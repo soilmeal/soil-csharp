@@ -1,13 +1,12 @@
 using System.Threading;
 
-namespace Soil.Core.Threading
+namespace Soil.Core.Threading;
+
+public interface IThreadFactory
 {
-    public interface IThreadFactory
-    {
-        ThreadPriority Priority { get; }
+    ThreadPriority Priority { get; }
 
-        Thread Create(ThreadStart start_);
+    Thread Create(ThreadStart start_);
 
-        Thread Create(ParameterizedThreadStart start_);
-    }
+    Thread Create(ParameterizedThreadStart start_);
 }

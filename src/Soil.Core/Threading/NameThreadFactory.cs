@@ -1,37 +1,36 @@
 using System.Threading;
 
-namespace Soil.Core.Threading
+namespace Soil.Core.Threading;
+
+internal class NameThreadFactory : IThreadFactory
 {
-    internal class NameThreadFactory : IThreadFactory
+    private readonly ThreadPriority _priority;
+    public ThreadPriority Priority => _priority;
+
+    private readonly string _name;
+    public string Name => _name;
+
+    public NameThreadFactory(ThreadPriority priority_, string name_)
     {
-        private readonly ThreadPriority _priority;
-        public ThreadPriority Priority => _priority;
+        _priority = priority_;
+        _name = name_;
+    }
 
-        private readonly string _name;
-        public string Name => _name;
-
-        public NameThreadFactory(ThreadPriority priority_, string name_)
+    public Thread Create(ThreadStart start_)
+    {
+        var thread = new Thread(start_)
         {
-            _priority = priority_;
-            _name = name_;
-        }
+            Name = _name
+        };
+        return thread;
+    }
 
-        public Thread Create(ThreadStart start_)
+    public Thread Create(ParameterizedThreadStart start_)
+    {
+        var thread = new Thread(start_)
         {
-            var thread = new Thread(start_)
-            {
-                Name = _name
-            };
-            return thread;
-        }
-
-        public Thread Create(ParameterizedThreadStart start_)
-        {
-            var thread = new Thread(start_)
-            {
-                Name = _name
-            };
-            return thread;
-        }
+            Name = _name
+        };
+        return thread;
     }
 }
