@@ -2,7 +2,8 @@ namespace Soil.Core.Threading;
 
 public class ThreadNameFormatter
 {
-    public static readonly ThreadNameFormatter Default = new();
+    private static readonly ThreadNameFormatter _default = new();
+    public static ThreadNameFormatter Default => _default;
 
     private readonly string _threadNameFormat = string.Empty;
     public string ThreadNameFormat => _threadNameFormat;

@@ -46,7 +46,7 @@ public class TaskSchedulerBuilder
         IThreadFactory threadFactory = ThreadFactory ?? ThreadFactoryBuilder.BuildDefault();
 
         int maximumConcurrencyLevel = CoerceMaximumConcurrencyLevel();
-        return new TaskScheduler(maximumConcurrencyLevel, threadFactory, queue);
+        return new FixedThreadTaskScheduler(maximumConcurrencyLevel, threadFactory, queue);
     }
 
     public static TaskScheduler BuildSingleThread()
@@ -54,7 +54,7 @@ public class TaskSchedulerBuilder
         var builder = new TaskSchedulerBuilder();
         return builder.SetMaximumConcurrencyLevel(1)
             .SetThreadFactory(ThreadFactoryBuilder.BuildDefault())
-            .SetQueue(new BlockingCollection<Task>())
+            .SetQueue(new BlockingCollection<Task>(new ConcurrentQueue<Task>()))
             .Build();
     }
 
@@ -62,7 +62,7 @@ public class TaskSchedulerBuilder
     {
         if (maximumConcurrencyLevel_ == 1)
         {
-            throw new ArgumentOutOfRangeException(nameof(maximumConcurrencyLevel_), maximumConcurrencyLevel_, "maximumConcurrencyLevel of BuildWorkStealing() is must be greater than or less than 1");
+            throw new ArgumentOutOfRangeException(nameof(maximumConcurrencyLevel_), maximumConcurrencyLevel_, "maximumConcurrencyLevel of BuildWorkStealing() is must not be 1");
         }
 
         var builder = new TaskSchedulerBuilder();

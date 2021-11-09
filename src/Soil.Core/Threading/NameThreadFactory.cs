@@ -4,13 +4,18 @@ namespace Soil.Core.Threading;
 
 internal class NameThreadFactory : IThreadFactory
 {
+    private static readonly NameThreadFactory _default = new();
+    public static NameThreadFactory Default => _default;
+
     private readonly ThreadPriority _priority;
     public ThreadPriority Priority => _priority;
 
     private readonly string _name;
     public string Name => _name;
 
-    public NameThreadFactory(ThreadPriority priority_, string name_)
+    private NameThreadFactory() : this(ThreadPriority.Normal, "thread") { }
+
+    internal NameThreadFactory(ThreadPriority priority_, string name_)
     {
         _priority = priority_;
         _name = name_;
