@@ -24,4 +24,11 @@ public class ThreadFactoryBuilder
     {
         return new FormattedNameThreadFactory(_priority, formatter_);
     }
+
+    public static IThreadFactory BuildDefault()
+    {
+        var builder = new ThreadFactoryBuilder();
+        return builder.SetPriority(ThreadPriority.Normal)
+            .Build(ThreadNameFormatter.Default);
+    }
 }

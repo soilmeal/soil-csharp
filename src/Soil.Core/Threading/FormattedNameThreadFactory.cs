@@ -2,7 +2,7 @@ using System.Threading;
 
 namespace Soil.Core.Threading;
 
-public class FormattedNameThreadFactory : IThreadFactory
+internal class FormattedNameThreadFactory : IThreadFactory
 {
     private readonly ThreadPriority _priority;
     public ThreadPriority Priority => _priority;
