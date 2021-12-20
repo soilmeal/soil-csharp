@@ -9,7 +9,7 @@ public class TaskSchedulerBuilder
     private int _maximumConcurrencyLevel = 0;
     public int MaximumConcurrencyLevel => _maximumConcurrencyLevel;
 
-    public IThreadFactory? _threadFactory;
+    private IThreadFactory? _threadFactory;
     public IThreadFactory? ThreadFactory => _threadFactory;
 
     private BlockingCollection<Task>? _queue;
