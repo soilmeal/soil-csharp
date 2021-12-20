@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4EFBAC63-241
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soil.Core", "src\Soil.Core\Soil.Core.csproj", "{E7394A81-F382-4A7D-A1FC-7FB8322F5C66}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soil.Net", "src\Soil.Net\Soil.Net.csproj", "{DD688BD5-DA84-4756-A222-59458BF5886B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,8 +34,21 @@ Global
 		{E7394A81-F382-4A7D-A1FC-7FB8322F5C66}.Release|x64.Build.0 = Release|Any CPU
 		{E7394A81-F382-4A7D-A1FC-7FB8322F5C66}.Release|x86.ActiveCfg = Release|Any CPU
 		{E7394A81-F382-4A7D-A1FC-7FB8322F5C66}.Release|x86.Build.0 = Release|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Debug|x64.Build.0 = Debug|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Debug|x86.Build.0 = Debug|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Release|x64.ActiveCfg = Release|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Release|x64.Build.0 = Release|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Release|x86.ActiveCfg = Release|Any CPU
+		{DD688BD5-DA84-4756-A222-59458BF5886B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E7394A81-F382-4A7D-A1FC-7FB8322F5C66} = {4EFBAC63-241B-46A8-B520-0601E0F4174F}
+		{DD688BD5-DA84-4756-A222-59458BF5886B} = {4EFBAC63-241B-46A8-B520-0601E0F4174F}
 	EndGlobalSection
 EndGlobal
