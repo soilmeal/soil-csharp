@@ -8,7 +8,7 @@ namespace Soil.Core.Event;
 internal class ConcurrentEventHandlerSet<TEnum> : IEventDispatcher<TEnum>
     where TEnum : struct, Enum
 {
-    private readonly ConcurrentDictionary<TEnum, ImmutableList<EventHandler<Event<TEnum>>>> _handlersOfType = new ConcurrentDictionary<TEnum, ImmutableList<EventHandler<Event<TEnum>>>>();
+    private readonly ConcurrentDictionary<TEnum, ImmutableList<EventHandler<Event<TEnum>>>> _handlersOfType = new();
 
     internal ConcurrentEventHandlerSet() { }
 

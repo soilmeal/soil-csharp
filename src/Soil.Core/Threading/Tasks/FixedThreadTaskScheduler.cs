@@ -9,10 +9,22 @@ namespace Soil.Core.Threading.Tasks;
 public class FixedThreadTaskScheduler : TaskScheduler
 {
     private readonly int _maximumConcurrencyLevel;
-    public override int MaximumConcurrencyLevel => _maximumConcurrencyLevel;
+    public override int MaximumConcurrencyLevel
+    {
+        get
+        {
+            return _maximumConcurrencyLevel;
+        }
+    }
 
     private readonly IThreadFactory _threadFactory;
-    public override IThreadFactory ThreadFactory => _threadFactory;
+    public override IThreadFactory ThreadFactory
+    {
+        get
+        {
+            return _threadFactory;
+        }
+    }
 
     private readonly BlockingCollection<Task> _tasks;
 

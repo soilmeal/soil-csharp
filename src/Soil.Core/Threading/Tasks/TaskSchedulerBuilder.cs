@@ -7,13 +7,31 @@ namespace Soil.Core.Threading.Tasks;
 public class TaskSchedulerBuilder
 {
     private int _maximumConcurrencyLevel = 0;
-    public int MaximumConcurrencyLevel => _maximumConcurrencyLevel;
+    public int MaximumConcurrencyLevel
+    {
+        get
+        {
+            return _maximumConcurrencyLevel;
+        }
+    }
 
     private IThreadFactory? _threadFactory;
-    public IThreadFactory? ThreadFactory => _threadFactory;
+    public IThreadFactory? ThreadFactory
+    {
+        get
+        {
+            return _threadFactory;
+        }
+    }
 
     private BlockingCollection<Task>? _queue;
-    public BlockingCollection<Task>? Queue => _queue;
+    public BlockingCollection<Task>? Queue
+    {
+        get
+        {
+            return _queue;
+        }
+    }
 
     public TaskSchedulerBuilder() { }
 

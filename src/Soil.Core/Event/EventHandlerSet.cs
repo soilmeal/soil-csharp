@@ -6,7 +6,7 @@ namespace Soil.Core.Event;
 internal class EventHandlerSet<TEnum> : IEventDispatcher<TEnum>
     where TEnum : struct, Enum
 {
-    private readonly Dictionary<TEnum, List<EventHandler<Event<TEnum>>>> _handlersOfType = new Dictionary<TEnum, List<EventHandler<Event<TEnum>>>>();
+    private readonly Dictionary<TEnum, List<EventHandler<Event<TEnum>>>> _handlersOfType = new();
 
     internal EventHandlerSet() { }
 

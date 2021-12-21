@@ -10,9 +10,9 @@ internal class EventQueueDispatcher<TEnum> : IEventQueueDispatcher<TEnum>
 
     private ulong _processedCnt = 0;
 
-    private readonly Queue<Event<TEnum>> _queue = new Queue<Event<TEnum>>();
+    private readonly Queue<Event<TEnum>> _queue = new();
 
-    private readonly EventHandlerSet<TEnum> _handlerSet = new EventHandlerSet<TEnum>();
+    private readonly EventHandlerSet<TEnum> _handlerSet = new();
 
     internal EventQueueDispatcher() { }
 

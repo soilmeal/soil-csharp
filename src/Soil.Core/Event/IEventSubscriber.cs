@@ -14,7 +14,7 @@ public interface IEventSubscriber
     public class Builder<TEnum>
         where TEnum : struct, Enum
     {
-        private readonly Dictionary<TEnum, EventHandler<Event<TEnum>>> _handlers = new Dictionary<TEnum, EventHandler<Event<TEnum>>>();
+        private readonly Dictionary<TEnum, EventHandler<Event<TEnum>>> _handlers = new();
 
         public Builder<TEnum> AddHandler<TEvent>(TEnum type, EventHandler<TEvent>? handler)
             where TEvent : Event<TEnum>

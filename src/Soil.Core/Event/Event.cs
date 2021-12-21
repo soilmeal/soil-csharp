@@ -7,9 +7,15 @@ public abstract class Event<TEnum>
 {
     private readonly TEnum _type;
 
-    public TEnum Type => _type;
+    public TEnum Type
+    {
+        get
+        {
+            return _type;
+        }
+    }
 
-    public Event(TEnum type_)
+    protected Event(TEnum type_)
     {
         _type = type_;
     }

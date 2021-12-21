@@ -7,13 +7,13 @@ namespace Soil.Core.Event;
 internal class ConcurrentEventQueueDispatcher<TEnum> : IEventQueueDispatcher<TEnum>
     where TEnum : struct, Enum
 {
-    private readonly AtomicUInt64 _queuedCnt = new AtomicUInt64(0UL);
+    private readonly AtomicUInt64 _queuedCnt = new(0UL);
 
-    private readonly AtomicUInt64 _processedCnt = new AtomicUInt64(0UL);
+    private readonly AtomicUInt64 _processedCnt = new(0UL);
 
-    private readonly ConcurrentQueue<Event<TEnum>> _queue = new ConcurrentQueue<Event<TEnum>>();
+    private readonly ConcurrentQueue<Event<TEnum>> _queue = new();
 
-    private readonly ConcurrentEventHandlerSet<TEnum> _handlerSet = new ConcurrentEventHandlerSet<TEnum>();
+    private readonly ConcurrentEventHandlerSet<TEnum> _handlerSet = new();
 
     internal ConcurrentEventQueueDispatcher() { }
 

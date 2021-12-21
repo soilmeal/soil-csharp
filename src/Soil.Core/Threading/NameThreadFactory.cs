@@ -5,13 +5,31 @@ namespace Soil.Core.Threading;
 internal class NameThreadFactory : IThreadFactory
 {
     private static readonly NameThreadFactory _default = new();
-    public static NameThreadFactory Default => _default;
+    public static NameThreadFactory Default
+    {
+        get
+        {
+            return _default;
+        }
+    }
 
     private readonly ThreadPriority _priority;
-    public ThreadPriority Priority => _priority;
+    public ThreadPriority Priority
+    {
+        get
+        {
+            return _priority;
+        }
+    }
 
     private readonly string _name;
-    public string Name => _name;
+    public string Name
+    {
+        get
+        {
+            return _name;
+        }
+    }
 
     private NameThreadFactory() : this(ThreadPriority.Normal, "thread") { }
 

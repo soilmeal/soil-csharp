@@ -3,10 +3,22 @@ namespace Soil.Core.Threading;
 public class ThreadNameFormatter
 {
     private static readonly ThreadNameFormatter _default = new();
-    public static ThreadNameFormatter Default => _default;
+    public static ThreadNameFormatter Default
+    {
+        get
+        {
+            return _default;
+        }
+    }
 
     private readonly string _threadNameFormat = string.Empty;
-    public string ThreadNameFormat => _threadNameFormat;
+    public string ThreadNameFormat
+    {
+        get
+        {
+            return _threadNameFormat;
+        }
+    }
 
     private ThreadNameFormatter() : this("thread-{0}") { }
 

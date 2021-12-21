@@ -5,7 +5,13 @@ namespace Soil.Core.Threading;
 public class ThreadFactoryBuilder
 {
     private ThreadPriority _priority = ThreadPriority.Normal;
-    public ThreadPriority Priority => _priority;
+    public ThreadPriority Priority
+    {
+        get
+        {
+            return _priority;
+        }
+    }
 
     public ThreadFactoryBuilder() { }
 

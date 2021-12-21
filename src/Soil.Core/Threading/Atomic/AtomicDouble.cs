@@ -10,15 +10,10 @@ public struct AtomicDouble : IAtomicNumeric<double>
 
     public AtomicDouble(double initialValue)
     {
-
-        if (Environment.Is64BitOperatingSystem && Environment.Is64BitProcess)
-        {
-            _impl = new AtomicDoubleIn64BitSys(initialValue);
-        }
-        else
-        {
-            _impl = new AtomicDoubleIn32bitSys(initialValue);
-        }
+        bool is64Bit = Environment.Is64BitOperatingSystem && Environment.Is64BitProcess;
+        _impl = is64Bit
+            ? new AtomicDoubleIn64BitSys(initialValue)
+            : new AtomicDoubleIn32bitSys(initialValue);
     }
 
     public double Read()
@@ -43,7 +38,7 @@ public struct AtomicDouble : IAtomicNumeric<double>
 
     public double Exchange(double other)
     {
-        return _impl.Exchange(other); ;
+        return _impl.Exchange(other);
     }
 
     public double CompareExchange(double other, double comparand)
