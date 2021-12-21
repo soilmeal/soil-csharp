@@ -1,0 +1,722 @@
+root = true
+
+# Indent style for all files
+# 모든 파일들의 들여쓰기 유형
+[*]
+indent_style = space
+
+# Code files
+# 코드 파일
+[*.{cs,csx,vb,vbx}]
+indent_size = 4
+tab_width = 4
+
+# XML project files
+# XML 프로젝트 파일
+[*.{csproj,vbproj,vcxproj,vcxproj.filters,proj,projitems,shproj}]
+indent_size = 2
+
+# XML config files
+# XML 설정 파일
+[*.{props,targets,ruleset,config,nuspec,resx,vsixmanifest,vsct}]
+indent_size = 2
+
+# JSON files
+# JSON 파일
+[*.json]
+indent_size = 2
+
+# Powershell shell script files
+# Powershell 쉘 스크립트 파일
+[*.ps1]
+indent_size = 2
+
+# Shell script files
+# 쉘 스크립트 파일
+[*.sh]
+end_of_line = lf
+indent_size = 2
+
+# Dotnet code style settings:
+# 닷넷 코딩 스타일 설정
+[*.{cs,vb}]
+
+# IDE0055: Fix formatting
+# IDE0055: 서식 수정
+# https://docs.microsoft.com/ko-kr/dotnet/fundamentals/code-analysis/style-rules/formatting-rules#rule-id-ide0055-fix-formatting
+dotnet_diagnostic.IDE0055.severity = warning
+
+# IDE1006: Naming rule violation
+# IDE1006: 명명 규칙 위반
+dotnet_diagnostic.IDE1006.severity = warning
+
+# Sort "using" and "Import" directives with "System.*" appearing first
+# "System.*" 이 먼저 나오도록 "using" 과 "Import" 구문 정렬
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Non-private static fields are PascalCase
+# private 이 아닌 static 필드는 PascalCase 사용
+dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.severity = warning
+dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.symbols = non_private_static_fields
+dotnet_naming_rule.non_private_static_fields_should_be_pascal_case.style = non_private_static_field_style
+
+dotnet_naming_symbols.non_private_static_fields.applicable_kinds = field
+dotnet_naming_symbols.non_private_static_fields.applicable_accessibilities = public, protected, internal, protected_internal, private_protected
+dotnet_naming_symbols.non_private_static_fields.required_modifiers = static
+
+dotnet_naming_style.non_private_static_field_style.capitalization = pascal_case
+
+# Non-private readonly fields are PascalCase
+# private 이 아닌 readonly 필드는 PascalCase 사용
+dotnet_naming_rule.non_private_readonly_fields_should_be_pascal_case.severity = warning
+dotnet_naming_rule.non_private_readonly_fields_should_be_pascal_case.symbols = non_private_readonly_fields
+dotnet_naming_rule.non_private_readonly_fields_should_be_pascal_case.style = non_private_readonly_field_style
+
+dotnet_naming_symbols.non_private_readonly_fields.applicable_kinds = field
+dotnet_naming_symbols.non_private_readonly_fields.applicable_accessibilities = public, protected, internal, protected_internal, private_protected
+dotnet_naming_symbols.non_private_readonly_fields.required_modifiers = readonly
+
+dotnet_naming_style.non_private_readonly_field_style.capitalization = pascal_case
+
+# Constants are PascalCase
+# 상수는 PascalCase 사용
+dotnet_naming_rule.constants_should_be_pascal_case.severity = warning
+dotnet_naming_rule.constants_should_be_pascal_case.symbols = constants
+dotnet_naming_rule.constants_should_be_pascal_case.style = constant_style
+
+dotnet_naming_symbols.constants.applicable_kinds = field, local
+dotnet_naming_symbols.constants.required_modifiers = const
+
+dotnet_naming_style.constant_style.capitalization = pascal_case
+
+# Instance fields are camelCase and start with _
+# 객체 필드는 camelCase 를 사용하고 _ 로 시작
+dotnet_naming_rule.instance_fields_should_be_camel_case.severity = warning
+dotnet_naming_rule.instance_fields_should_be_camel_case.symbols = instance_fields
+dotnet_naming_rule.instance_fields_should_be_camel_case.style = instance_field_style
+
+dotnet_naming_symbols.instance_fields.applicable_kinds = field
+
+dotnet_naming_style.instance_field_style.capitalization = camel_case
+dotnet_naming_style.instance_field_style.required_prefix = _
+
+# Locals and parameters are camelCase
+# 지역 변수 및 매개변수는 camelCase 사용
+dotnet_naming_rule.locals_should_be_camel_case.severity = warning
+dotnet_naming_rule.locals_should_be_camel_case.symbols = locals_and_parameters
+dotnet_naming_rule.locals_should_be_camel_case.style = camel_case_style
+
+dotnet_naming_symbols.locals_and_parameters.applicable_kinds = parameter, local
+
+dotnet_naming_style.camel_case_style.capitalization = camel_case
+
+# Local functions are PascalCase
+# 지역 함수는 Pascalcase 사용
+dotnet_naming_rule.local_functions_should_be_pascal_case.severity = warning
+dotnet_naming_rule.local_functions_should_be_pascal_case.symbols = local_functions
+dotnet_naming_rule.local_functions_should_be_pascal_case.style = local_function_style
+
+dotnet_naming_symbols.local_functions.applicable_kinds = local_function
+
+dotnet_naming_style.local_function_style.capitalization = pascal_case
+
+# By default, name items with PascalCase
+# 위 규칙을 제외한 다른 이름은 PascalCase
+dotnet_naming_rule.members_should_be_pascal_case.severity = warning
+dotnet_naming_rule.members_should_be_pascal_case.symbols = all_members
+dotnet_naming_rule.members_should_be_pascal_case.style = pascal_case_style
+
+dotnet_naming_symbols.all_members.applicable_kinds = *
+
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# Avoid "this." and "Me." if not necessary
+# 꼭 필요하지 않으면 "this."  와 "Me." 사용 피하기
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method = false:warning
+dotnet_style_qualification_for_event = false:warning
+
+# Use language keywords instead of framework type names for type references
+# 타입 참조에 프레임워크 타입 대신 언어 키워드 사용
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
+
+# IDE0036: Order modifiers
+# IDE0036: 한정자 정렬
+# public, private, protected, internal, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, volatile, async:warning
+dotnet_diagnostic.IDE0036.severity = warning
+
+# IDE0040: Add accessibility modifiers
+# IDE0040: 접근 한정자 추가
+# for_non_interface_members:warning
+dotnet_diagnostic.IDE0040.severity = warning
+
+# IDE0044: Add readonly modifier
+# IDE0044: 필드에 readonly 한정자 추가
+# true:warning
+dotnet_diagnostic.IDE0044.severity = warning
+
+# Use parentheses to clarity artihmetic operator precedence
+# 산술 연산자 우선순위를 명료하게 만들기 위해 괄호 사용
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:warning
+
+# Use parentheses to clarity relational operator precedence
+# 관계 연산자 연산자 우선순위를 명료하게 만들기 위해 괄호 사용
+dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:warning
+
+# Use parentheses to clarify other binary operator
+# 단항 연산자 연산자 우선순위를 명료하게 만들기 위해 괄호 사용
+dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:warning
+
+# Prefer to not have parentheses in other operator when that's precedence is obvious
+# 다른 연산자에서는 우선순위가 명확할 경우 괄호 사용하지 않는 것을 선호
+dotnet_style_parentheses_in_other_operators = never_if_unnecessary:default
+
+# Specify missing cases or missing "default" case for switch statements
+# PS: becase analzyer suggest even if has "default" case, set this option to "silent"
+# switch 문에 누락된 case 나 누락된 "default" case 명시하기
+# 추신: 분석기가 "default" case 를 가지고 있다 하더라도 제안하여, 이 옵션을 "silent" 설정합니다.
+dotnet_diagnostic.IDE0010.severity = silent
+
+# Use object initializer if possible
+# 가능한 경우, 객체 이니셜라이저 사용
+dotnet_style_object_initializer = true:suggestion
+
+# Use collection initializer if posssible
+# 가능한 경우, 컬렉션 이니셜라이저 사용
+dotnet_style_collection_initializer = true:suggestion
+
+# Use properties with explicit private backing fields.
+# 명시적인 private 필드를 가지는 프로퍼티를 사용 
+dotnet_style_prefer_auto_properties = false:suggestion
+
+# Use explicit tuple names
+# 명시적인 튜플 이름을 사용
+dotnet_style_explicit_tuple_names = true:suggestion
+
+# IDE0034: Simplify "default" expression
+# IDE0034: "default" 표현식 간소화
+dotnet_diagnostic.IDE0034.severity = suggestion
+
+# var tuple = (age, name)
+# Use inferred tuple element names
+# 추론된 튜플 이름 사용
+dotnet_style_prefer_inferred_tuple_names = true:suggestion
+
+# var anon = new { age, name };
+# Use inferred anonymous type member names
+# 추론된 익명 타입 맴버 이름 사용
+dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
+
+# Use ternary conditional expressions for simple assignments that require conditional logic
+# 조건이 필요한 단순 할당에 삼중 조건 연산자 사용
+dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion
+
+# Use ternary conditional expressions for simple assignments that require conditional logic
+# 조건이 필요한 단순 반환에 삼중 조건 연산자 사용
+dotnet_style_prefer_conditional_expression_over_return = true:suggestion
+
+# Convert anonymous type to tuple
+# 익명 타입을 튜플로 변환
+dotnet_diagnostic.IDE0050.severity = suggestion
+
+# Use 'System.HashCode.Combine' instead of using custom hash computation code
+# 사용자 정의 해쉬 계산 코드를 사용하는 대신 'System.HashCode.Combine' 사용
+dotnet_diagnostic.IDE0070.severity = suggestion
+
+# Simplify interpolated strings
+# 보간된 문자열 단순화
+dotnet_style_prefer_simplified_interpolation = true:suggestion
+
+# Specify missing cases or missing "default" case for switch expressions
+# PS: becase analzyer suggest even if has "default" case, set this option to "silent"
+# switch 표현식에 누락된 케이스나 누락된 "default" 케이스 명시하기
+# 추신: 분석기가 "default" case 를 가지고 있다 하더라도 제안하여, 이 옵션을 "silent" 설정합니다.
+dotnet_diagnostic.IDE0072.severity = silent
+
+# Use compound assignments
+# 복합 할당 사용
+dotnet_style_prefer_compound_assignment = true:suggestion
+
+# Simplify conditional expressions
+# 조건 표현식 간소화
+dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
+
+# Convert 'typeof(T).Name' to 'nameof'
+# 'type(T).Name' 을 'nameof' 로 변환
+dotnet_diagnostic.IDE0082.severity = suggestion
+
+# x != null ? x : y => x ?? y
+# Use null coalescing expressions instead of ternary conditional expressions
+# 삼중 조건 표현식 대신 null 병합 연산자 사용
+dotnet_style_coalesce_expression = true:suggestion
+
+# Use null-conditional operator when possible
+# 가능할 경우, null 조건부 연산자 사용
+dotnet_style_null_propagation = true:suggestion
+
+# Use "is" pattern-matching instead of "object.ReferenceEquals"
+# "object.ReferenceEquals" 대신 "is" 패턴 매칭 사용
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
+
+# Do not require file header
+# 파일 해더 불필요
+file_header_template = unset
+
+
+# IDE0001: Simplify name
+# IDE001: 이름 단순화
+dotnet_diagnostic.IDE0001.severity = suggestion
+
+# IDE0002: Simplify member access
+# IDE0002: 맴버 접근 단순화
+dotnet_diagnostic.IDE0002.severity = suggestion
+
+# IDE0004: Remove unnecessary cast
+# IDE0004: 불필요한 변환 제거
+dotnet_diagnostic.IDE0004.severity = suggestion
+
+# IDE0005: Remove unnecessary import
+# IDE0005: 불필요한 import 제거
+dotnet_diagnostic.IDE0005.severity = silent
+
+# IDE0035: Remove unreachable code
+# IDE0035: 접근할 수 없는 코드 제거
+dotnet_diagnostic.IDE0035.severity = suggestion
+
+# IDE0051: Remove unused private member
+# IDE0051: 사용하지 않는 private 맴버 제거
+dotnet_diagnostic.IDE0051.severity = suggestion
+
+# IDE0052: Remove unread private member
+# IDE0052: 읽지 않는 private 맴버 제거
+dotnet_diagnostic.IDE0052.severity = suggestion
+
+# Flag methods with any accessibility that contain unused parameters
+# 접근 제한시에 상관없이 사용하지 않는 매개변수를 포함하는 메소드를 표시
+dotnet_code_quality_unused_parameters = all:silent
+
+# Remove unnecessary suppresion
+# 불필요한 비표시 제거
+dotnet_diagnostic.IDE0079.severity = warning
+
+# Remove unnecessary equality operator
+# 불필요한 동등 비교 연산자 제거
+dotnet_diagnostic.IDE0100.severity = suggestion
+
+# CA1008: Enums should have zero value
+# CA1008: 열거형은 0 값을 가지고 있어야 합니다.
+dotnet_code_quality.CA1008.api_surface = all
+dotnet_diagnostic.CA1008.severity = suggestion
+
+# CA1010: Collections should implement generic interface
+# CA1010: 컬렉션은 제네릭 인터페이스를 구현해야합니다.
+dotnet_code_quality.CA1010.api_surface = all
+dotnet_diagnostic.CA1008.severity = suggestion
+
+# CA1012: Abstract types should not have public constructors
+# CA1012: 추상 타입은 public 생성자를 가지면 안됩니다.
+dotnet_code_quality.CA1012.api_surface = all
+dotnet_diagnostic.CA1012.severity = warning
+
+# CA1018: Mark attributes with AttributeUsageAttribute
+# CA1018: 어트리뷰트에 AttributeUsageAttribute 를 추가하세요
+dotnet_code_quality.CA1018.api_surface = all
+dotnet_diagnostic.CA1018.severity = warning
+
+# CA1024: Use properties where appropriate
+# CA1024: 적절한 곳에는 프로퍼티를 사용하세요
+dotnet_diagnostic.CA1024.severity = suggestion
+
+# CA1027: Mark enums with FlagsAttribute
+# CA1027: 열거형에 FlagsAttribute 를 추가하세요
+dotnet_diagnostic.CA1027.severity = suggestion
+
+# CA1028: Enum storage should be Int32
+# CA1028: 열거형 저장공간은 Int32 여야 합니다.
+dotnet_diagnostic.CA1028.severity = suggestion
+
+# CA1031: Do not catch general exception types
+# CA1031: 포괄적인 예외 타입을 잡지 마세요
+dotnet_diagnostic.CA1031.severity = suggestion
+
+# CA1032: Implement standard exception constructors
+# CA1032: 표준 예외 생성자를 구현하세요
+dotnet_diagnostic.CA1032.severity = suggestion
+
+# CA1033: Interface methods should be callable by child types
+# CA1033: 인터페이스 메소드는 자식 타입이 호출할 수 있어야 합니다.
+dotnet_diagnostic.CA1033.severity = warning
+
+# CA1036: Override methods on comparable types
+# CA1036: 비교할 수 있는 타입에 메소드를 오버라이딩 하세요
+dotnet_code_quality.CA1036.api_surface = all
+dotnet_diagnostic.CA1036.severity = suggestion
+
+# CA1041: Provide ObsoleteAttribute message
+# CA1041: ObsoleteAttribute 메시지를 제공하세요
+dotnet_diagnostic.CA1041.severity = suggestion
+
+# CA1043: Use integral or string argument for indexers
+# CA1043: indexer 에는 정수 혹은 문자열 인자를 사용하세요
+dotnet_code_quality.CA1043.api_surface = all
+dotnet_diagnostic.CA1043.severity = suggestion
+
+# CA1044: Properties should not be write only
+# CA1044: 프로퍼티는 쓰기만 가능해서는 안됩니다
+dotnet_code_quality.CA1044.api_surface = all
+dotnet_diagnostic.CA1044.severity = warning
+
+# CA1046: Do not overload operator equals on reference types
+# CA1046: 참조 타입의 .Equals() 를 오버로딩 하지 마세요
+dotnet_code_quality.CA1046.api_surface = all
+dotnet_diagnostic.CA1046.severity = suggestion
+
+# CA1050: Declare types in namespaces
+# CA1050: 타입을 네임스페이스 안에 선언하세요
+dotnet_code_quality.CA1050.api_surface = all
+
+# CA1050: Do not declare visible instance fields
+# CA1050: 접근 가능한 객체 필드를 선언하지 마세요
+dotnet_code_quality.CA1051.api_surface = all
+dotnet_code_quality.CA1051.exclude_structs = true
+dotnet_diagnostic.CA1051.severity = waring
+
+# CA1052: Static holder types should be Static or NotInheritable
+# CA1052: Static 홀더 타입은 Static 혹은 NotInheritable 여야 합니다
+dotnet_code_quality.CA1052.api_surface = all
+dotnet_diagnostic.CA1052.severity = suggestion
+
+# CA1053: Static holder types should not have default constructors
+# CA1053: Static 홀더 타입은 기본 생성자를 가지면 안됩니다
+dotnet_code_quality.CA1053.api_surface = all
+dotnet_diagnostic.CA1053.severity = suggestion
+
+# CA1058: Types should not extend certain base types
+# CA1058: 특정 기반 타입을 확장하면 안됩니다.
+dotnet_code_quality.CA1058.api_surface = all
+dotnet_diagnostic.CA1058.severity = suggestion
+
+# CA1061: Do not hide base class methods
+# CA1061: 기반 클래스의 메소드를 숨기지 마세요
+dotnet_code_quality.CA1061.api_surface = all
+dotnet_diagnostic.CA1061.severity = suggestion
+
+# CA1508: Avoid dead conditional code
+# CA1508: 불필요한 조건 코드를 피하세요
+dotnet_diagnostic.CA1508.severity = suggestion
+
+# CA1710: Identifiers should have correct suffix
+# CA1710: 식별자는 올바른 접미사를 가져야 합니다
+dotnet_code_quality.CA1710.api_surface = all
+dotnet_diagnostic.CA1710.severity = suggestion
+
+# CA1712: Do not prefix enum values with type name
+# CA1712: 열거형 맴버의 앞에 열거형의 이름을 붙이지 마세요
+dotnet_code_quality.CA1712.api_surface = all
+dotnet_diagnostic.CA1712.severity = suggestion
+
+# CA1715: Identifiers should have correct prefix
+# CA1715: 식별자는 올바른 접두사를 가져야 합니다
+dotnet_code_quality.CA1715.api_surface = all
+dotnet_code_quality.CA1715.exclude_single_letter_type_parameters = true
+dotnet_diagnostic.CA1715.severity = warning
+
+# CA1802: Use Literals Where Appropriate
+# CA1802: 적절한 곳에 리터럴 상수를 사용하세요
+dotnet_diagnostic.CA1802.severity = suggestion
+
+# CA1819: Properties should not return arrays
+# CA1819: 프로퍼티는 배열을 반환하면 안됩니다.
+dotnet_diagnostic.CA1819.severity = suggestion
+
+# CA1820: Test for empty strings using string length
+# CA1820: 문자열의 길이를 이용해서 빈 문자열을 검사합니다
+dotnet_diagnostic.CA1820.severity = suggestion
+
+# CSharp code style settings:
+[*.cs]
+
+# Require braces to be on a new line for all expressions
+# 모든 표현식에서 괄호가 다음 줄에 위치해야함
+csharp_new_line_before_open_brace = all
+
+# Place "else" statements on new line
+# "else" 문은 다음 줄에 표시
+csharp_new_line_before_else = true
+
+# Place "catch" statements on new line
+# "catch" 문은 다음 줄에 표시
+csharp_new_line_before_catch = true
+
+# Place "finally" statements on new line
+# "finally" 문은 다음 줄에 표시
+csharp_new_line_before_finally = true
+
+# Require members of object initializer to be on seperate lines
+# 객체 이니셜라이져의 맴버는 각각 다른 줄에 위치해야함
+csharp_new_line_before_members_in_object_initializers = true
+
+# Require memberes of anonymous types to be on seperate lines
+# 익명 타입의 맴버는 각각 다른 줄에 위치해야함
+csharp_new_line_before_members_in_anonymous_types = true
+
+# Require elements of query expression clauses to be on seperate lines
+# 질의 표현식 절의 구성 요소들은 각각 다른 줄에 위치해야함
+csharp_new_line_between_query_expression_clauses = true
+
+# Indent "switch" case contents
+# "switch" case 의 내용을 들여쓰기
+csharp_indent_case_contents = true
+
+# Indent "switch" labels
+# "switch" label 을 들여쓰기
+csharp_indent_switch_labels = true
+
+# place label at same indent as the current context
+# label 에 현재 문맥과 같은 들여쓰기 사용
+csharp_indent_labels = no_change
+
+# Indent contents of block
+# 블럭의 내용 들여쓰기
+csharp_indent_block_contents = true
+
+# Indent braces of block
+# 블럭의 괄호 들여쓰기
+csharp_indent_braces = false
+
+# Indent "switch" case contents if they are in block
+# "switch" case 의 내용이 블럭에 있으면 들여쓰기
+csharp_indent_case_contents_when_block = true
+
+# Remove space between the cast and the value
+# 변환과 값 사이 공백 제거
+csharp_space_after_cast  = false
+
+# Place a space character after a keyword in a control flow statement such as a "for" loop
+# "for" 반복문과 같은 흐름 제어 문에서 키워드 뒤에 공백 넣기
+csharp_space_after_keywords_in_control_flow_statements = true
+
+# Remove between parentheses
+# 소괄호 사이에 공백 제거
+csharp_space_between_parentheses = false
+
+# Place a space character before the colon for bases or interfaces in a type declaration
+# 타입 선언에서 상속/구현에 대한 콜론 앞에 공백 넣기
+csharp_space_before_colon_in_inheritance_clause = true
+
+# true - Place a space character after the colon for bases or interfaces in a type declaration
+# 타입 선언에서 상속/구현에 대한 콜론 뒤에 공백 넣기
+csharp_space_after_colon_in_inheritance_clause = true
+
+# Insert space before and after the binary operator
+# 이항 연산자의 앞뒤로 공백 넣기
+csharp_space_around_binary_operators = before_and_after
+
+# Remove space characters after the opening parenthesis and before the closing parenthesis of a method declaration parameter list
+# 메소드 선언의 매개변수 목록을 여는 소괄호의 뒤와 닫는 소괄호의 앞에 있는 공백 제거
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+
+# Remove space within empty parameter list parentheses for a method declaration
+# 메소드 선언의 빈 매개변수 목록의 소괄호 사이에 공백 제거
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+
+# Remove space characters between the method name and opening parenthesis in the method declaration
+# 메소드 선언의 메소드 이름과 여는 소괄호 사이의 공백 제거
+csharp_space_between_method_declaration_name_and_open_parenthesis = false
+
+# Remove space characters after the opening parenthesis and before the closing parenthesis of a method call
+# 메소드 호출의 여는 소괄호 뒤와 닫는 소괄호 앞에 있는 공백 제거
+csharp_space_between_method_call_parameter_list_parentheses = false
+
+# Remove space within empty argument list parentheses
+# 빈 인자 목록 괄호 사이의 공백 제거
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+
+# Remove space between method call name and opening parenthesis
+# 메소드 호출 이름과 여는 소괄호 사이의 공백 제거
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+
+# Insert space after a comma
+# 쉼표 뒤에 공백 추가
+csharp_space_after_comma = true
+
+# Remove space before a comma
+# 쉼표 앞의 공백 제거
+csharp_space_before_comma = false
+
+# Remove space after a dot
+# 마침표 뒤의 공백 제거
+csharp_space_after_dot = false
+
+# Remote space before dot
+# 마침표 앞의 공백 제거
+csharp_space_before_dot = false
+
+# Insert space after each semicolon in a "for" statement
+# "for" 문의 각 세미콜론 뒤에 공백 추가
+csharp_space_after_semicolon_in_for_statement = true
+
+# Remove space before each semicolon in a "for" statement
+# "for" 문의 각 세미콜론 앞에 공백 제거
+csharp_space_before_semicolon_in_for_statement = false
+
+# Remove extra space characters in declaration statements
+# 선언문의 추가적인 공백 제거
+csharp_space_around_declaration_statements = false
+
+# Remove space before opening square brackets
+# 여는 대괄호 앞에 공백 제거
+csharp_space_before_open_square_brackets = false
+
+# Remove space between empty square brackets
+# 빈 대괄호 사이의 공백 제거
+csharp_space_between_empty_square_brackets = false
+
+# Remove space characters in non-empty square brackets
+# 비지 않은 대괄호 양 끝에 공백 제거
+csharp_space_between_square_brackets = false
+
+# Leave statements and member declarations on different lines
+# 맴버 선언/구문을 다른 라인에 위치시키기
+csharp_preserve_single_line_statements = false
+
+# Leave code block on single line
+# 같은 라인에 블록을 두기
+csharp_preserve_single_line_blocks = true
+
+# Declare "out" variables before the method call
+# PS: Set this option "true"  if using IDE that support inlay hint (inline type hint)
+# "out" 변수를 메소드 호출 전에 선언
+# 추신: inlay hint (인라인 타입 힌트) 를 지원하는 IDE 를 사용한다면 이 옵션을 "true" 로 설정하세요
+csharp_style_inlined_variable_declaration = false:warning
+
+# Use local functions over anonymous functions
+# 익명 함수 대신 로컬 함수 사용
+csharp_style_pattern_local_over_anonymous_function = true:suggestion
+
+# Use deconstructed variable declaration
+# 비구조화 변수 선언 사용
+csharp_style_deconstructed_variable_declaration = true:suggestion
+
+# Use "^" operator when calculating an index from the end of collection
+# 컬렉션의 끝에서 시작하는 인덱스를 계산할 때, "^" 연산자 사용
+csharp_style_prefer_index_operator = true:suggestion
+
+# Use range operator ".." when extracting a "slice" of a collection
+# 컬렉션의 일부를 추출할 때, 범위 연산자 ".." 사용
+csharp_style_prefer_range_operator = true:suggestion
+
+# Use target-typed "new" expression when created type is apparent
+# 생성되는 타입이 명확한 경우 대상 타입으로 지정되는 "new" 표현식을 사용
+csharp_style_implicit_object_creation_when_type_is_apparent = true:suggestion
+
+# Use null-conditional operator when invoking lambda instead of performing null check
+# lambda 호출 시 null 체크를 수행하는 대신 null 조건부 연산자 사용 
+csharp_style_conditional_delegate_call = true:suggestion
+
+# Use "throw" expression instead of "throw" statements 
+# "throw" 문 대신 "throw" 표현식 사용
+csharp_style_throw_expression = true:suggestion
+
+# Use explicit type to declare variables with built-in system type such as "int"
+# "int" 와 같은 시스템 내장 타입을 사용하는 변수를 정의하기 위해 명시적인 타입 사용
+csharp_style_var_for_built_in_types = false:waring
+
+# Use "var" when the type is already specified on the right-hand side of a declaration expression
+# PS: Set this option "true"  if using IDE that support inlay hint (inline type hint)
+# 선언 표현식의 우항에 이미 타입이 명시되어 있는 경우 "var" 사용
+# 추신: inlay hint (인라인 타입 힌트) 를 지원하는 IDE 를 사용한다면 이 옵션을 "true" 로 설정하세요
+csharp_style_var_when_type_is_apparent = true:silent
+
+# Use explicit type other cases
+# PS: Set this option "true"  if using IDE that support inlay hint (inline type hint)
+# 다른 상황에서는 명시적인 타입 사용하기
+# 추신: inlay hint (인라인 타입 힌트) 를 지원하는 IDE 를 사용한다면 이 옵션을 "true" 로 설정하세요
+csharp_style_var_elsewhere = true:slient
+
+# Use block bodies for constructor instead of expression bodies
+# 생성자에는 표현식 대신 블록 사용하기
+csharp_style_expression_bodied_constructors = false:warning
+
+# Use block bodies for methods instead of expression bodies
+# 메소드에는 표현식 대신 블록 사용하기
+csharp_style_expression_bodied_methods = false:warning
+
+# Use block bodies for operators instead of expression bodies
+# 연산자 오버로딩에는 표현식 대신 블록 사용하기
+csharp_style_expression_bodied_operators = false:warning
+
+# Use block bodies for properties instead of expression bodies
+# 프로퍼티에는 표현식 대신 블록 사용하기
+csharp_style_expression_bodied_properties = false:warning
+
+# Use block bodies for indexers instead of expression bodies
+# 인덱서에는 표현식 대신 블록 사용하기
+csharp_style_expression_bodied_indexers = false:warning
+
+# Use block bodies for accessors instead of expression bodies
+# 접근자에는 표현식 대신 블록 사용하기
+csharp_style_expression_bodied_accessors = false:warning
+
+# Use expression bodies for lambdas only when they will be a single line
+# 람다가 한줄일 경우에만 표현식 사용
+csharp_style_expression_bodied_lambdas = when_on_single_line:warning
+
+# Use block bodies for local functions instead of expression bodies
+# 지역 함수에는 표현식 대신 블록 사용
+csharp_style_expression_bodied_local_functions = false:warning
+
+# Use pattern-matching instead of "as" expressions with null checks to determine if something is of a particular type
+# 대상이 특정 타입인지 확인하기 위해, null 검사를 같이 사용하는 "as" 표현식 대신 패턴 매칭 사용
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+
+# Use pattern-matching instead of "is" operator with type casts
+# 타입기변환이 수반되는 "is" 표현식 대신 패턴 패칭 사용하기
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+
+# Use "switch" expression
+# "switch" 표현식 사용
+csharp_style_prefer_switch_expression = true:suggestion
+
+# Do not use pattern matching constructs
+# 패턴 매칭 구조 사용하지 않기
+csharp_style_prefer_pattern_matching = false
+
+# Use "not" pattern when possible
+# 가능한 경우에 "not" 패턴 사용
+csharp_style_prefer_not_pattern = true:suggestion
+
+# Use curly braces even for one line of code
+# 코드가 한 줄인 경우에도 중괄호 사용
+csharp_prefer_braces = true:warning
+
+# Use simple "using" statements
+# 단순 "using" 문 사용
+csharp_prefer_simple_using_statement = true:suggestion
+
+# Specify "using" directive to be placed outside the namespace
+# "using" 지시문이 네임스페이스 밖에 위치하도록 작성하기
+csharp_using_directive_placement = outside_namespace:warning
+
+# Assign a unused expression to "discard"
+# 사용하지 않는 표현식을 "discard" 에 할당
+csharp_style_unused_value_expression_statement_preference = discard_variable:silent
+
+# Use "discard" when assigning a value that's not used
+# 사용하지 않는 값을 할당할 때, "discard" 를 사용
+csharp_style_unused_value_assignment_preference = discard_variable:silent
+
+# Remove unnecessary suppresion operator
+# 불필요한 비표시 연산자 제거
+dotnet_diagnostic.IDE0080.severity = warning
+
+# Remove unnecessary "discard" pattern
+# 불필요한 "discard" 패턴 제거
+dotnet_diagnostic.IDE0110.serverity = suggestion
+
+# Namespace declarations should be file scoped.
+# 네임스페이스 선언을 파일 영역 단위로 설정
+csharp_style_namespace_declarations = file_scoped:suggestion
