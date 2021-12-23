@@ -382,7 +382,7 @@ dotnet_code_quality.CA1050.api_surface = all
 # CA1050: 접근 가능한 객체 필드를 선언하지 마세요
 dotnet_code_quality.CA1051.api_surface = all
 dotnet_code_quality.CA1051.exclude_structs = true
-dotnet_diagnostic.CA1051.severity = waring
+dotnet_diagnostic.CA1051.severity = warning
 
 # CA1052: Static holder types should be Static or NotInheritable
 # CA1052: Static 홀더 타입은 Static 혹은 NotInheritable 여야 합니다
