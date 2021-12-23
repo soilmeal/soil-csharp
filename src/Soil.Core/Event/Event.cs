@@ -15,8 +15,8 @@ public abstract class Event<TEnum>
         }
     }
 
-    protected Event(TEnum type_)
+    protected Event(TEnum type)
     {
-        _type = type_;
+        _type = type;
     }
 }

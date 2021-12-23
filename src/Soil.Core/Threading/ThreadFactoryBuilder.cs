@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 
 namespace Soil.Core.Threading;
@@ -15,20 +16,24 @@ public class ThreadFactoryBuilder
 
     public ThreadFactoryBuilder() { }
 
-    public ThreadFactoryBuilder SetPriority(ThreadPriority priority_)
+    public ThreadFactoryBuilder SetPriority(ThreadPriority priority)
     {
-        _priority = priority_;
+        _priority = priority;
         return this;
     }
 
-    public IThreadFactory Build(string name_)
+    public IThreadFactory Build(string name)
     {
-        return new NameThreadFactory(_priority, name_);
+        return !string.IsNullOrEmpty(name)
+            ? new NameThreadFactory(_priority, name)
+            : throw new ArgumentNullException(nameof(name));
     }
 
-    public IThreadFactory Build(ThreadNameFormatter formatter_)
+    public IThreadFactory Build(ThreadNameFormatter formatter)
     {
-        return new FormattedNameThreadFactory(_priority, formatter_);
+        return formatter != null
+            ? new FormattedNameThreadFactory(_priority, formatter)
+            : throw new ArgumentNullException(nameof(formatter));
     }
 
     public static IThreadFactory BuildDefault()

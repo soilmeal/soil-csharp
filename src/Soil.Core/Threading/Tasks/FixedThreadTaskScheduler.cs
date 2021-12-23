@@ -28,25 +28,28 @@ public class FixedThreadTaskScheduler : TaskScheduler
 
     private readonly BlockingCollection<Task> _tasks;
 
-    private readonly List<Thread> _threads;
+    private readonly Thread[] _threads;
 
-    internal FixedThreadTaskScheduler(int maximumConcurrencyLevel_, IThreadFactory threadFactory_) :
-        this(maximumConcurrencyLevel_, threadFactory_, new())
+    internal FixedThreadTaskScheduler(int maximumConcurrencyLevel, IThreadFactory threadFactory) :
+        this(maximumConcurrencyLevel, threadFactory, new())
     { }
 
-    internal FixedThreadTaskScheduler(int maximumConcurrencyLevel_, IThreadFactory threadFactory_, BlockingCollection<Task> tasks_)
+    internal FixedThreadTaskScheduler(int maximumConcurrencyLevel, IThreadFactory threadFactory, BlockingCollection<Task> tasks)
     {
         // call and discard to create unique id of scheduler
         _ = Id;
 
-        _maximumConcurrencyLevel = maximumConcurrencyLevel_;
-        _threadFactory = threadFactory_;
-        _tasks = tasks_;
+        _maximumConcurrencyLevel = maximumConcurrencyLevel;
+        _threadFactory = threadFactory;
+        _tasks = tasks;
 
-        _threads = Enumerable.Range(0, maximumConcurrencyLevel_)
-            .Select(i => ThreadFactory.Create(Execute))
-            .ToList();
-        _threads.ForEach(thread => thread.Start());
+        _threads = Enumerable.Range(0, maximumConcurrencyLevel)
+            .Select(_ => ThreadFactory.Create(Execute))
+            .ToArray();
+        foreach (var thread in _threads)
+        {
+            thread.Start();
+        }
     }
 
     protected override IEnumerable<Task>? GetScheduledTasks()

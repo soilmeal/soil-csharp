@@ -3,11 +3,11 @@ using System.Threading;
 
 namespace Soil.Core.Threading.Atomic;
 
-internal class AtomicDoubleIn32bitSys : IAtomicNumeric<double>
+internal class AtomicDoubleIn32BitSys : IAtomicNumeric<double>
 {
     private long _value;
 
-    internal AtomicDoubleIn32bitSys(double initialValue)
+    internal AtomicDoubleIn32BitSys(double initialValue)
     {
         _value = BitConverter.DoubleToInt64Bits(initialValue);
     }

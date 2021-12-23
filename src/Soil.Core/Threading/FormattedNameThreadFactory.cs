@@ -31,25 +31,26 @@ internal class FormattedNameThreadFactory : IThreadFactory
         }
     }
 
-    private FormattedNameThreadFactory() : this(ThreadPriority.Normal, ThreadNameFormatter.Default)
+    private FormattedNameThreadFactory()
+        : this(ThreadPriority.Normal, ThreadNameFormatter.Default)
     { }
 
-    internal FormattedNameThreadFactory(ThreadPriority priority_, ThreadNameFormatter formatter_)
+    internal FormattedNameThreadFactory(ThreadPriority priority, ThreadNameFormatter formatter)
     {
-        _priority = priority_;
-        _formatter = formatter_;
+        _priority = priority;
+        _formatter = formatter;
     }
 
-    public Thread Create(ThreadStart start_)
+    public Thread Create(ThreadStart start)
     {
-        var thread = new Thread(start_);
+        var thread = new Thread(start);
         thread.Name = _formatter.Format(thread.ManagedThreadId);
         return thread;
     }
 
-    public Thread Create(ParameterizedThreadStart start_)
+    public Thread Create(ParameterizedThreadStart start)
     {
-        var thread = new Thread(start_);
+        var thread = new Thread(start);
         thread.Name = _formatter.Format(thread.ManagedThreadId);
         return thread;
     }

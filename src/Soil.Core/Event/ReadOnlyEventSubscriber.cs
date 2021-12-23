@@ -14,8 +14,8 @@ internal class ReadOnlyEventSubscriber<TEnum> : IEventSubscriber<TEnum>
         get { return _handlers; }
     }
 
-    internal ReadOnlyEventSubscriber(Dictionary<TEnum, EventHandler<Event<TEnum>>> handlers_)
+    internal ReadOnlyEventSubscriber(Dictionary<TEnum, EventHandler<Event<TEnum>>> handlers)
     {
-        _handlers = new ReadOnlyDictionary<TEnum, EventHandler<Event<TEnum>>>(handlers_);
+        _handlers = new ReadOnlyDictionary<TEnum, EventHandler<Event<TEnum>>>(handlers);
     }
 }

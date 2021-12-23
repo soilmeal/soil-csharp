@@ -7,9 +7,9 @@ public class ImmediateEventDispatcher<TEnum> : IEventDispatcher<TEnum>
 {
     private readonly IEventHandlerSet<TEnum> _handlerSet;
 
-    private ImmediateEventDispatcher(IEventHandlerSet<TEnum> handlerSets_)
+    private ImmediateEventDispatcher(IEventHandlerSet<TEnum> handlerSets)
     {
-        _handlerSet = handlerSets_;
+        _handlerSet = handlerSets;
     }
 
     public void Subscribe(IEventSubscriber<TEnum>? subscriber)

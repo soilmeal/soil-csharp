@@ -16,44 +16,27 @@ public interface IEventSubscriber
     {
         private readonly Dictionary<TEnum, EventHandler<Event<TEnum>>> _handlers = new();
 
-        public Builder<TEnum> AddHandler<TEvent>(TEnum type, EventHandler<TEvent>? handler)
+        public Builder<TEnum> AddHandler<TEvent>(TEnum type, EventHandler<TEvent> handler)
             where TEvent : Event<TEnum>
         {
             if (handler == null)
             {
-                return this;
+                throw new ArgumentNullException(nameof(handler));
             }
 
-            _handlers.TryAdd(type, (evt) =>
-            {
-                if (evt is not TEvent tEvt)
-                {
-                    return;
-                }
-
-
-                handler(tEvt);
-            });
+            _handlers.TryAdd(type, WrapHandler<TEvent>(handler.Invoke));
 
             return this;
         }
 
-        public Builder<TEnum> AddHandler<TEvent>(TEnum type, Action<TEvent>? handler)
+        public Builder<TEnum> AddHandler<TEvent>(TEnum type, Action<TEvent> handler)
         {
             if (handler == null)
             {
-                return this;
+                throw new ArgumentNullException(nameof(handler));
             }
 
-            _handlers.TryAdd(type, (evt) =>
-            {
-                if (evt is not TEvent tEvt)
-                {
-                    return;
-                }
-
-                handler.Invoke(tEvt);
-            });
+            _handlers.TryAdd(type, WrapHandler(handler));
 
             return this;
         }
@@ -65,6 +48,19 @@ public interface IEventSubscriber
 #else
             return new ReadOnlyEventSubscriber<TEnum>(_handlers);
 #endif
+        }
+
+        private static EventHandler<Event<TEnum>> WrapHandler<TEvent>(Action<TEvent> handler)
+        {
+            return (evt) =>
+            {
+                if (evt is not TEvent tEvt)
+                {
+                    return;
+                }
+
+                handler(tEvt);
+            };
         }
     }
 }

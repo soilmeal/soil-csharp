@@ -13,7 +13,7 @@ public struct AtomicDouble : IAtomicNumeric<double>
         bool is64Bit = Environment.Is64BitOperatingSystem && Environment.Is64BitProcess;
         _impl = is64Bit
             ? new AtomicDoubleIn64BitSys(initialValue)
-            : new AtomicDoubleIn32bitSys(initialValue);
+            : new AtomicDoubleIn32BitSys(initialValue);
     }
 
     public double Read()

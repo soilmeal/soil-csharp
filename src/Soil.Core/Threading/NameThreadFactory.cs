@@ -31,26 +31,27 @@ internal class NameThreadFactory : IThreadFactory
         }
     }
 
-    private NameThreadFactory() : this(ThreadPriority.Normal, "thread") { }
+    private NameThreadFactory()
+        : this(ThreadPriority.Normal, "thread") { }
 
-    internal NameThreadFactory(ThreadPriority priority_, string name_)
+    internal NameThreadFactory(ThreadPriority priority, string name)
     {
-        _priority = priority_;
-        _name = name_;
+        _priority = priority;
+        _name = name;
     }
 
-    public Thread Create(ThreadStart start_)
+    public Thread Create(ThreadStart start)
     {
-        var thread = new Thread(start_)
+        var thread = new Thread(start)
         {
             Name = _name
         };
         return thread;
     }
 
-    public Thread Create(ParameterizedThreadStart start_)
+    public Thread Create(ParameterizedThreadStart start)
     {
-        var thread = new Thread(start_)
+        var thread = new Thread(start)
         {
             Name = _name
         };

@@ -6,7 +6,7 @@ public interface IThreadFactory
 {
     ThreadPriority Priority { get; }
 
-    Thread Create(ThreadStart start_);
+    Thread Create(ThreadStart start);
 
-    Thread Create(ParameterizedThreadStart start_);
+    Thread Create(ParameterizedThreadStart start);
 }

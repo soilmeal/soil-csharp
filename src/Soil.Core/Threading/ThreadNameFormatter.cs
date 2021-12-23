@@ -20,11 +20,14 @@ public class ThreadNameFormatter
         }
     }
 
-    private ThreadNameFormatter() : this("thread-{0}") { }
-
-    public ThreadNameFormatter(string threadNameFormat_)
+    private ThreadNameFormatter()
+        : this("thread-{0}")
     {
-        _threadNameFormat = threadNameFormat_;
+    }
+
+    public ThreadNameFormatter(string threadNameFormat)
+    {
+        _threadNameFormat = threadNameFormat;
     }
 
     public string Format(int threadId)

@@ -16,9 +16,9 @@ internal class ImmutableEventSubscriber<TEnum> : IEventSubscriber<TEnum>
         get { return _handlers; }
     }
 
-    internal ImmutableEventSubscriber(Dictionary<TEnum, EventHandler<Event<TEnum>>> handlers_)
+    internal ImmutableEventSubscriber(Dictionary<TEnum, EventHandler<Event<TEnum>>> handlers)
     {
-        _handlers = ImmutableDictionary.CreateRange(handlers_);
+        _handlers = ImmutableDictionary.CreateRange(handlers);
     }
 }
 
