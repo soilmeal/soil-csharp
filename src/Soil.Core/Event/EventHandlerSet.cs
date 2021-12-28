@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Soil.Core.Event;
 
-internal class EventHandlerSet<TEnum> : IEventDispatcher<TEnum>
+internal class EventHandlerSet<TEnum> : IEventHandlerSet<TEnum>
     where TEnum : struct, Enum
 {
     private readonly Dictionary<TEnum, List<EventHandler<Event<TEnum>>>> _handlersOfType = new();

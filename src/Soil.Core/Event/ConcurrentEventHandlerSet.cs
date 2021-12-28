@@ -5,9 +5,10 @@ using System.Collections.Immutable;
 
 namespace Soil.Core.Event;
 
-internal class ConcurrentEventHandlerSet<TEnum> : IEventDispatcher<TEnum>
+internal class ConcurrentEventHandlerSet<TEnum> : IEventHandlerSet<TEnum>
     where TEnum : struct, Enum
 {
+
     private readonly ConcurrentDictionary<TEnum, ImmutableList<EventHandler<Event<TEnum>>>> _handlersOfType = new();
 
     internal ConcurrentEventHandlerSet() { }
