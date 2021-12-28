@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Soil.Core.Threading.Tasks;
 
-public class FixedThreadTaskScheduler : TaskScheduler
+public class FixedThreadTaskScheduler : AbstractTaskScheduler
 {
     private readonly int _maximumConcurrencyLevel;
     public override int MaximumConcurrencyLevel
@@ -44,7 +45,7 @@ public class FixedThreadTaskScheduler : TaskScheduler
         _tasks = tasks;
 
         _threads = Enumerable.Range(0, maximumConcurrencyLevel)
-            .Select(_ => ThreadFactory.Create(Execute))
+            .Select(_ => ThreadFactory.Create(Execute, true))
             .ToArray();
         foreach (var thread in _threads)
         {
@@ -78,5 +79,22 @@ public class FixedThreadTaskScheduler : TaskScheduler
         {
             TryExecuteTask(task);
         }
+    }
+
+    public override void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (!disposing)
+        {
+            return;
+        }
+
+        _tasks.CompleteAdding();
+        _tasks.Dispose();
     }
 }

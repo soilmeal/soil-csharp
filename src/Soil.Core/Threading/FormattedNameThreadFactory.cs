@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 
 namespace Soil.Core.Threading;
@@ -43,14 +44,30 @@ internal class FormattedNameThreadFactory : IThreadFactory
 
     public Thread Create(ThreadStart start)
     {
-        var thread = new Thread(start);
+        return Create(start, false);
+    }
+
+    public Thread Create(ThreadStart start, bool backgound)
+    {
+        var thread = new Thread(start)
+        {
+            IsBackground = backgound,
+        };
         thread.Name = _formatter.Format(thread.ManagedThreadId);
         return thread;
     }
 
     public Thread Create(ParameterizedThreadStart start)
     {
-        var thread = new Thread(start);
+        return Create(start, false);
+    }
+
+    public Thread Create(ParameterizedThreadStart start, bool backgound)
+    {
+        var thread = new Thread(start)
+        {
+            IsBackground = backgound,
+        };
         thread.Name = _formatter.Format(thread.ManagedThreadId);
         return thread;
     }
