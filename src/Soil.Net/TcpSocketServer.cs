@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using Soil.Core.Threading;
 using Soil.Core.Threading.Atomic;
@@ -10,7 +9,7 @@ using Soil.Net.Threading.Tasks;
 
 namespace Soil.Net;
 
-public class TcpServer : IServer<TcpChannel>
+public class TcpSocketServer : IServer<SocketChannel>
 {
     private readonly IPEndPoint _localEndPoint;
 
@@ -26,7 +25,7 @@ public class TcpServer : IServer<TcpChannel>
 
     // private readonly int _workerThreadCount;
 
-    private readonly IChannelGroup<TcpChannel> _channelGroup;
+    private readonly IChannelGroup<SocketChannel> _channelGroup;
 
     private readonly AtomicInt32 _status;
     public ServerStatus Status
@@ -37,9 +36,9 @@ public class TcpServer : IServer<TcpChannel>
         }
     }
 
-    private readonly TcpListener _listener;
+    private readonly Socket _socket;
 
-    private TcpServer(
+    private TcpSocketServer(
         IPEndPoint localEndPoint,
         int backlog,
         int masterThreadCount,
@@ -57,17 +56,17 @@ public class TcpServer : IServer<TcpChannel>
 
         // _workerThreadCount = workerThreadCount;
         _channelGroup = (workerThreadCount <= 1)
-            ? new SingleThreadChannelGroup<TcpChannel>(workerThreadFactory)
-            : new MultiThreadChannelGroup<TcpChannel>(workerThreadCount, workerThreadFactory);
+            ? new SingleThreadChannelGroup<SocketChannel>(workerThreadFactory)
+            : new MultiThreadChannelGroup<SocketChannel>(workerThreadCount, workerThreadFactory);
 
 
         _status = new AtomicInt32((int)ServerStatus.None);
-        _listener = new TcpListener(_localEndPoint);
+        _socket = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
     }
 
     public bool Pending()
     {
-        return _listener.Pending();
+        return _socket.Poll(0, SelectMode.SelectRead);
     }
 
     public void Start()
@@ -77,10 +76,28 @@ public class TcpServer : IServer<TcpChannel>
             (int)ServerStatus.None);
         if (oldStatus != ServerStatus.None)
         {
+            // _logger.Debug("Server is already running - oldState: {0}", oldStatus);
             return;
         }
 
-        _listener.Start(_backlog);
+        try
+        {
+            _listener.Start();
+        }
+        catch (Exception ex)
+        {
+            _status.Exchange((int)ServerStatus.None);
+
+            // _logger.Debug(ex, "_listener.Start(int) failed");
+
+            throw;
+        }
+
+        // _logger.Debug("Start Success!");
+
+        _status.CompareExchange(
+            (int)ServerStatus.Listening,
+            (int)ServerStatus.Starting);
 
         _schedulerGroup.StartNewOnNextScheduler(
             Accept,
@@ -90,18 +107,26 @@ public class TcpServer : IServer<TcpChannel>
 
     public void Stop()
     {
-        _listener.Stop();
+        // _logger.Debug("Stopping...");
+
+        _status.CompareExchange((int)ServerStatus.Closing, (int)ServerStatus.Listening);
+
+        try
+        {
+            _listener.Stop();
+        }
+        catch (Exception ex)
+        {
+            // _logger.Debug(ex, "_listener.Stop() failed");
+            throw;
+        }
+
+        // _logger.Debug("Stop Success!");
     }
 
     private void Accept()
     {
-        ServerStatus oldStatus = (ServerStatus)_status.CompareExchange(
-            (int)ServerStatus.Listening,
-            (int)ServerStatus.Starting);
-        if (oldStatus != ServerStatus.Starting)
-        {
-            return;
-        }
+        // _logger.Debug("Start accepting...");
 
         while (Status == ServerStatus.Listening)
         {
@@ -110,22 +135,24 @@ public class TcpServer : IServer<TcpChannel>
             {
                 client = _listener.AcceptTcpClient();
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
-                // TODO: NEED LOG
+                // _logger.Debug(ex, "_listener is not started or closed");
                 break;
             }
-            catch (SocketException)
+            catch (SocketException ex)
             {
-                // TODO: NEED LOG
+                // _logger.Debug(ex, "_listener.AcceptTcpClient() failed");
                 continue;
             }
 
-            _channelGroup.Register(new TcpChannel(client));
+            _channelGroup.Register(new SocketChannel(client));
         }
+
+        // _logger.Debug("End accepting...");
     }
 
-    public class Builder : IServerBuilder<Builder, TcpServer, TcpChannel>
+    public class Builder : IServerBuilder<Builder, TcpSocketServer, SocketChannel>
     {
         private IPAddress _ipAddress = IPAddress.None;
         public IPAddress IPAddress
@@ -283,7 +310,7 @@ public class TcpServer : IServer<TcpChannel>
             return this;
         }
 
-        public TcpServer Build()
+        public TcpSocketServer Build()
         {
 
             IPAddress ipAddress = _ipAddress != IPAddress.None
@@ -301,7 +328,7 @@ public class TcpServer : IServer<TcpChannel>
             IThreadFactory masterThreadFactory = GetOrDefaultMasterThreadFactory();
             IThreadFactory workerThreadFactory = GetOrDefaultWorkerThreadFactory();
 
-            return new TcpServer(
+            return new TcpSocketServer(
                 ipEndPoint,
                 backlog,
                 masterThreadCount,
@@ -324,7 +351,7 @@ public class TcpServer : IServer<TcpChannel>
 
         private IThreadFactory GetOrDefaultMasterThreadFactory()
         {
-            return _masterThreadFactory ?? ThreadFactoryBuilder.BuildDefault();
+            return _masterThreadFactory ?? IThreadFactory.Builder.BuildDefault();
         }
 
         private int GetOrDefaultWorkerThreadCount()
@@ -335,7 +362,7 @@ public class TcpServer : IServer<TcpChannel>
 
         private IThreadFactory GetOrDefaultWorkerThreadFactory()
         {
-            return _workerThreadFactory ?? ThreadFactoryBuilder.BuildDefault();
+            return _workerThreadFactory ?? IThreadFactory.Builder.BuildDefault();
         }
     }
 }
