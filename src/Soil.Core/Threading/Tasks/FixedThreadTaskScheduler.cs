@@ -4,11 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Soil.Core.Threading.Tasks;
 
 public class FixedThreadTaskScheduler : AbstractTaskScheduler
 {
+    private readonly ILogger<FixedThreadTaskScheduler> _logger;
+
     private readonly int _maximumConcurrencyLevel;
     public override int MaximumConcurrencyLevel
     {
@@ -31,14 +34,23 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
 
     private readonly Thread[] _threads;
 
-    internal FixedThreadTaskScheduler(int maximumConcurrencyLevel, IThreadFactory threadFactory) :
-        this(maximumConcurrencyLevel, threadFactory, new())
+    internal FixedThreadTaskScheduler(
+        int maximumConcurrencyLevel,
+        IThreadFactory threadFactory,
+        ILoggerFactory loggerFactory) :
+        this(maximumConcurrencyLevel, threadFactory, new(), loggerFactory)
     { }
 
-    internal FixedThreadTaskScheduler(int maximumConcurrencyLevel, IThreadFactory threadFactory, BlockingCollection<Task> tasks)
+    internal FixedThreadTaskScheduler(
+        int maximumConcurrencyLevel,
+        IThreadFactory threadFactory,
+        BlockingCollection<Task> tasks,
+        ILoggerFactory loggerFactory)
     {
         // call and discard to create unique id of scheduler
         _ = Id;
+
+        _logger = loggerFactory.CreateLogger<FixedThreadTaskScheduler>();
 
         _maximumConcurrencyLevel = maximumConcurrencyLevel;
         _threadFactory = threadFactory;
@@ -51,6 +63,11 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
         {
             thread.Start();
         }
+    }
+
+    ~FixedThreadTaskScheduler()
+    {
+        Dispose(false);
     }
 
     protected override IEnumerable<Task>? GetScheduledTasks()

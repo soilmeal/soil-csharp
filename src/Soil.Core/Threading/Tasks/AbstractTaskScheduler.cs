@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Soil.Core.Threading.Tasks;
 
@@ -14,7 +15,16 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
 
     public class Builder
     {
+        private readonly ILogger<Builder> _logger;
+
+        private readonly ILoggerFactory _loggerFactory;
+
         private int _maximumConcurrencyLevel = 0;
+
+        private IThreadFactory? _threadFactory;
+
+        private BlockingCollection<Task>? _queue;
+
         public int MaximumConcurrencyLevel
         {
             get
@@ -23,7 +33,6 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
             }
         }
 
-        private IThreadFactory? _threadFactory;
         public IThreadFactory? ThreadFactory
         {
             get
@@ -32,7 +41,6 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
             }
         }
 
-        private BlockingCollection<Task>? _queue;
         public BlockingCollection<Task>? Queue
         {
             get
@@ -41,7 +49,11 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
             }
         }
 
-        public Builder() { }
+        public Builder(ILoggerFactory loggerFactory)
+        {
+            _logger = loggerFactory.CreateLogger<Builder>();
+            _loggerFactory = loggerFactory;
+        }
 
         public Builder SetMaximumConcurrencyLevel(int maximumConcurrencyLevel)
         {
@@ -72,31 +84,34 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
 
         public AbstractTaskScheduler Build()
         {
-            BlockingCollection<Task> queue = GetOrDefaultQueue();
-            IThreadFactory threadFactory = GetOrDefaultThreadFactory();
-            int maximumConcurrencyLevel = GetOrDefaultMaximumConcurrencyLevel();
-            return new FixedThreadTaskScheduler(maximumConcurrencyLevel, threadFactory, queue);
+            return new FixedThreadTaskScheduler(
+                GetOrDefaultMaximumConcurrencyLevel(),
+                GetOrDefaultThreadFactory(),
+                GetOrDefaultQueue(),
+                _loggerFactory);
         }
 
-        public static AbstractTaskScheduler BuildSingleThread()
+        public static AbstractTaskScheduler BuildSingleThread(ILoggerFactory loggerFactory)
         {
-            var builder = new Builder();
+            var builder = new Builder(loggerFactory);
             return builder.SetMaximumConcurrencyLevel(1)
-                .SetThreadFactory(IThreadFactory.Builder.BuildDefault())
+                .SetThreadFactory(IThreadFactory.Builder.BuildDefault(loggerFactory))
                 .SetQueue(new BlockingCollection<Task>(new ConcurrentQueue<Task>()))
                 .Build();
         }
 
-        public static AbstractTaskScheduler BuildWorkStealing(int maximumConcurrencyLevel)
+        public static AbstractTaskScheduler BuildWorkStealing(
+            int maximumConcurrencyLevel,
+            ILoggerFactory loggerFactory)
         {
             if (maximumConcurrencyLevel == 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(maximumConcurrencyLevel), maximumConcurrencyLevel, "maximumConcurrencyLevel of BuildWorkStealing() is must not be 1");
             }
 
-            var builder = new Builder();
+            var builder = new Builder(loggerFactory);
             return builder.SetMaximumConcurrencyLevel(maximumConcurrencyLevel)
-                .SetThreadFactory(IThreadFactory.Builder.BuildDefault())
+                .SetThreadFactory(IThreadFactory.Builder.BuildDefault(loggerFactory))
                 .SetQueue(new BlockingCollection<Task>(new ConcurrentBag<Task>()))
                 .Build();
         }
@@ -109,7 +124,7 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
 
         private IThreadFactory GetOrDefaultThreadFactory()
         {
-            return _threadFactory ?? IThreadFactory.Builder.BuildDefault();
+            return _threadFactory ?? IThreadFactory.Builder.BuildDefault(_loggerFactory);
         }
 
         private BlockingCollection<Task> GetOrDefaultQueue()

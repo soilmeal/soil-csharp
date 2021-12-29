@@ -1,17 +1,13 @@
+using Microsoft.Extensions.Logging;
+
 namespace Soil.Core.Threading;
 
 public class ThreadNameFormatter
 {
-    private static readonly ThreadNameFormatter _default = new();
-    public static ThreadNameFormatter Default
-    {
-        get
-        {
-            return _default;
-        }
-    }
+    private readonly ILogger<ThreadNameFormatter> _logger;
 
     private readonly string _threadNameFormat = string.Empty;
+
     public string ThreadNameFormat
     {
         get
@@ -20,13 +16,15 @@ public class ThreadNameFormatter
         }
     }
 
-    private ThreadNameFormatter()
-        : this("thread-{0}")
+    public ThreadNameFormatter(ILoggerFactory loggerFactory)
+        : this("thread-{0}", loggerFactory)
     {
     }
 
-    public ThreadNameFormatter(string threadNameFormat)
+    public ThreadNameFormatter(string threadNameFormat, ILoggerFactory loggerFactory)
     {
+        _logger = loggerFactory.CreateLogger<ThreadNameFormatter>();
+
         _threadNameFormat = threadNameFormat;
     }
 

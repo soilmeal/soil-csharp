@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Soil.Core.Threading;
 
@@ -17,7 +18,13 @@ public interface IThreadFactory
 
     public class Builder
     {
+        private readonly ILogger<Builder> _logger;
+
+        private readonly ILoggerFactory _loggerFactory;
+
         private ThreadPriority _priority = ThreadPriority.Normal;
+
+
         public ThreadPriority Priority
         {
             get
@@ -26,7 +33,11 @@ public interface IThreadFactory
             }
         }
 
-        public Builder() { }
+        public Builder(ILoggerFactory loggerFactory)
+        {
+            _logger = loggerFactory.CreateLogger<Builder>();
+            _loggerFactory = loggerFactory;
+        }
 
         public Builder SetPriority(ThreadPriority priority)
         {
@@ -37,22 +48,22 @@ public interface IThreadFactory
         public IThreadFactory Build(string name)
         {
             return !string.IsNullOrEmpty(name)
-                ? new NameThreadFactory(_priority, name)
+                ? new NameThreadFactory(_priority, name, _loggerFactory)
                 : throw new ArgumentNullException(nameof(name));
         }
 
         public IThreadFactory Build(ThreadNameFormatter formatter)
         {
             return formatter != null
-                ? new FormattedNameThreadFactory(_priority, formatter)
+                ? new FormattedNameThreadFactory(_priority, formatter, _loggerFactory)
                 : throw new ArgumentNullException(nameof(formatter));
         }
 
-        public static IThreadFactory BuildDefault()
+        public static IThreadFactory BuildDefault(ILoggerFactory loggerFactory)
         {
-            var builder = new Builder();
+            var builder = new Builder(loggerFactory);
             return builder.SetPriority(ThreadPriority.Normal)
-                .Build(ThreadNameFormatter.Default);
+                .Build(new ThreadNameFormatter(loggerFactory));
         }
     }
 }

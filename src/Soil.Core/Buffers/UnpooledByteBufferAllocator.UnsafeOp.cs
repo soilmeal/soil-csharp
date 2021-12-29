@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace Soil.Core.Buffers;
 
@@ -6,7 +7,9 @@ public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
 {
     public class UnsafeOp : IByteBufferAllocator.IUnsafeOp<ByteBuffer>
     {
+        private readonly ILogger<UnsafeOp> _logger;
         private readonly UnpooledByteBufferAllocator _parent;
+
         public UnpooledByteBufferAllocator Parent
         {
             get
@@ -15,8 +18,10 @@ public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
             }
         }
 
-        public UnsafeOp(UnpooledByteBufferAllocator parent)
+        public UnsafeOp(UnpooledByteBufferAllocator parent, ILoggerFactory loggerFactory)
         {
+            _logger = loggerFactory.CreateLogger<UnsafeOp>();
+
             _parent = parent;
         }
 

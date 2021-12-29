@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace Soil.Core.Buffers;
 
@@ -6,6 +7,8 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
 {
     public class UnsafeOp
     {
+        private readonly ILogger<UnsafeOp> _logger;
+
         private readonly ByteBuffer _parent;
         private readonly ByteBufferAllocator _allocator;
 
@@ -25,8 +28,13 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
             }
         }
 
-        public UnsafeOp(ByteBuffer parent, ByteBufferAllocator allocator)
+        public UnsafeOp(
+            ByteBuffer parent,
+            ByteBufferAllocator allocator,
+            ILoggerFactory loggerFactory)
         {
+            _logger = loggerFactory.CreateLogger<UnsafeOp>();
+
             _parent = parent;
             _allocator = allocator;
         }

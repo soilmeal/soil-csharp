@@ -1,16 +1,12 @@
+using Microsoft.Extensions.Logging;
+
 namespace Soil.Core.Buffers;
 
 public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
 {
-    private static readonly UnpooledByteBufferAllocator _instance = new();
+    private readonly ILogger<UnpooledByteBufferAllocator> _logger;
 
-    public static UnpooledByteBufferAllocator Instance
-    {
-        get
-        {
-            return _instance;
-        }
-    }
+    private readonly ILoggerFactory _loggerFactory;
 
     private readonly UnsafeOp _unsafe;
 
@@ -22,14 +18,17 @@ public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
         }
     }
 
-    private UnpooledByteBufferAllocator()
+    public UnpooledByteBufferAllocator(ILoggerFactory loggerFactory)
     {
-        _unsafe = new UnsafeOp(this);
+        _logger = loggerFactory.CreateLogger<UnpooledByteBufferAllocator>();
+        _loggerFactory = loggerFactory;
+
+        _unsafe = new UnsafeOp(this, loggerFactory);
     }
 
     public override ByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian)
     {
-        var byteBuffer = new UnpooledByteBuffer(this);
+        var byteBuffer = new UnpooledByteBuffer(this, _loggerFactory);
         byteBuffer.Unsafe.Allocate(capacityHint, endianless);
 
         return byteBuffer;

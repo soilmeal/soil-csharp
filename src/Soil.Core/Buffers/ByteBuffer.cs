@@ -1,11 +1,14 @@
 using System;
 using System.Buffers.Binary;
+using Microsoft.Extensions.Logging;
 
 namespace Soil.Core.Buffers;
 
 public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
 {
     private static readonly byte[] _defaultBuffer = Array.Empty<byte>();
+
+    private readonly ILogger<ByteBuffer> _logger;
 
     private byte[] _buffer;
 
@@ -61,7 +64,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
     {
         get
         {
-            return ByteBufferAllocator.MaxCapacity;
+            return MaxCapacity;
         }
     }
 
@@ -97,11 +100,13 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         }
     }
 
-    protected ByteBuffer(ByteBufferAllocator allocator)
+    protected ByteBuffer(ByteBufferAllocator allocator, ILoggerFactory loggerFactory)
     {
+        _logger = loggerFactory.CreateLogger<ByteBuffer>();
+
         _buffer = _defaultBuffer;
         _endianless = Endianless.None;
-        _unsafe = new(this, allocator);
+        _unsafe = new(this, allocator, loggerFactory);
 
         _readIdx = 0;
         _writtenIdx = 0;

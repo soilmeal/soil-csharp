@@ -1,20 +1,17 @@
 using System;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Soil.Core.Threading;
 
 internal class NameThreadFactory : IThreadFactory
 {
-    private static readonly NameThreadFactory _default = new();
-    public static NameThreadFactory Default
-    {
-        get
-        {
-            return _default;
-        }
-    }
+    private readonly ILogger<NameThreadFactory> _logger;
 
     private readonly ThreadPriority _priority;
+
+    private readonly string _name;
+
     public ThreadPriority Priority
     {
         get
@@ -25,7 +22,6 @@ internal class NameThreadFactory : IThreadFactory
 
     }
 
-    private readonly string _name;
     public string Name
     {
         get
@@ -34,11 +30,13 @@ internal class NameThreadFactory : IThreadFactory
         }
     }
 
-    private NameThreadFactory()
-        : this(ThreadPriority.Normal, "thread") { }
+    internal NameThreadFactory(ILoggerFactory loggerFactory)
+        : this(ThreadPriority.Normal, "thread", loggerFactory) { }
 
-    internal NameThreadFactory(ThreadPriority priority, string name)
+    internal NameThreadFactory(ThreadPriority priority, string name, ILoggerFactory loggerFactory)
     {
+        _logger = loggerFactory.CreateLogger<NameThreadFactory>();
+
         _priority = priority;
         _name = name;
     }
