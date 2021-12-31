@@ -1,0 +1,927 @@
+using System;
+using Soil.Buffers.Helper;
+
+namespace Soil.Buffers;
+
+public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
+{
+    private static readonly byte[] _defaultBuffer = Array.Empty<byte>();
+
+    private byte[] _buffer;
+
+    private int _readIdx = 0;
+
+    private int _writtenIdx = 0;
+
+    private Endianless _endianless;
+
+    private readonly UnsafeOp _unsafe;
+
+    public int ReadIndex
+    {
+        get
+        {
+            return _readIdx;
+        }
+    }
+
+    public int ReadableBytes
+    {
+        get
+        {
+            return _writtenIdx - _readIdx;
+        }
+    }
+
+    public int WrittenIndex
+    {
+        get
+        {
+            return _writtenIdx;
+        }
+    }
+
+    public int WritableBytes
+    {
+        get
+        {
+            return Capacity - _writtenIdx;
+        }
+    }
+
+    public int Capacity
+    {
+        get
+        {
+            return _buffer.Length;
+        }
+    }
+
+    public int MaxCapacity
+    {
+        get
+        {
+            return MaxCapacity;
+        }
+    }
+
+    public Endianless Endianless
+    {
+        get
+        {
+            return _endianless;
+        }
+    }
+
+    public UnsafeOp Unsafe
+    {
+        get
+        {
+            return _unsafe;
+        }
+    }
+
+    public IByteBufferAllocator<ByteBuffer> Allocator
+    {
+        get
+        {
+            return _unsafe.Allocator;
+        }
+    }
+
+    public bool IsInitialized
+    {
+        get
+        {
+            return ReferenceEquals(_buffer, _defaultBuffer) || _endianless == Endianless.None;
+        }
+    }
+
+    protected ByteBuffer(ByteBufferAllocator allocator)
+    {
+        _buffer = _defaultBuffer;
+        _endianless = Endianless.None;
+        _unsafe = new(this, allocator);
+
+        _readIdx = 0;
+        _writtenIdx = 0;
+    }
+
+    public bool Readable()
+    {
+        return ReadableBytes > 0;
+    }
+
+    public bool Readable(int length)
+    {
+        return ReadableBytes >= length;
+    }
+
+    public bool Writable()
+    {
+        return WritableBytes > 0;
+    }
+
+    public bool Writable(int length)
+    {
+        return WritableBytes >= length;
+    }
+
+    public void EnsureCapacity(int length)
+    {
+        if (Writable(length))
+        {
+            return;
+        }
+
+        _unsafe.Reallocate(length);
+    }
+
+    public byte ReadByte()
+    {
+        int length = sizeof(byte);
+        return Readable(length)
+            ? _buffer[_readIdx++]
+            : throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+    }
+
+    public sbyte ReadSByte()
+    {
+        int length = sizeof(sbyte);
+        return Readable(length)
+            ? (sbyte)_buffer[_readIdx++]
+            : throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+    }
+
+    public Memory<byte> ReadBytes(int length)
+    {
+        if (length <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(length), length, null);
+        }
+
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        byte[] bytes = new byte[length];
+
+        ReadBytes(ref bytes, length);
+
+        return bytes.AsMemory();
+    }
+
+    public int ReadBytes(ref byte[] dest)
+    {
+        return dest != null
+            ? ReadBytes(ref dest, 0, Math.Min(dest.Length, ReadableBytes))
+            : throw new ArgumentNullException(nameof(dest));
+    }
+
+    public int ReadBytes(ref byte[] dest, int length)
+    {
+        return ReadBytes(ref dest, 0, length);
+    }
+
+    public int ReadBytes(ref byte[] dest, int destIndex, int length)
+    {
+        if (dest == null)
+        {
+            throw new ArgumentNullException(nameof(dest));
+        }
+
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        ReadOnlySpan<byte> srcSlice = AsReadableSlice(length);
+        srcSlice.CopyTo(dest);
+
+        _readIdx += length;
+
+        return length;
+    }
+
+    public int ReadBytes(ref Span<byte> dest)
+    {
+        return ReadBytes(ref dest, Math.Min(dest.Length, ReadableBytes));
+    }
+
+    public int ReadBytes(ref Span<byte> dest, int length)
+    {
+        return ReadBytes(ref dest, 0, length);
+    }
+
+    public int ReadBytes(ref Span<byte> dest, int destIndex, int length)
+    {
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        ReadOnlySpan<byte> srcSlice = AsReadableSlice(length);
+        srcSlice.CopyTo(dest[destIndex..]);
+
+        _readIdx += length;
+
+        return length;
+    }
+
+    public int ReadBytes(ref Memory<byte> dest)
+    {
+        return ReadBytes(ref dest, Math.Min(dest.Length, ReadableBytes));
+    }
+
+    public int ReadBytes(ref Memory<byte> dest, int length)
+    {
+        return ReadBytes(ref dest, 0, length);
+    }
+
+    public int ReadBytes(ref Memory<byte> dest, int destIndex, int length)
+    {
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        ReadOnlySpan<byte> srcSlice = AsReadableSlice(length);
+        srcSlice.CopyTo(dest.Span[destIndex..]);
+
+        _readIdx += length;
+
+        return length;
+    }
+
+    public int ReadBytes<TAnotherDerived>(ref TAnotherDerived dest)
+        where TAnotherDerived : struct, IByteBuffer<TAnotherDerived>
+    {
+        return ReadBytes(ref dest, dest.WritableBytes);
+    }
+
+    public int ReadBytes<TAnotherDerived>(ref TAnotherDerived dest, int length)
+        where TAnotherDerived : struct, IByteBuffer<TAnotherDerived>
+    {
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        int result = dest.WriteBytes(_buffer, _readIdx, length);
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public char ReadChar()
+    {
+        return (char)ReadUInt16();
+    }
+
+    public char ReadChar(Endianless endianless)
+    {
+        return (char)ReadUInt16(endianless);
+    }
+
+    public short ReadInt16()
+    {
+        return ReadInt16(_endianless);
+    }
+
+    public short ReadInt16(Endianless endianless)
+    {
+        int length = sizeof(short);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        short result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt16BigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt16LittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public ushort ReadUInt16()
+    {
+        return ReadUInt16(_endianless);
+    }
+
+    public ushort ReadUInt16(Endianless endianless)
+    {
+        int length = sizeof(ushort);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        ushort result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt16BigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt16LittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public int ReadInt32()
+    {
+        return ReadInt32(_endianless);
+    }
+
+    public int ReadInt32(Endianless endianless)
+    {
+        int length = sizeof(int);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        int result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt32BigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt32LittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public uint ReadUInt32()
+    {
+        return ReadUInt32(_endianless);
+    }
+
+    public uint ReadUInt32(Endianless endianless)
+    {
+        int length = sizeof(uint);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        uint result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt32BigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt32LittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public long ReadInt64()
+    {
+        return ReadInt64(_endianless);
+    }
+
+    public long ReadInt64(Endianless endianless)
+    {
+        int length = sizeof(long);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        long result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt64BigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt64LittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public ulong ReadUInt64()
+    {
+        return ReadUInt64(_endianless);
+    }
+
+    public ulong ReadUInt64(Endianless endianless)
+    {
+        int length = sizeof(ulong);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        ulong result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt64BigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt64LittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public float ReadSingle()
+    {
+        return ReadSingle(_endianless);
+    }
+
+    public float ReadSingle(Endianless endianless)
+    {
+        int length = sizeof(float);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        float result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadSingleBigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadSingleLittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public double ReadDouble()
+    {
+        return ReadDouble(_endianless);
+    }
+
+    public double ReadDouble(Endianless endianless)
+    {
+        int length = sizeof(double);
+        if (!Readable(length))
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
+        }
+
+        double result = endianless switch
+        {
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadDoubleBigEndian(AsReadableSlice(length)),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadDoubleLittleEndian(AsReadableSlice(length)),
+            _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
+        };
+
+        _readIdx += length;
+
+        return result;
+    }
+
+    public ByteBuffer WriteByte(byte value)
+    {
+        int length = sizeof(byte);
+        EnsureCapacity(length);
+
+        Span<byte> slice = AsWritableSlice();
+        slice[0] = value;
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteSByte(sbyte value)
+    {
+        int length = sizeof(sbyte);
+        EnsureCapacity(length);
+
+        Span<byte> slice = AsWritableSlice();
+        slice[0] = (byte)value;
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public int WriteBytes(byte[] src)
+    {
+        return WriteBytes(src, WritableBytes);
+    }
+
+    public int WriteBytes(byte[] src, int length)
+    {
+        return WriteBytes(src, 0, length);
+    }
+
+    public int WriteBytes(byte[] src, int srcIndex, int length)
+    {
+        if (src == null)
+        {
+            throw new ArgumentNullException(nameof(src));
+        }
+
+        EnsureCapacity(length);
+
+        ReadOnlySpan<byte> srcSlice = BufferUtilities.SpanSlice(src, srcIndex, length);
+        Span<byte> bufSlice = AsWritableSlice();
+        srcSlice.CopyTo(bufSlice);
+
+        _writtenIdx += length;
+
+        return length;
+    }
+
+    public int WriteBytes(ReadOnlySpan<byte> src)
+    {
+        return WriteBytes(src, WritableBytes);
+    }
+
+    public int WriteBytes(ReadOnlySpan<byte> src, int length)
+    {
+        return WriteBytes(src, 0, length);
+    }
+
+    public int WriteBytes(ReadOnlySpan<byte> src, int srcIndex, int length)
+    {
+        EnsureCapacity(length);
+
+        ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(src, srcIndex, length);
+        Span<byte> bufSlice = AsWritableSlice();
+        srcSlice.CopyTo(bufSlice);
+
+        _writtenIdx += length;
+
+        return length;
+    }
+
+    public int WriteBytes(ReadOnlyMemory<byte> src)
+    {
+        return WriteBytes(src, WritableBytes);
+    }
+
+    public int WriteBytes(ReadOnlyMemory<byte> src, int length)
+    {
+        return WriteBytes(src, 0, length);
+    }
+
+    public int WriteBytes(ReadOnlyMemory<byte> src, int srcIndex, int length)
+    {
+        EnsureCapacity(length);
+
+        ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(src, srcIndex, length);
+        Span<byte> bufSlice = AsWritableSlice();
+        srcSlice.CopyTo(bufSlice);
+
+        _writtenIdx += length;
+
+        return length;
+    }
+
+    public int WriteBytes<TAnotherDerived>(ref TAnotherDerived src)
+        where TAnotherDerived : struct, IReadOnlyByteBuffer<TAnotherDerived>
+    {
+        return WriteBytes(ref src, src.ReadableBytes);
+    }
+
+    public int WriteBytes<TAnotherDerived>(ref TAnotherDerived src, int length)
+        where TAnotherDerived : struct, IReadOnlyByteBuffer<TAnotherDerived>
+    {
+        EnsureCapacity(length);
+
+        int result = src.ReadBytes(ref _buffer, _writtenIdx, length);
+
+        _writtenIdx += length;
+
+        return result;
+    }
+
+    public ByteBuffer WriteChar(char value)
+    {
+        return WriteChar(value, _endianless);
+    }
+
+    public ByteBuffer WriteChar(char value, Endianless endianless)
+    {
+        return WriteUInt16(value, endianless);
+    }
+
+    public ByteBuffer WriteInt16(short value)
+    {
+        return WriteInt16(value, _endianless);
+    }
+
+    public ByteBuffer WriteInt16(short value, Endianless endianless)
+    {
+        int length = sizeof(short);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteInt16BigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteInt16LittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteUInt16(ushort value)
+    {
+        return WriteUInt16(value, _endianless);
+    }
+
+    public ByteBuffer WriteUInt16(ushort value, Endianless endianless)
+    {
+        int length = sizeof(ushort);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteUInt16BigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteUInt16LittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteInt32(int value)
+    {
+        return WriteInt32(value, _endianless);
+    }
+
+    public ByteBuffer WriteInt32(int value, Endianless endianless)
+    {
+        int length = sizeof(int);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteInt32BigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteInt32LittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteUInt32(uint value)
+    {
+        return WriteUInt32(value, _endianless);
+    }
+
+    public ByteBuffer WriteUInt32(uint value, Endianless endianless)
+    {
+        int length = sizeof(uint);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteUInt32BigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteUInt32LittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteInt64(long value)
+    {
+        return WriteInt64(value, _endianless);
+    }
+
+    public ByteBuffer WriteInt64(long value, Endianless endianless)
+    {
+        int length = sizeof(long);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteInt64BigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteInt64LittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteUInt64(ulong value)
+    {
+        return WriteUInt64(value, _endianless);
+    }
+
+    public ByteBuffer WriteUInt64(ulong value, Endianless endianless)
+    {
+        int length = sizeof(ulong);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteUInt64BigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteUInt64LittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteSingle(float value)
+    {
+        return WriteSingle(value, _endianless);
+    }
+
+    public ByteBuffer WriteSingle(float value, Endianless endianless)
+    {
+        int length = sizeof(float);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteSingleBigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteSingleLittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public ByteBuffer WriteDouble(double value)
+    {
+        return WriteDouble(value, _endianless);
+    }
+
+    public ByteBuffer WriteDouble(double value, Endianless endianless)
+    {
+        int length = sizeof(double);
+        EnsureCapacity(length);
+
+        switch (endianless)
+        {
+            case Endianless.BigEndian:
+                {
+                    BinaryPrimitivesHelper.WriteDoubleBigEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            case Endianless.LittleEndian:
+                {
+                    BinaryPrimitivesHelper.WriteDoubleLittleEndian(AsWritableSlice(length), value);
+                    break;
+                }
+            default:
+                {
+                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+                }
+        }
+
+        _writtenIdx += length;
+
+        return this;
+    }
+
+    public void Clear()
+    {
+        if (!IsInitialized)
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.Uninitialized);
+        }
+
+        _readIdx = 0;
+        _writtenIdx = 0;
+
+        Array.Fill<byte>(_buffer, 0);
+    }
+
+    public void Release()
+    {
+        Allocator.Unsafe.Release(this);
+    }
+
+    public void ResetReadIndex()
+    {
+        _readIdx = 0;
+    }
+
+    public void ResetWrittenIndex()
+    {
+        _writtenIdx = 0;
+    }
+
+    private ReadOnlySpan<byte> AsReadableSlice()
+    {
+        return AsReadableSlice(ReadableBytes);
+    }
+
+    private ReadOnlySpan<byte> AsReadableSlice(int length)
+    {
+        return BufferUtilities.SpanSlice(_buffer, _readIdx, length);
+    }
+
+    private Span<byte> AsWritableSlice()
+    {
+        return AsWritableSlice(WritableBytes);
+    }
+
+    private Span<byte> AsWritableSlice(int length)
+    {
+        return BufferUtilities.SpanSlice(_buffer, _writtenIdx, length);
+    }
+}

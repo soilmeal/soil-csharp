@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "dependencies": {
+    ".NETCoreApp,Version=v3.1": {
+      "soil.collections": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      }
+    },
+    ".NETStandard,Version=v2.1": {
+      "soil.collections": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      }
+    },
+    ".NETCoreApp,Version=v5.0": {
+      "soil.collections": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      }
+    },
+    "net6.0": {
+      "soil.collections": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      }
+    }
+  }
+}
