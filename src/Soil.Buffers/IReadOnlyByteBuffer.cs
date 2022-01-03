@@ -97,4 +97,6 @@ public interface IReadOnlyByteBuffer
     int GetBytes(int index, Memory<byte> dest, int destIndex, int length);
 
     void ResetReadIndex();
+
+    void Release();
 }

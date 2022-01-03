@@ -14,6 +14,8 @@ public interface IByteBuffer : IReadOnlyByteBuffer
 
     IByteBufferAllocator Allocator { get; }
 
+    bool IsInitialized { get; }
+
     void EnsureCapacity(int length);
 
     bool Writable();
