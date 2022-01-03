@@ -3,7 +3,7 @@ using Soil.Buffers.Helper;
 
 namespace Soil.Buffers;
 
-public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
+public abstract partial class ByteBuffer : IByteBuffer
 {
     private static readonly byte[] _defaultBuffer = Array.Empty<byte>();
 
@@ -81,7 +81,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         }
     }
 
-    public IByteBufferAllocator<ByteBuffer> Allocator
+    public IByteBufferAllocator Allocator
     {
         get
         {
@@ -134,14 +134,14 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
             return;
         }
 
-        _unsafe.Reallocate(length);
+        _unsafe.Reallocate();
     }
 
     public byte ReadByte()
     {
         int length = sizeof(byte);
         return Readable(length)
-            ? _buffer[_readIdx++]
+            ? AsReadableSlice()[_readIdx++]
             : throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
     }
 
@@ -149,7 +149,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
     {
         int length = sizeof(sbyte);
         return Readable(length)
-            ? (sbyte)_buffer[_readIdx++]
+            ? (sbyte)AsReadableSlice()[_readIdx++]
             : throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
     }
 
@@ -166,25 +166,24 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         }
 
         byte[] bytes = new byte[length];
-
-        ReadBytes(ref bytes, length);
+        ReadBytes(bytes, length);
 
         return bytes.AsMemory();
     }
 
-    public int ReadBytes(ref byte[] dest)
+    public int ReadBytes(byte[] dest)
     {
         return dest != null
-            ? ReadBytes(ref dest, 0, Math.Min(dest.Length, ReadableBytes))
+            ? ReadBytes(dest, 0, Math.Min(dest.Length, ReadableBytes))
             : throw new ArgumentNullException(nameof(dest));
     }
 
-    public int ReadBytes(ref byte[] dest, int length)
+    public int ReadBytes(byte[] dest, int length)
     {
-        return ReadBytes(ref dest, 0, length);
+        return ReadBytes(dest, 0, length);
     }
 
-    public int ReadBytes(ref byte[] dest, int destIndex, int length)
+    public int ReadBytes(byte[] dest, int destIndex, int length)
     {
         if (dest == null)
         {
@@ -197,24 +196,24 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         }
 
         ReadOnlySpan<byte> srcSlice = AsReadableSlice(length);
-        srcSlice.CopyTo(dest);
+        srcSlice.CopyTo(BufferUtilities.SpanSlice(dest, destIndex, length));
 
         _readIdx += length;
 
         return length;
     }
 
-    public int ReadBytes(ref Span<byte> dest)
+    public int ReadBytes(Span<byte> dest)
     {
-        return ReadBytes(ref dest, Math.Min(dest.Length, ReadableBytes));
+        return ReadBytes(dest, Math.Min(dest.Length, ReadableBytes));
     }
 
-    public int ReadBytes(ref Span<byte> dest, int length)
+    public int ReadBytes(Span<byte> dest, int length)
     {
-        return ReadBytes(ref dest, 0, length);
+        return ReadBytes(dest, 0, length);
     }
 
-    public int ReadBytes(ref Span<byte> dest, int destIndex, int length)
+    public int ReadBytes(Span<byte> dest, int destIndex, int length)
     {
         if (!Readable(length))
         {
@@ -222,24 +221,24 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         }
 
         ReadOnlySpan<byte> srcSlice = AsReadableSlice(length);
-        srcSlice.CopyTo(dest[destIndex..]);
+        srcSlice.CopyTo(BufferUtilities.SpanSlice(dest, destIndex, length));
 
         _readIdx += length;
 
         return length;
     }
 
-    public int ReadBytes(ref Memory<byte> dest)
+    public int ReadBytes(Memory<byte> dest)
     {
-        return ReadBytes(ref dest, Math.Min(dest.Length, ReadableBytes));
+        return ReadBytes(dest, Math.Min(dest.Length, ReadableBytes));
     }
 
-    public int ReadBytes(ref Memory<byte> dest, int length)
+    public int ReadBytes(Memory<byte> dest, int length)
     {
-        return ReadBytes(ref dest, 0, length);
+        return ReadBytes(dest, 0, length);
     }
 
-    public int ReadBytes(ref Memory<byte> dest, int destIndex, int length)
+    public int ReadBytes(Memory<byte> dest, int destIndex, int length)
     {
         if (!Readable(length))
         {
@@ -247,22 +246,25 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         }
 
         ReadOnlySpan<byte> srcSlice = AsReadableSlice(length);
-        srcSlice.CopyTo(dest.Span[destIndex..]);
+        srcSlice.CopyTo(BufferUtilities.SpanSlice(dest, destIndex, length));
 
         _readIdx += length;
 
         return length;
     }
 
-    public int ReadBytes<TAnotherDerived>(ref TAnotherDerived dest)
-        where TAnotherDerived : struct, IByteBuffer<TAnotherDerived>
+    public int ReadBytes(IByteBuffer dest)
     {
-        return ReadBytes(ref dest, dest.WritableBytes);
+        return ReadBytes(dest, dest.WritableBytes);
     }
 
-    public int ReadBytes<TAnotherDerived>(ref TAnotherDerived dest, int length)
-        where TAnotherDerived : struct, IByteBuffer<TAnotherDerived>
+    public int ReadBytes(IByteBuffer dest, int length)
     {
+        if (dest == null)
+        {
+            throw new ArgumentNullException(nameof(dest));
+        }
+
         if (!Readable(length))
         {
             throw new InvalidBufferOperationException(InvalidBufferOperationException.ReadIndexExceed, _readIdx, _writtenIdx, length);
@@ -485,7 +487,81 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return result;
     }
 
-    public ByteBuffer WriteByte(byte value)
+    public int GetBytes(int index, byte[] dest)
+    {
+        return GetBytes(index, dest, Math.Min(Capacity - index, dest.Length));
+    }
+
+    public int GetBytes(int index, byte[] dest, int length)
+    {
+        return GetBytes(index, dest, 0, length);
+    }
+
+    public int GetBytes(int index, byte[] dest, int destIndex, int length)
+    {
+        if (dest == null)
+        {
+            throw new ArgumentNullException(nameof(dest));
+        }
+
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = AsReadableSlice(index, length);
+        srcSlice.CopyTo(BufferUtilities.SpanSlice(dest, destIndex, length));
+
+        return length;
+    }
+
+    public int GetBytes(int index, Span<byte> dest)
+    {
+        return GetBytes(index, dest, Math.Min(Capacity - index, dest.Length));
+    }
+
+    public int GetBytes(int index, Span<byte> dest, int length)
+    {
+        return GetBytes(index, dest, 0, length);
+    }
+
+    public int GetBytes(int index, Span<byte> dest, int destIndex, int length)
+    {
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = AsReadableSlice(index, length);
+        srcSlice.CopyTo(BufferUtilities.SpanSlice(dest, destIndex, length));
+
+        return length;
+    }
+
+    public int GetBytes(int index, Memory<byte> dest)
+    {
+        return GetBytes(index, dest, Math.Min(Capacity - index, dest.Length));
+    }
+
+    public int GetBytes(int index, Memory<byte> dest, int length)
+    {
+        return GetBytes(index, dest, 0, length);
+    }
+
+    public int GetBytes(int index, Memory<byte> dest, int destIndex, int length)
+    {
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = AsReadableSlice(index, length);
+        srcSlice.CopyTo(BufferUtilities.SpanSlice(dest, destIndex, length));
+
+        return length;
+    }
+
+    public IByteBuffer WriteByte(byte value)
     {
         int length = sizeof(byte);
         EnsureCapacity(length);
@@ -498,7 +574,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteSByte(sbyte value)
+    public IByteBuffer WriteSByte(sbyte value)
     {
         int length = sizeof(sbyte);
         EnsureCapacity(length);
@@ -531,7 +607,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         EnsureCapacity(length);
 
         ReadOnlySpan<byte> srcSlice = BufferUtilities.SpanSlice(src, srcIndex, length);
-        Span<byte> bufSlice = AsWritableSlice();
+        Span<byte> bufSlice = AsWritableSlice(length);
         srcSlice.CopyTo(bufSlice);
 
         _writtenIdx += length;
@@ -554,7 +630,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         EnsureCapacity(length);
 
         ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(src, srcIndex, length);
-        Span<byte> bufSlice = AsWritableSlice();
+        Span<byte> bufSlice = AsWritableSlice(length);
         srcSlice.CopyTo(bufSlice);
 
         _writtenIdx += length;
@@ -577,7 +653,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         EnsureCapacity(length);
 
         ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(src, srcIndex, length);
-        Span<byte> bufSlice = AsWritableSlice();
+        Span<byte> bufSlice = AsWritableSlice(length);
         srcSlice.CopyTo(bufSlice);
 
         _writtenIdx += length;
@@ -585,40 +661,38 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return length;
     }
 
-    public int WriteBytes<TAnotherDerived>(ref TAnotherDerived src)
-        where TAnotherDerived : struct, IReadOnlyByteBuffer<TAnotherDerived>
+    public int WriteBytes(IByteBuffer src)
     {
-        return WriteBytes(ref src, src.ReadableBytes);
+        return WriteBytes(src, src.ReadableBytes);
     }
 
-    public int WriteBytes<TAnotherDerived>(ref TAnotherDerived src, int length)
-        where TAnotherDerived : struct, IReadOnlyByteBuffer<TAnotherDerived>
+    public int WriteBytes(IByteBuffer src, int length)
     {
         EnsureCapacity(length);
 
-        int result = src.ReadBytes(ref _buffer, _writtenIdx, length);
+        int result = src.ReadBytes(_buffer, _writtenIdx, length);
 
         _writtenIdx += length;
 
         return result;
     }
 
-    public ByteBuffer WriteChar(char value)
+    public IByteBuffer WriteChar(char value)
     {
         return WriteChar(value, _endianless);
     }
 
-    public ByteBuffer WriteChar(char value, Endianless endianless)
+    public IByteBuffer WriteChar(char value, Endianless endianless)
     {
         return WriteUInt16(value, endianless);
     }
 
-    public ByteBuffer WriteInt16(short value)
+    public IByteBuffer WriteInt16(short value)
     {
         return WriteInt16(value, _endianless);
     }
 
-    public ByteBuffer WriteInt16(short value, Endianless endianless)
+    public IByteBuffer WriteInt16(short value, Endianless endianless)
     {
         int length = sizeof(short);
         EnsureCapacity(length);
@@ -646,12 +720,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteUInt16(ushort value)
+    public IByteBuffer WriteUInt16(ushort value)
     {
         return WriteUInt16(value, _endianless);
     }
 
-    public ByteBuffer WriteUInt16(ushort value, Endianless endianless)
+    public IByteBuffer WriteUInt16(ushort value, Endianless endianless)
     {
         int length = sizeof(ushort);
         EnsureCapacity(length);
@@ -679,12 +753,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteInt32(int value)
+    public IByteBuffer WriteInt32(int value)
     {
         return WriteInt32(value, _endianless);
     }
 
-    public ByteBuffer WriteInt32(int value, Endianless endianless)
+    public IByteBuffer WriteInt32(int value, Endianless endianless)
     {
         int length = sizeof(int);
         EnsureCapacity(length);
@@ -712,12 +786,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteUInt32(uint value)
+    public IByteBuffer WriteUInt32(uint value)
     {
         return WriteUInt32(value, _endianless);
     }
 
-    public ByteBuffer WriteUInt32(uint value, Endianless endianless)
+    public IByteBuffer WriteUInt32(uint value, Endianless endianless)
     {
         int length = sizeof(uint);
         EnsureCapacity(length);
@@ -745,12 +819,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteInt64(long value)
+    public IByteBuffer WriteInt64(long value)
     {
         return WriteInt64(value, _endianless);
     }
 
-    public ByteBuffer WriteInt64(long value, Endianless endianless)
+    public IByteBuffer WriteInt64(long value, Endianless endianless)
     {
         int length = sizeof(long);
         EnsureCapacity(length);
@@ -778,12 +852,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteUInt64(ulong value)
+    public IByteBuffer WriteUInt64(ulong value)
     {
         return WriteUInt64(value, _endianless);
     }
 
-    public ByteBuffer WriteUInt64(ulong value, Endianless endianless)
+    public IByteBuffer WriteUInt64(ulong value, Endianless endianless)
     {
         int length = sizeof(ulong);
         EnsureCapacity(length);
@@ -811,12 +885,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteSingle(float value)
+    public IByteBuffer WriteSingle(float value)
     {
         return WriteSingle(value, _endianless);
     }
 
-    public ByteBuffer WriteSingle(float value, Endianless endianless)
+    public IByteBuffer WriteSingle(float value, Endianless endianless)
     {
         int length = sizeof(float);
         EnsureCapacity(length);
@@ -844,12 +918,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
-    public ByteBuffer WriteDouble(double value)
+    public IByteBuffer WriteDouble(double value)
     {
         return WriteDouble(value, _endianless);
     }
 
-    public ByteBuffer WriteDouble(double value, Endianless endianless)
+    public IByteBuffer WriteDouble(double value, Endianless endianless)
     {
         int length = sizeof(double);
         EnsureCapacity(length);
@@ -877,6 +951,83 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
         return this;
     }
 
+    public int SetBytes(int index, byte[] src)
+    {
+        return SetBytes(index, src, Math.Min(Capacity - index, src.Length));
+    }
+
+    public int SetBytes(int index, byte[] src, int length)
+    {
+        return SetBytes(index, src, 0, length);
+    }
+
+    public int SetBytes(int index, byte[] src, int srcIndex, int length)
+    {
+        if (src == null)
+        {
+            throw new ArgumentNullException(nameof(src));
+        }
+
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(src, srcIndex, length);
+        Span<byte> bufSlice = AsWritableSlice(index, length);
+        srcSlice.CopyTo(bufSlice);
+
+        return length;
+    }
+
+    public int SetBytes(int index, ReadOnlySpan<byte> src)
+    {
+        return SetBytes(index, src, Math.Min(Capacity - index, src.Length));
+    }
+
+    public int SetBytes(int index, ReadOnlySpan<byte> src, int length)
+    {
+        return SetBytes(index, src, 0, length);
+    }
+
+    public int SetBytes(int index, ReadOnlySpan<byte> src, int srcIndex, int length)
+    {
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(src, srcIndex, length);
+        Span<byte> bufSlice = AsWritableSlice(index, length);
+        srcSlice.CopyTo(bufSlice);
+
+        return length;
+    }
+
+    public int SetBytes(int index, ReadOnlyMemory<byte> src)
+    {
+        return SetBytes(index, src, Math.Min(Capacity - index, src.Length));
+    }
+
+    public int SetBytes(int index, ReadOnlyMemory<byte> src, int length)
+    {
+        return SetBytes(index, src, 0, length);
+    }
+
+    public int SetBytes(int index, ReadOnlyMemory<byte> src, int srcIndex, int length)
+    {
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(src, srcIndex, length);
+        Span<byte> bufSlice = AsWritableSlice(index, length);
+        srcSlice.CopyTo(bufSlice);
+
+        return length;
+    }
+
     public void Clear()
     {
         if (!IsInitialized)
@@ -892,7 +1043,18 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
 
     public void Release()
     {
-        Allocator.Unsafe.Release(this);
+        if (!IsInitialized)
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReleaseTwice);
+        }
+
+        Clear();
+
+        byte[] buffer = _buffer;
+        _buffer = _defaultBuffer;
+        _endianless = Endianless.None;
+
+        Allocator.Unsafe.Return(this, buffer);
     }
 
     public void ResetReadIndex()
@@ -912,7 +1074,12 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
 
     private ReadOnlySpan<byte> AsReadableSlice(int length)
     {
-        return BufferUtilities.SpanSlice(_buffer, _readIdx, length);
+        return AsReadableSlice(_readIdx, length);
+    }
+
+    private ReadOnlySpan<byte> AsReadableSlice(int readIdx, int length)
+    {
+        return BufferUtilities.SpanSlice(_buffer, readIdx, length);
     }
 
     private Span<byte> AsWritableSlice()
@@ -922,6 +1089,11 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
 
     private Span<byte> AsWritableSlice(int length)
     {
-        return BufferUtilities.SpanSlice(_buffer, _writtenIdx, length);
+        return AsWritableSlice(_writtenIdx, length);
+    }
+
+    private Span<byte> AsWritableSlice(int writtenIdx, int length)
+    {
+        return BufferUtilities.SpanSlice(_buffer, writtenIdx, length);
     }
 }

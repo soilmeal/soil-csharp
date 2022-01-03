@@ -1,22 +1,17 @@
 namespace Soil.Buffers;
 
-public interface IByteBufferAllocator<TByteBuffer>
-    where TByteBuffer : IByteBuffer<TByteBuffer>
-{
-    IByteBufferAllocator.IUnsafeOp<TByteBuffer> Unsafe { get; }
-
-    TByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian);
-}
-
 public interface IByteBufferAllocator
 {
-    public interface IUnsafeOp<TByteBuffer>
-        where TByteBuffer : IByteBuffer<TByteBuffer>
+    IUnsafeOp Unsafe { get; }
+
+    IByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian);
+
+    public interface IUnsafeOp
     {
         byte[] Allocate(int capacityHint);
 
-        byte[] Reallocate(byte[] oldBuffer, int capacityHint);
+        byte[] Reallocate(byte[] oldBuffer);
 
-        void Release(TByteBuffer buffer);
+        void Return(IByteBuffer byteBuffer, byte[] buffer);
     }
 }

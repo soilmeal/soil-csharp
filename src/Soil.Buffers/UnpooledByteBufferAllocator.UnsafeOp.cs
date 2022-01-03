@@ -1,8 +1,10 @@
+using System;
+
 namespace Soil.Buffers;
 
 public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
 {
-    public class UnsafeOp : IByteBufferAllocator.IUnsafeOp<ByteBuffer>
+    public class UnsafeOp : IByteBufferAllocator.IUnsafeOp
     {
         private readonly UnpooledByteBufferAllocator _parent;
 
@@ -27,16 +29,24 @@ public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
                 : throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
         }
 
-        public byte[] Reallocate(byte[] oldBuffer, int capacityHint)
+        public byte[] Reallocate(byte[] oldBuffer)
         {
-            return oldBuffer.Length < MaxCapacity
-                ? Allocate(capacityHint)
-                : throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
+            return oldBuffer != null
+                ? Allocate(oldBuffer.Length + 1)
+                : throw new ArgumentNullException(nameof(oldBuffer));
         }
 
-        public void Release(ByteBuffer buffer)
+        public void Return(IByteBuffer byteBuffer, byte[] buffer)
         {
-            _ = buffer.Unsafe.Release();
+            if (byteBuffer == null)
+            {
+                throw new ArgumentNullException(nameof(byteBuffer));
+            }
+
+            if (buffer == null)
+            {
+                throw new ArgumentNullException(nameof(buffer));
+            }
         }
     }
 }

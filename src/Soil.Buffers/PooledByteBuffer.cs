@@ -2,7 +2,7 @@ namespace Soil.Buffers;
 
 public class PooledByteBuffer : ByteBuffer
 {
-    public PooledByteBuffer(ByteBufferAllocator allocator)
+    public PooledByteBuffer(PooledByteBufferAllocator allocator)
         : base(allocator)
     {
     }

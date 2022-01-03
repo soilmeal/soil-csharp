@@ -1,8 +1,10 @@
+using System;
+
 namespace Soil.Buffers;
 
 public partial class PooledByteBufferAllocator : ByteBufferAllocator
 {
-    public class UnsafeOp : IByteBufferAllocator.IUnsafeOp<ByteBuffer>
+    public class UnsafeOp : IByteBufferAllocator.IUnsafeOp
     {
         private readonly PooledByteBufferAllocator _parent;
 
@@ -24,15 +26,29 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
             return _parent._bufferPool.Rent(capacityHint);
         }
 
-        public byte[] Reallocate(byte[] oldBuffer, int capacityHint)
+        public byte[] Reallocate(byte[] oldBuffer)
         {
-            _parent._bufferPool.Return(oldBuffer);
-            return Allocate(capacityHint);
+            byte[] newBuffer = Allocate(oldBuffer.Length + 1);
+            Array.Copy(oldBuffer, newBuffer, oldBuffer.Length);
+            Free(oldBuffer);
+            return newBuffer;
         }
 
-        public void Release(ByteBuffer buffer)
+        public void Return(IByteBuffer byteBuffer, byte[] buffer)
         {
-            _parent._bufferPool.Return(buffer.Unsafe.Release());
+            if (byteBuffer is not PooledByteBuffer pooledByteBuffer)
+            {
+                return;
+            }
+
+            _parent._byteBufferPool.Return(pooledByteBuffer);
+            Free(buffer);
+        }
+
+        private void Free(byte[] buffer)
+        {
+            Array.Fill<byte>(buffer, 0);
+            _parent._bufferPool.Return(buffer);
         }
     }
 }

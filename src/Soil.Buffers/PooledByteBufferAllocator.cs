@@ -15,7 +15,7 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
 
     private readonly UnsafeOp _unsafe;
 
-    public override IByteBufferAllocator.IUnsafeOp<ByteBuffer> Unsafe
+    public override IByteBufferAllocator.IUnsafeOp Unsafe
     {
         get
         {
@@ -39,9 +39,9 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
         _bufferPool = ArrayPool<byte>.Create(bufferArrayBucketSize, MaxCapacity);
     }
 
-    public override ByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian)
+    public override IByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian)
     {
-        PooledByteBuffer byteBuffer = _byteBufferPool.Get();
+        ByteBuffer byteBuffer = _byteBufferPool.Get();
         byteBuffer.Unsafe.Allocate(capacityHint, endianless);
 
         return byteBuffer;

@@ -2,8 +2,7 @@ using System;
 
 namespace Soil.Buffers;
 
-public interface IByteBuffer<TDerived> : IReadOnlyByteBuffer<TDerived>
-    where TDerived : IByteBuffer<TDerived>
+public interface IByteBuffer : IReadOnlyByteBuffer
 {
     int WrittenIndex { get; }
 
@@ -13,7 +12,7 @@ public interface IByteBuffer<TDerived> : IReadOnlyByteBuffer<TDerived>
 
     int MaxCapacity { get; }
 
-    IByteBufferAllocator<TDerived> Allocator { get; }
+    IByteBufferAllocator Allocator { get; }
 
     void EnsureCapacity(int length);
 
@@ -21,9 +20,9 @@ public interface IByteBuffer<TDerived> : IReadOnlyByteBuffer<TDerived>
 
     bool Writable(int length);
 
-    TDerived WriteByte(byte value);
+    IByteBuffer WriteByte(byte value);
 
-    TDerived WriteSByte(sbyte value);
+    IByteBuffer WriteSByte(sbyte value);
 
     int WriteBytes(byte[] src);
 
@@ -43,47 +42,63 @@ public interface IByteBuffer<TDerived> : IReadOnlyByteBuffer<TDerived>
 
     int WriteBytes(ReadOnlyMemory<byte> src, int srcIndex, int length);
 
-    int WriteBytes<TAnotherDerived>(ref TAnotherDerived src)
-        where TAnotherDerived : struct, IReadOnlyByteBuffer<TAnotherDerived>;
+    int WriteBytes(IByteBuffer src);
 
-    int WriteBytes<TAnotherDerived>(ref TAnotherDerived src, int length)
-        where TAnotherDerived : struct, IReadOnlyByteBuffer<TAnotherDerived>;
+    int WriteBytes(IByteBuffer src, int length);
 
-    TDerived WriteChar(char value);
+    IByteBuffer WriteChar(char value);
 
-    TDerived WriteChar(char value, Endianless endianless);
+    IByteBuffer WriteChar(char value, Endianless endianless);
 
-    TDerived WriteInt16(short value);
+    IByteBuffer WriteInt16(short value);
 
-    TDerived WriteInt16(short value, Endianless endianless);
+    IByteBuffer WriteInt16(short value, Endianless endianless);
 
-    TDerived WriteUInt16(ushort value);
+    IByteBuffer WriteUInt16(ushort value);
 
-    TDerived WriteUInt16(ushort value, Endianless endianless);
+    IByteBuffer WriteUInt16(ushort value, Endianless endianless);
 
-    TDerived WriteInt32(int value);
+    IByteBuffer WriteInt32(int value);
 
-    TDerived WriteInt32(int value, Endianless endianless);
+    IByteBuffer WriteInt32(int value, Endianless endianless);
 
-    TDerived WriteUInt32(uint value);
+    IByteBuffer WriteUInt32(uint value);
 
-    TDerived WriteUInt32(uint value, Endianless endianless);
+    IByteBuffer WriteUInt32(uint value, Endianless endianless);
 
-    TDerived WriteInt64(long value);
+    IByteBuffer WriteInt64(long value);
 
-    TDerived WriteInt64(long value, Endianless endianless);
+    IByteBuffer WriteInt64(long value, Endianless endianless);
 
-    TDerived WriteUInt64(ulong value);
+    IByteBuffer WriteUInt64(ulong value);
 
-    TDerived WriteUInt64(ulong value, Endianless endianless);
+    IByteBuffer WriteUInt64(ulong value, Endianless endianless);
 
-    TDerived WriteSingle(float value);
+    IByteBuffer WriteSingle(float value);
 
-    TDerived WriteSingle(float value, Endianless endianless);
+    IByteBuffer WriteSingle(float value, Endianless endianless);
 
-    TDerived WriteDouble(double value);
+    IByteBuffer WriteDouble(double value);
 
-    TDerived WriteDouble(double value, Endianless endianless);
+    IByteBuffer WriteDouble(double value, Endianless endianless);
+
+    int SetBytes(int index, byte[] src);
+
+    int SetBytes(int index, byte[] src, int length);
+
+    int SetBytes(int index, byte[] src, int srcIndex, int length);
+
+    int SetBytes(int index, ReadOnlySpan<byte> src);
+
+    int SetBytes(int index, ReadOnlySpan<byte> src, int length);
+
+    int SetBytes(int index, ReadOnlySpan<byte> src, int srcIndex, int length);
+
+    int SetBytes(int index, ReadOnlyMemory<byte> src);
+
+    int SetBytes(int index, ReadOnlyMemory<byte> src, int length);
+
+    int SetBytes(int index, ReadOnlyMemory<byte> src, int srcIndex, int length);
 
     void ResetWrittenIndex();
 

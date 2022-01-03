@@ -4,7 +4,7 @@ public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
 {
     private readonly UnsafeOp _unsafe;
 
-    public override IByteBufferAllocator.IUnsafeOp<ByteBuffer> Unsafe
+    public override IByteBufferAllocator.IUnsafeOp Unsafe
     {
         get
         {
@@ -17,7 +17,7 @@ public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
         _unsafe = new UnsafeOp(this);
     }
 
-    public override ByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian)
+    public override IByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian)
     {
         var byteBuffer = new UnpooledByteBuffer(this);
         byteBuffer.Unsafe.Allocate(capacityHint, endianless);

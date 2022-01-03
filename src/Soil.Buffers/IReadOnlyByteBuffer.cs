@@ -2,8 +2,7 @@ using System;
 
 namespace Soil.Buffers;
 
-public interface IReadOnlyByteBuffer<TDerived>
-    where TDerived : IReadOnlyByteBuffer<TDerived>
+public interface IReadOnlyByteBuffer
 {
     int ReadIndex { get; }
 
@@ -21,29 +20,27 @@ public interface IReadOnlyByteBuffer<TDerived>
 
     Memory<byte> ReadBytes(int length);
 
-    int ReadBytes(ref byte[] dest);
+    int ReadBytes(byte[] dest);
 
-    int ReadBytes(ref byte[] dest, int length);
+    int ReadBytes(byte[] dest, int length);
 
-    int ReadBytes(ref byte[] dest, int destIndex, int length);
+    int ReadBytes(byte[] dest, int destIndex, int length);
 
-    int ReadBytes(ref Span<byte> dest);
+    int ReadBytes(Span<byte> dest);
 
-    int ReadBytes(ref Span<byte> dest, int length);
+    int ReadBytes(Span<byte> dest, int length);
 
-    int ReadBytes(ref Span<byte> dest, int destIndex, int length);
+    int ReadBytes(Span<byte> dest, int destIndex, int length);
 
-    int ReadBytes(ref Memory<byte> dest);
+    int ReadBytes(Memory<byte> dest);
 
-    int ReadBytes(ref Memory<byte> dest, int length);
+    int ReadBytes(Memory<byte> dest, int length);
 
-    int ReadBytes(ref Memory<byte> dest, int destIndex, int length);
+    int ReadBytes(Memory<byte> dest, int destIndex, int length);
 
-    int ReadBytes<TAnotherDerived>(ref TAnotherDerived dest)
-        where TAnotherDerived : struct, IByteBuffer<TAnotherDerived>;
+    int ReadBytes(IByteBuffer dest);
 
-    int ReadBytes<TAnotherDerived>(ref TAnotherDerived dest, int length)
-        where TAnotherDerived : struct, IByteBuffer<TAnotherDerived>;
+    int ReadBytes(IByteBuffer dest, int length);
 
     char ReadChar();
 
@@ -80,6 +77,24 @@ public interface IReadOnlyByteBuffer<TDerived>
     double ReadDouble();
 
     double ReadDouble(Endianless endianless);
+
+    int GetBytes(int index, byte[] dest);
+
+    int GetBytes(int index, byte[] dest, int length);
+
+    int GetBytes(int index, byte[] dest, int destIndex, int length);
+
+    int GetBytes(int index, Span<byte> dest);
+
+    int GetBytes(int index, Span<byte> dest, int length);
+
+    int GetBytes(int index, Span<byte> dest, int destIndex, int length);
+
+    int GetBytes(int index, Memory<byte> dest);
+
+    int GetBytes(int index, Memory<byte> dest, int length);
+
+    int GetBytes(int index, Memory<byte> dest, int destIndex, int length);
 
     void ResetReadIndex();
 }

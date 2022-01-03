@@ -2,7 +2,7 @@ using System;
 
 namespace Soil.Buffers;
 
-public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
+public abstract partial class ByteBuffer : IByteBuffer
 {
     public class UnsafeOp
     {
@@ -18,7 +18,7 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
             }
         }
 
-        public IByteBufferAllocator<ByteBuffer> Allocator
+        public IByteBufferAllocator Allocator
         {
             get
             {
@@ -59,25 +59,9 @@ public abstract partial class ByteBuffer : IByteBuffer<ByteBuffer>
             _parent._endianless = endianless;
         }
 
-        public void Reallocate(int capacityHint)
+        public void Reallocate()
         {
-            _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer, capacityHint);
-        }
-
-        public byte[] Release()
-        {
-            if (!_parent.IsInitialized)
-            {
-                throw new InvalidBufferOperationException(InvalidBufferOperationException.ReleaseTwice);
-            }
-
-            _parent.Clear();
-
-            byte[] buffer = _parent._buffer;
-            _parent._buffer = _defaultBuffer;
-            _parent._endianless = Endianless.None;
-
-            return buffer;
+            _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer);
         }
 
         public Memory<byte> AsMemoryToSend()
