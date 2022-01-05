@@ -1,17 +1,72 @@
 {
   "version": 1,
   "dependencies": {
-    "net6.0": {
-      "Microsoft.Extensions.ObjectPool": {
-        "type": "Transitive",
-        "resolved": "6.0.1",
-        "contentHash": "ZyWqqp7d54J7ej5dVNm8YZ4DydyIlVZqTgmCZFkO7tmZRSWxuFYKZa6z+K2Zla9YCUSuWH5IH6rMeHel9sNiKA=="
-      },
-      "soil.core": {
+    ".NETCoreApp,Version=v3.1": {
+      "soil.buffers": {
         "type": "Project",
         "dependencies": {
-          "Microsoft.Extensions.ObjectPool": "6.0.0"
+          "Soil.ObjectPool": "1.0.0"
         }
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
+        "type": "Project"
+      }
+    },
+    ".NETStandard,Version=v2.1": {
+      "soil.buffers": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.ObjectPool": "1.0.0"
+        }
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
+        "type": "Project"
+      }
+    },
+    ".NETCoreApp,Version=v5.0": {
+      "soil.buffers": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.ObjectPool": "1.0.0"
+        }
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
+        "type": "Project"
+      }
+    },
+    "net6.0": {
+      "soil.buffers": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.ObjectPool": "1.0.0"
+        }
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
+        "type": "Project"
       }
     }
   }

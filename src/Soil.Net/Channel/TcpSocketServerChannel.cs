@@ -1,17 +1,44 @@
 using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Soil.Buffers;
+using Soil.Net.Channel.Configuration;
+using Soil.Net.Event;
+using Soil.ObjectPool;
+using Soil.Threading.Atomic;
 
 namespace Soil.Net.Channel;
 
-public class TcpSocketServerChannel : IServerChannel
+public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 {
+    private static readonly AtomicUInt64 _idGenerator = new();
+
+    private readonly ulong _id = _idGenerator.Increment();
+
+    private readonly AtomicInt32 _status = new((int)ChannelStatus.None);
+
+    private readonly Socket _socket;
+
+    private readonly IEventLoop _eventLoop;
+
+    private readonly ChannelHandlerContext _ctx;
+
+    private readonly ChannelConfiguration _configuration;
+
+    private readonly SocketChannelConfigurationSection _socketConfSection;
+
+    private readonly ChannelConfiguration _childConfiguration;
+
+    private readonly ConcurrentDictionary<ulong, IChannel> _children = new();
+
     public ulong Id
     {
         get
         {
-            throw new NotImplementedException();
+            return _id;
         }
     }
 
@@ -19,7 +46,7 @@ public class TcpSocketServerChannel : IServerChannel
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket.AddressFamily;
         }
     }
 
@@ -27,7 +54,7 @@ public class TcpSocketServerChannel : IServerChannel
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket.SocketType;
         }
     }
 
@@ -35,23 +62,23 @@ public class TcpSocketServerChannel : IServerChannel
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket.ProtocolType;
         }
     }
 
-    public EndPoint LocalEndPoint
+    public EndPoint? LocalEndPoint
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket.LocalEndPoint;
         }
     }
 
-    public EndPoint RemoteEndPoint
+    public EndPoint? RemoteEndPoint
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket.RemoteEndPoint;
         }
     }
 
@@ -59,7 +86,7 @@ public class TcpSocketServerChannel : IServerChannel
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket.IsBound;
         }
     }
 
@@ -67,7 +94,15 @@ public class TcpSocketServerChannel : IServerChannel
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket.Connected;
+        }
+    }
+
+    public ChannelStatus Status
+    {
+        get
+        {
+            return (ChannelStatus)_status.Read();
         }
     }
 
@@ -75,192 +110,554 @@ public class TcpSocketServerChannel : IServerChannel
     {
         get
         {
-            throw new NotImplementedException();
+            return _socket;
         }
     }
 
-    public void Accept()
+    public SocketShutdown ShutdownHow
     {
-        throw new NotImplementedException();
+        get
+        {
+            return _socketConfSection.ShutdownHow;
+        }
     }
 
-    public Task AcceptAsync()
+    public IByteBufferAllocator Allocator
     {
-        throw new NotImplementedException();
+        get
+        {
+            return _configuration.Allocator;
+        }
     }
 
-    public void Bind(EndPoint endPoint)
+    public IEventLoop EventLoop
     {
-        throw new NotImplementedException();
+        get
+        {
+            return _eventLoop;
+        }
+    }
+
+    public IChannelInitHandler InitHandler
+    {
+        get
+        {
+            return _configuration.InitHandler!;
+        }
+    }
+
+    public IChannelLifecycleHandler LifecycleHandler
+    {
+        get
+        {
+            return _configuration.LifecycleHandler;
+        }
+    }
+
+    public IChannelExceptionHandler ExceptionHandler
+    {
+        get
+        {
+            return _configuration.ExceptionHandler;
+        }
+    }
+
+    public IChannelPipeline Pipeline
+    {
+        get
+        {
+            throw new NotSupportedException();
+        }
+
+        set
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public ChannelConfiguration Configuration
+    {
+        get
+        {
+            return _configuration;
+        }
+    }
+
+    public ChannelConfiguration ChildConfiguration
+    {
+        get
+        {
+            return _childConfiguration;
+        }
+    }
+
+    public TcpSocketServerChannel(
+        AddressFamily addressFamily,
+        ChannelConfiguration configuration,
+        ChannelConfiguration childConfiguration)
+    {
+        _socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
+        _eventLoop = configuration.EventLoopGroup;
+
+        _configuration = configuration;
+        _socketConfSection = configuration.GetSection<SocketChannelConfigurationSection>();
+
+        _childConfiguration = childConfiguration;
+
+        _ctx = new ChannelHandlerContext(this);
+
+        _socketConfSection.ApplyAllSocketOption(_socket);
+    }
+
+    ~TcpSocketServerChannel()
+    {
+        Dispose(false);
+    }
+
+
+    public bool TryGetChild(ulong id, out IChannel? child)
+    {
+        return _children.TryGetValue(id, out child);
     }
 
     public Task BindAsync(EndPoint endPoint)
     {
-        throw new NotImplementedException();
+        if (!_eventLoop.IsInEventLoop)
+        {
+            return _eventLoop.StartNew(() => _socket.Bind(endPoint));
+        }
+
+        try
+        {
+            _socket.Bind(endPoint);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            return Task.FromException(ex);
+        }
     }
 
-    public void Close()
+    public Task StartAsync()
     {
-        throw new NotImplementedException();
+        return StartAsync(Constants.DefaultBacklog);
     }
 
-    public void Close(int timeout)
+    public Task StartAsync(int backlog)
     {
-        throw new NotImplementedException();
+        if (!_eventLoop.IsInEventLoop)
+        {
+            return _eventLoop.StartNew(() => Start(backlog));
+        }
+
+        try
+        {
+            Start(backlog);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            RunExceptionHandler(ex);
+
+            return Task.FromException(ex);
+        }
     }
 
-    public Task CloseAsync()
+    public Task StartAsync(EndPoint endPoint)
     {
-        throw new NotImplementedException();
+        return StartAsync(endPoint, Constants.DefaultBacklog);
     }
 
-    public Task CloseAsync(int timeout)
+    public Task StartAsync(EndPoint endPoint, int backlog)
     {
-        throw new NotImplementedException();
+        if (!_eventLoop.IsInEventLoop)
+        {
+            return _eventLoop.StartNew(() => Start(endPoint, backlog));
+        }
+
+        try
+        {
+            Start(endPoint, backlog);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            return Task.FromException(ex);
+        }
     }
 
-    public void Connect(EndPoint endPoint)
+    public Task StartAsync(IPAddress address, int port)
     {
-        throw new NotImplementedException();
+        return StartAsync(address, port, Constants.DefaultBacklog);
     }
 
-    public void Connect(IPAddress address, int port)
+    public Task StartAsync(IPAddress address, int port, int backlog)
     {
-        throw new NotImplementedException();
+        return StartAsync(new IPEndPoint(address, port), backlog);
     }
 
-    public void Connect(IPAddress[] address, int port)
+    public Task StartAsync(string host, int port)
     {
-        throw new NotImplementedException();
+        return StartAsync(host, port, Constants.DefaultBacklog);
     }
 
-    public void Connect(string host, int port)
+    public Task StartAsync(string host, int port, int backlog)
     {
-        throw new NotImplementedException();
+
+        IPAddress? address;
+        EndPoint endPoint = IPAddress.TryParse(host, out address)
+            ? new IPEndPoint(address, port)
+            : new DnsEndPoint(host, port);
+
+        return StartAsync(endPoint, backlog);
     }
 
-    public Task ConnectAsync(EndPoint endPoint)
+    public async void RequestAccept()
     {
-        throw new NotImplementedException();
+        if (Status != ChannelStatus.Running)
+        {
+            return;
+        }
+
+        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
+        try
+        {
+            Socket acceptedSocket = await args.AcceptAsync(_socket);
+
+            RunInitHandler(acceptedSocket);
+        }
+        catch (Exception ex)
+        {
+            RunExceptionHandler(ex);
+        }
+        finally
+        {
+            ReturnSocketChannelAsyncEventArgs(args);
+
+            TryRequestAccept();
+        }
     }
 
-    public Task ConnectAsync(IPAddress address, int port)
+    public void RequestRead(IByteBuffer? byteBuffer = null)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    public Task ConnectAsync(IPAddress[] address, int port)
+    public Task<int> WriteAsync(object message)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
-    public Task ConnectAsync(string host, int port)
+    public async Task CloseAsync()
     {
-        throw new NotImplementedException();
+        if (!TryChangeStatusToClosing())
+        {
+            return;
+        }
+
+        try
+        {
+            await RunCloseAsync()
+                   .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            RunExceptionHandler(ex);
+
+            throw;
+        }
+        finally
+        {
+            HandleClose();
+        }
     }
 
-    public void Flush()
+    public void Dispose()
     {
-        throw new NotImplementedException();
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 
-    public void Listen()
+    protected void Dispose(bool disposing)
     {
-        throw new NotImplementedException();
+        if (!disposing)
+        {
+            return;
+        }
+
+        ChangeStatusToNone();
+
+        _socket.Dispose();
     }
 
-    public void Listen(int backlog)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ChangeStatus(ChannelStatus status)
     {
-        throw new NotImplementedException();
+        _status.Exchange((int)status);
     }
 
-    public Task ListenAsync()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ChannelStatus TryChangeStatus(ChannelStatus status, ChannelStatus comparandStatus)
     {
-        throw new NotImplementedException();
+        return (ChannelStatus)_status.CompareExchange(
+            (int)status,
+            (int)comparandStatus);
     }
 
-    public Task ListenAsync(int backlog)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ChangeStatusToNone()
     {
-        throw new NotImplementedException();
+        ChangeStatus(ChannelStatus.None);
     }
 
-    public void Write(byte[] buffer)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ChangeStatusToRunning()
     {
-        throw new NotImplementedException();
+        ChangeStatus(ChannelStatus.Running);
     }
 
-    public void Write(byte[] buffer, int size)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool TryChangeStatusToStarting()
     {
-        throw new NotImplementedException();
+        ChannelStatus oldStatus = TryChangeStatus(ChannelStatus.Starting, ChannelStatus.None);
+        return oldStatus == ChannelStatus.None;
     }
 
-    public void Write(byte[] buffer, int size, int offset)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool TryChangeStatusToClosing()
     {
-        throw new NotImplementedException();
+        ChannelStatus oldStatus = TryChangeStatus(ChannelStatus.Closing, ChannelStatus.Running);
+        return oldStatus == ChannelStatus.Running;
     }
 
-    public void Write(ReadOnlySpan<byte> buffer)
+    private void Start(EndPoint endPoint, int backlog)
     {
-        throw new NotImplementedException();
+        if (IsBound)
+        {
+            throw new InvalidOperationException("already bound");
+        }
+
+        if (!TryChangeStatusToStarting())
+        {
+            return;
+        }
+
+        try
+        {
+            _socket.Bind(endPoint);
+            _socket.Listen(backlog);
+
+            HandleStartSucceed();
+        }
+        catch (Exception ex)
+        {
+            HandleStartFailed(ex);
+
+            throw;
+        }
     }
 
-    public void WriteAndFlush(byte[] buffer)
+    private void Start(int backlog)
     {
-        throw new NotImplementedException();
+        if (!TryChangeStatusToStarting())
+        {
+            return;
+        }
+
+        try
+        {
+            _socket.Listen(backlog);
+
+            HandleStartSucceed();
+        }
+        catch (Exception ex)
+        {
+            HandleStartFailed(ex);
+
+            throw;
+        }
     }
 
-    public void WriteAndFlush(byte[] buffer, int size)
+    private void Close()
     {
-        throw new NotImplementedException();
+        try
+        {
+            _socket.Shutdown(_socketConfSection.ShutdownHow);
+        }
+        finally
+        {
+            _socket.Close();
+        }
     }
 
-    public void WriteAndFlush(byte[] buffer, int size, int offset)
+    private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
     {
-        throw new NotImplementedException();
+        args.AcceptSocket = null;
+        args.SetBuffer(null, 0, 0);
+        _socketConfSection.SocketChannelEventArgsPool.Return(args);
     }
 
-    public void WriteAndFlush(ReadOnlySpan<byte> buffer)
+    private Task RunCloseAsync()
     {
-        throw new NotImplementedException();
+        if (!_eventLoop.IsInEventLoop)
+        {
+            return _eventLoop.StartNew(Close);
+        }
+
+        try
+        {
+            Close();
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            return Task.FromException(ex);
+        }
     }
 
-    public Task WriteAndFlushAsync(byte[] buffer)
+    private void TryRequestAccept()
     {
-        throw new NotImplementedException();
+        if (!_configuration.AutoRequest)
+        {
+            return;
+        }
+
+        RequestAccept();
     }
 
-    public Task WriteAndFlushAsync(byte[] buffer, int size)
+    private void HandleStartSucceed()
     {
-        throw new NotImplementedException();
+        ChangeStatusToRunning();
+
+        RunLifecycleHandlerActive();
+
+        if (!_configuration.AutoRequest)
+        {
+            return;
+        }
+
+        TryRequestAccept();
     }
 
-    public Task WriteAndFlushAsync(byte[] buffer, int size, int offset)
+    private void HandleStartFailed(Exception ex)
     {
-        throw new NotImplementedException();
+        ChangeStatusToNone();
+
+        RunExceptionHandler(ex);
     }
 
-    public Task WriteAndFlushAsync(ReadOnlySpan<byte> buffer)
+    private void HandleClose()
     {
-        throw new NotImplementedException();
+        ChangeStatusToNone();
+
+        RunLifecycleHandlerInactive();
     }
 
-    public Task WriteAsync(byte[] buffer)
+    private void RunLifecycleHandlerActive()
     {
-        throw new NotImplementedException();
+        if (_eventLoop.IsInEventLoop)
+        {
+            InvokeLifecycleActive();
+            return;
+        }
+
+        _eventLoop.StartNew(() => InvokeLifecycleActive());
     }
 
-    public Task WriteAsync(byte[] buffer, int size)
+    private void RunInitHandler(Socket socket)
     {
-        throw new NotImplementedException();
+        if (_eventLoop.IsInEventLoop)
+        {
+            InvokeInitHandler(socket);
+            return;
+        }
+
+        _eventLoop.StartNew(() => InvokeInitHandler(socket));
     }
 
-    public Task WriteAsync(byte[] buffer, int size, int offset)
+    private void RunLifecycleHandlerInactive()
     {
-        throw new NotImplementedException();
+        if (_eventLoop.IsInEventLoop)
+        {
+            InvokeLifecycleInactive();
+            return;
+        }
+
+        _eventLoop.StartNew(() => InvokeLifecycleInactive());
     }
 
-    public Task WriteAsync(ReadOnlySpan<byte> buffer)
+    private void RunExceptionHandler(Exception ex)
     {
-        throw new NotImplementedException();
+        if (_eventLoop.IsInEventLoop)
+        {
+            ExceptionHandler.HandleException(_ctx, ex);
+            return;
+        }
+
+        _eventLoop.StartNew(() => ExceptionHandler.HandleException(_ctx, ex));
+    }
+
+    private void InvokeInitHandler(Socket socket)
+    {
+        var child = new TcpSocketChannel(
+            socket,
+            _childConfiguration,
+            ChannelStatus.Running);
+        try
+        {
+            InitHandler.InitChannel(child);
+
+            _children.AddOrUpdate(child.Id,
+                (_) => child,
+                (_, oldChild) =>
+                {
+                    oldChild.CloseAsync();
+                    return child;
+                });
+
+            child.EventLoop.StartNew(() =>
+            {
+                child.LifecycleHandler.HandleChannelActive(child);
+
+                if (!_childConfiguration.AutoRequest)
+                {
+                    return;
+                }
+
+                child.RequestRead();
+            });
+        }
+        catch (Exception ex)
+        {
+#pragma warning disable CS4014 
+            child.CloseAsync();
+#pragma warning restore CS4014 
+
+            RunExceptionHandler(ex);
+        }
+    }
+
+    private void InvokeLifecycleActive()
+    {
+        try
+        {
+            LifecycleHandler.HandleChannelActive(this);
+        }
+        catch (Exception ex)
+        {
+            RunExceptionHandler(ex);
+        }
+    }
+
+    private void InvokeLifecycleInactive()
+    {
+        try
+        {
+            LifecycleHandler.HandleChannelInactive(this);
+        }
+        catch (Exception ex)
+        {
+            RunExceptionHandler(ex);
+        }
     }
 }

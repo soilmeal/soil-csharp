@@ -1,7 +1,8 @@
-using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Soil.Buffers;
+using Soil.Net.Channel.Configuration;
 using Soil.Net.Event;
 
 namespace Soil.Net.Channel;
@@ -24,79 +25,41 @@ public interface IChannel
 
     bool Connected { get; }
 
-    Socket Socket { get; }
+    ChannelStatus Status { get; }
 
-    IEventSource EventSource { get; }
+    IByteBufferAllocator Allocator { get; }
 
-    void Bind(EndPoint endPoint);
+    IEventLoop EventLoop { get; }
+
+    IChannelLifecycleHandler LifecycleHandler { get; }
+
+    IChannelExceptionHandler ExceptionHandler { get; }
+
+    IChannelPipeline Pipeline { get; set; }
+
+    ChannelConfiguration Configuration { get; }
 
     Task BindAsync(EndPoint endPoint);
 
-    void Listen();
+    Task StartAsync();
 
-    void Listen(int backlog);
+    Task StartAsync(int backlog);
 
-    Task ListenAsync();
+    Task StartAsync(EndPoint endPoint);
 
-    Task ListenAsync(int backlog);
+    Task StartAsync(EndPoint endPoint, int backlog);
 
-    void Connect(EndPoint endPoint);
+    Task StartAsync(IPAddress address, int port);
 
-    void Connect(IPAddress address, int port);
+    Task StartAsync(IPAddress address, int port, int backlog);
 
-    void Connect(IPAddress[] address, int port);
+    Task StartAsync(string host, int port);
 
-    void Connect(string host, int port);
+    Task StartAsync(string host, int port, int backlog);
 
-    Task ConnectAsync(EndPoint endPoint);
+    void RequestRead(IByteBuffer? byteBuffer = null);
 
-    Task ConnectAsync(IPAddress address, int port);
-
-    Task ConnectAsync(IPAddress[] address, int port);
-
-    Task ConnectAsync(string host, int port);
-
-    void Write(byte[] buffer);
-
-    void Write(byte[] buffer, int size);
-
-    void Write(byte[] buffer, int size, int offset);
-
-    void Write(ReadOnlySpan<byte> buffer);
-
-    Task WriteAsync(byte[] buffer);
-
-    Task WriteAsync(byte[] buffer, int size);
-
-    Task WriteAsync(byte[] buffer, int size, int offset);
-
-    Task WriteAsync(ReadOnlySpan<byte> buffer);
-
-    void Close();
-
-    void Close(int timeout);
+    Task<int> WriteAsync(object message);
 
     Task CloseAsync();
-
-    Task CloseAsync(int timeout);
-
-    void Flush();
-
-    void WriteAndFlush(byte[] buffer);
-
-    void WriteAndFlush(byte[] buffer, int size);
-
-    void WriteAndFlush(byte[] buffer, int size, int offset);
-
-    void WriteAndFlush(ReadOnlySpan<byte> buffer);
-
-    Task WriteAndFlushAsync(byte[] buffer);
-
-    Task WriteAndFlushAsync(byte[] buffer, int size);
-
-    Task WriteAndFlushAsync(byte[] buffer, int size, int offset);
-
-    Task WriteAndFlushAsync(ReadOnlySpan<byte> buffer);
-
-    Task Unregister();
 }

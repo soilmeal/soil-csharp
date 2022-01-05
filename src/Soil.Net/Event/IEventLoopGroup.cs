@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Soil.Net.Event;
 
-public interface IEventLoopGroup : IEnumerator<IEventLoop>, IEventSourceRegistry
+public interface IEventLoopGroup : IEventLoop
 {
     IEventLoop Next();
 }
