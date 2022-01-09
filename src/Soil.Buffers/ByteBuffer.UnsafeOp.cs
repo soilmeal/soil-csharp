@@ -4,13 +4,13 @@ namespace Soil.Buffers;
 
 public abstract partial class ByteBuffer : IByteBuffer
 {
-    public class UnsafeOp
+    public class UnsafeOp : IByteBuffer.IUnsafeOp
     {
         private readonly ByteBuffer _parent;
 
         private readonly ByteBufferAllocator _allocator;
 
-        public ByteBuffer Parent
+        public IByteBuffer Parent
         {
             get
             {
@@ -64,24 +64,60 @@ public abstract partial class ByteBuffer : IByteBuffer
             _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer);
         }
 
+        public Span<byte> AsSpanToSend()
+        {
+            return _parent._buffer.AsSpan()[_parent._readIdx.._parent._writtenIdx];
+        }
+
+        public Span<byte> AsSpanToRecv()
+        {
+            return _parent._buffer.AsSpan()[_parent._writtenIdx.._parent.Capacity];
+        }
+
         public Memory<byte> AsMemoryToSend()
         {
-            return _parent._buffer.AsMemory()[^_parent._writtenIdx..];
+            return _parent._buffer.AsMemory()[_parent._readIdx.._parent._writtenIdx];
         }
 
         public Memory<byte> AsMemoryToRecv()
         {
-            return _parent._buffer.AsMemory()[^_parent._readIdx..];
+            return _parent._buffer.AsMemory()[_parent._writtenIdx.._parent.Capacity];
         }
 
         public ArraySegment<byte> AsSegmentToSend()
         {
-            return new ArraySegment<byte>(_parent._buffer, 0, _parent._writtenIdx);
+            return new ArraySegment<byte>(
+                _parent._buffer,
+                _parent._readIdx,
+                _parent.ReadableBytes);
         }
 
         public ArraySegment<byte> AsSegmentToRecv()
         {
-            return new ArraySegment<byte>(_parent._buffer, 0, _parent._readIdx);
+            return new ArraySegment<byte>(
+                _parent._buffer,
+                _parent._writtenIdx,
+                _parent.WritableBytes);
+        }
+
+        public Span<byte> AsSpan()
+        {
+            return _parent._buffer.AsSpan();
+        }
+
+        public Memory<byte> AsMemory()
+        {
+            return _parent._buffer.AsMemory();
+        }
+
+        public ReadOnlySpan<byte> AsReadOnlySpan()
+        {
+            return _parent._buffer.AsSpan();
+        }
+
+        public ReadOnlyMemory<byte> AsReadOnlyMemory()
+        {
+            return _parent._buffer.AsMemory();
         }
     }
 }

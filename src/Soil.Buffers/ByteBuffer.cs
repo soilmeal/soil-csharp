@@ -73,14 +73,6 @@ public abstract partial class ByteBuffer : IByteBuffer
         }
     }
 
-    public UnsafeOp Unsafe
-    {
-        get
-        {
-            return _unsafe;
-        }
-    }
-
     public IByteBufferAllocator Allocator
     {
         get
@@ -94,6 +86,22 @@ public abstract partial class ByteBuffer : IByteBuffer
         get
         {
             return ReferenceEquals(_buffer, _defaultBuffer) || _endianless == Endianless.None;
+        }
+    }
+
+    public IReadOnlyByteBuffer.IReadOnlyUnsafeOp ReadOnlyUnsafe
+    {
+        get
+        {
+            return _unsafe;
+        }
+    }
+
+    public IByteBuffer.IUnsafeOp Unsafe
+    {
+        get
+        {
+            return _unsafe;
         }
     }
 
@@ -125,6 +133,16 @@ public abstract partial class ByteBuffer : IByteBuffer
     public bool Writable(int length)
     {
         return WritableBytes >= length;
+    }
+
+    public void EnsureCapacity()
+    {
+        if (Writable())
+        {
+            return;
+        }
+
+        _unsafe.Reallocate();
     }
 
     public void EnsureCapacity(int length)

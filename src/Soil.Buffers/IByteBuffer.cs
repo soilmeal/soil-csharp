@@ -14,7 +14,11 @@ public interface IByteBuffer : IReadOnlyByteBuffer
 
     IByteBufferAllocator Allocator { get; }
 
+    IUnsafeOp Unsafe { get; }
+
     bool IsInitialized { get; }
+
+    void EnsureCapacity();
 
     void EnsureCapacity(int length);
 
@@ -105,4 +109,21 @@ public interface IByteBuffer : IReadOnlyByteBuffer
     void ResetWrittenIndex();
 
     void Clear();
+
+    public interface IUnsafeOp : IReadOnlyUnsafeOp
+    {
+        void Reallocate();
+
+        void SetWrittenIndex(int writtenIndex);
+
+        Span<byte> AsSpanToRecv();
+
+        Memory<byte> AsMemoryToRecv();
+
+        ArraySegment<byte> AsSegmentToRecv();
+
+        Span<byte> AsSpan();
+
+        Memory<byte> AsMemory();
+    }
 }

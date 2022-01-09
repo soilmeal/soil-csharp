@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 
 namespace Soil.Buffers;
 
@@ -9,6 +10,8 @@ public interface IReadOnlyByteBuffer
     int ReadableBytes { get; }
 
     Endianless Endianless { get; }
+
+    IReadOnlyUnsafeOp ReadOnlyUnsafe { get; }
 
     bool Readable();
 
@@ -99,4 +102,25 @@ public interface IReadOnlyByteBuffer
     void ResetReadIndex();
 
     void Release();
+
+    public interface IReadOnlyUnsafeOp
+    {
+        IByteBuffer Parent { get; }
+
+        IByteBufferAllocator Allocator { get; }
+
+        void SetReadIndex(int readIndex);
+
+        void Allocate(int capacityHint, Endianless endianless);
+
+        Span<byte> AsSpanToSend();
+
+        Memory<byte> AsMemoryToSend();
+
+        ArraySegment<byte> AsSegmentToSend();
+
+        ReadOnlySpan<byte> AsReadOnlySpan();
+
+        ReadOnlyMemory<byte> AsReadOnlyMemory();
+    }
 }
