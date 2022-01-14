@@ -23,7 +23,7 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
 
         public byte[] Allocate(int capacityHint)
         {
-            return _parent._bufferPool.Rent(capacityHint);
+            return _parent._bufferArrayPool.Rent(capacityHint);
         }
 
         public byte[] Reallocate(byte[] oldBuffer)
@@ -48,7 +48,7 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
         private void Free(byte[] buffer)
         {
             Array.Fill<byte>(buffer, 0);
-            _parent._bufferPool.Return(buffer);
+            _parent._bufferArrayPool.Return(buffer);
         }
     }
 }

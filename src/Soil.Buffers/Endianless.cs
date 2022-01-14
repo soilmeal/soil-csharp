@@ -13,7 +13,7 @@ public enum Endianless
 
 public static class EndianlessExtensions
 {
-    public static string ToString(this ref Endianless value)
+    public static string FastToString(this Endianless value)
     {
         return value switch
         {

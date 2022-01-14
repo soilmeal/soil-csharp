@@ -85,7 +85,7 @@ public abstract partial class ByteBuffer : IByteBuffer
     {
         get
         {
-            return ReferenceEquals(_buffer, _defaultBuffer) || _endianless == Endianless.None;
+            return !ReferenceEquals(_buffer, _defaultBuffer) && _endianless != Endianless.None;
         }
     }
 
@@ -718,19 +718,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteInt16BigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteInt16BigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteInt16LittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteInt16LittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
@@ -751,19 +751,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteUInt16BigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteUInt16BigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteUInt16LittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteUInt16LittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
@@ -784,19 +784,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteInt32BigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteInt32BigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteInt32LittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteInt32LittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
@@ -817,19 +817,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteUInt32BigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteUInt32BigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteUInt32LittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteUInt32LittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
@@ -850,19 +850,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteInt64BigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteInt64BigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteInt64LittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteInt64LittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
@@ -883,19 +883,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteUInt64BigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteUInt64BigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteUInt64LittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteUInt64LittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
@@ -916,19 +916,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteSingleBigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteSingleBigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteSingleLittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteSingleLittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
@@ -949,19 +949,19 @@ public abstract partial class ByteBuffer : IByteBuffer
         switch (endianless)
         {
             case Endianless.BigEndian:
-                {
-                    BinaryPrimitivesHelper.WriteDoubleBigEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteDoubleBigEndian(AsWritableSlice(length), value);
+                break;
+            }
             case Endianless.LittleEndian:
-                {
-                    BinaryPrimitivesHelper.WriteDoubleLittleEndian(AsWritableSlice(length), value);
-                    break;
-                }
+            {
+                BinaryPrimitivesHelper.WriteDoubleLittleEndian(AsWritableSlice(length), value);
+                break;
+            }
             default:
-                {
-                    throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
-                }
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless);
+            }
         }
 
         _writtenIdx += length;
