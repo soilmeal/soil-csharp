@@ -2,7 +2,7 @@ using System;
 
 namespace Soil.Threading.Atomic;
 
-public struct AtomicDouble : IAtomicNumeric<double>
+public class AtomicDouble : IAtomicNumeric<double>
 {
     private readonly IAtomicNumeric<double> _impl;
 

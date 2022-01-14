@@ -3,7 +3,7 @@ using System.Threading;
 
 namespace Soil.Threading.Atomic;
 
-internal struct AtomicDoubleIn32BitSys : IAtomicNumeric<double>
+internal class AtomicDoubleIn32BitSys : IAtomicNumeric<double>
 {
     private long _value;
 

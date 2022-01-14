@@ -2,7 +2,7 @@ using System.Threading;
 
 namespace Soil.Threading.Atomic;
 
-public struct AtomicUInt32 : IAtomicInteger<uint>
+public class AtomicUInt32 : IAtomicInteger<uint>
 {
     private int _value;
 

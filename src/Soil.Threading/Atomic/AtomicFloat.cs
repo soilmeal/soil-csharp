@@ -2,7 +2,7 @@ using System.Threading;
 
 namespace Soil.Threading.Atomic;
 
-public struct AtomicFloat : IAtomicNumeric<float>
+public class AtomicFloat : IAtomicNumeric<float>
 {
     private float _value;
 

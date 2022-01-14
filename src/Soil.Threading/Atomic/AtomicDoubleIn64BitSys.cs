@@ -2,7 +2,7 @@ using System.Threading;
 
 namespace Soil.Threading.Atomic;
 
-internal struct AtomicDoubleIn64BitSys : IAtomicNumeric<double>
+internal class AtomicDoubleIn64BitSys : IAtomicNumeric<double>
 {
     private double _value;
 

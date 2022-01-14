@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Soil.Threading.Atomic;
 
-public struct AtomicBool : IAtomic<bool>
+public class AtomicBool : IAtomic<bool>
 {
     private int _value;
 

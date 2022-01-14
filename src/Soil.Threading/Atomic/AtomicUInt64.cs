@@ -2,7 +2,7 @@ using System.Threading;
 
 namespace Soil.Threading.Atomic;
 
-public struct AtomicUInt64 : IAtomicInteger<ulong>
+public class AtomicUInt64 : IAtomicInteger<ulong>
 {
     private long _value;
 
