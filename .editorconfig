@@ -490,7 +490,7 @@ csharp_indent_braces = false
 
 # Indent "switch" case contents if they are in block
 # "switch" case 의 내용이 블럭에 있으면 들여쓰기
-csharp_indent_case_contents_when_block = true
+csharp_indent_case_contents_when_block = false
 
 # Remove space between the cast and the value
 # 변환과 값 사이 공백 제거
