@@ -8,6 +8,8 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
 {
     public abstract IThreadFactory ThreadFactory { get; }
 
+    public abstract bool HasThread(int managedThreadId);
+
     public abstract void Dispose();
 
     protected abstract void Dispose(bool disposing);

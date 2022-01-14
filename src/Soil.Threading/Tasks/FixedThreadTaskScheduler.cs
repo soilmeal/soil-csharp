@@ -31,6 +31,8 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
 
     private readonly Thread[] _threads;
 
+    private readonly HashSet<int> _managedThreadIds;
+
     internal FixedThreadTaskScheduler(
         int maximumConcurrencyLevel,
         IThreadFactory threadFactory) :
@@ -56,11 +58,19 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
         {
             thread.Start();
         }
+
+        _managedThreadIds = _threads.Select(th => th.ManagedThreadId)
+            .ToHashSet();
     }
 
     ~FixedThreadTaskScheduler()
     {
         Dispose(false);
+    }
+
+    public override bool HasThread(int managedThreadId)
+    {
+        return _managedThreadIds.Contains(managedThreadId);
     }
 
     protected override IEnumerable<Task>? GetScheduledTasks()
