@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Soil.Buffers;
 using Soil.Net.Channel.Configuration;
 using Soil.Net.Event;
-using Soil.ObjectPool;
 using Soil.Threading.Atomic;
 
 namespace Soil.Net.Channel;

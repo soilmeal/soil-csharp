@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using Soil.Net.Sockets;
 using Soil.ObjectPool;
 using Soil.ObjectPool.Concurrent;
