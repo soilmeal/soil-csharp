@@ -1,5 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\Soil.Math\Soil.Math.csproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1;netcoreapp3.1;net5;net6;</TargetFrameworks>
     <LangVersion>10.0</LangVersion>
