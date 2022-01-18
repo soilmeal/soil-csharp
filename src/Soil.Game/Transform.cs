@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 using Soil.Math;
 
@@ -13,7 +14,7 @@ public class Transform
 
     private Quaternion _rotation;
 
-    private CoordinateSystem _coordinateSystem = CoordinateSystem.LeftHanded;
+    private readonly CoordinateSystem _coordinateSystem = CoordinateSystem.LeftHanded;
 
     public Transform? Parent
     {
@@ -29,18 +30,59 @@ public class Transform
             }
 
             _parent = value;
-            _coordinateSystem = value?._coordinateSystem ?? _coordinateSystem;
         }
     }
 
-    public Transform(CoordinateSystem coordinateSystem)
+    public Transform? parent
     {
-        _coordinateSystem = coordinateSystem;
+        get
+        {
+            return Parent;
+        }
+        set
+        {
+            Parent = value;
+        }
     }
 
-    public Transform(Transform? parent)
+    public CoordinateSystem CoordinateSystem
     {
-        Parent = parent;
+        get
+        {
+            return Parent?._coordinateSystem ?? _coordinateSystem;
+        }
+    }
+
+    public CoordinateSystem coordinateSystem
+    {
+        get
+        {
+            return CoordinateSystem;
+        }
+    }
+
+    public Vector3 LocalPosition
+    {
+        get
+        {
+            return _position;
+        }
+        set
+        {
+            _position = value;
+        }
+    }
+
+    public Vector3 localPosition
+    {
+        get
+        {
+            return LocalPosition;
+        }
+        set
+        {
+            LocalEulerAngles = value;
+        }
     }
 
     public Vector3 WorldPosition
@@ -66,15 +108,39 @@ public class Transform
         }
     }
 
-    public Vector3 LocalPosition
+    public Vector3 position
     {
         get
         {
-            return _position;
+            return WorldPosition;
         }
         set
         {
-            _position = value;
+            WorldPosition = value;
+        }
+    }
+
+    public Quaternion LocalRotation
+    {
+        get
+        {
+            return _rotation;
+        }
+        set
+        {
+            _rotation = value;
+        }
+    }
+
+    public Quaternion localRotation
+    {
+        get
+        {
+            return LocalRotation;
+        }
+        set
+        {
+            LocalRotation = localRotation;
         }
     }
 
@@ -92,15 +158,15 @@ public class Transform
         }
     }
 
-    public Quaternion LocalRotation
+    public Quaternion rotation
     {
         get
         {
-            return _rotation;
+            return WorldRotation;
         }
         set
         {
-            _rotation = value;
+            WorldRotation = value;
         }
     }
 
@@ -124,11 +190,27 @@ public class Transform
         }
     }
 
+    public Vector3 forward
+    {
+        get
+        {
+            return Forward;
+        }
+    }
+
     public Vector3 Up
     {
         get
         {
             return Vector3.Transform(Vector3.UnitY, WorldRotation);
+        }
+    }
+
+    public Vector3 up
+    {
+        get
+        {
+            return Up;
         }
     }
 
@@ -140,12 +222,145 @@ public class Transform
         }
     }
 
+    public Vector3 right
+    {
+        get
+        {
+            return Right;
+        }
+    }
+
+    public Matrix4x4 LocalScaleMatrix
+    {
+        get
+        {
+            return Matrix4x4.CreateScale(_scale);
+        }
+    }
+
+    public Matrix4x4 localScaleMatrix
+    {
+        get
+        {
+            return LocalScaleMatrix;
+        }
+    }
+
+    public Matrix4x4 WorldScaleMatrix
+    {
+        get
+        {
+            Transform? parent = _parent;
+            return parent != null ? parent.WorldScaleMatrix * LocalScaleMatrix : LocalScaleMatrix;
+        }
+    }
+
+    public Matrix4x4 scaleMatrix
+    {
+        get
+        {
+            return WorldScaleMatrix;
+        }
+    }
+
+    public Matrix4x4 LocalRotationMatrix
+    {
+        get
+        {
+            return Matrix4x4.CreateFromQuaternion(_rotation);
+        }
+    }
+
+    public Matrix4x4 localRotationMatrix
+    {
+        get
+        {
+            return localRotationMatrix;
+        }
+    }
+
+    public Matrix4x4 WorldRotationMatrix
+    {
+        get
+        {
+            Transform? parent = _parent;
+            return parent != null
+                ? parent.WorldRotationMatrix * LocalRotationMatrix
+                : LocalRotationMatrix;
+        }
+    }
+
+    public Matrix4x4 rotationMatrix
+    {
+        get
+        {
+            return WorldRotationMatrix;
+        }
+    }
+
+    public Matrix4x4 LocalTranslationMatrix
+    {
+        get
+        {
+            return Matrix4x4.CreateTranslation(_position);
+        }
+    }
+
+    public Matrix4x4 localTranslationMatrix
+    {
+        get
+        {
+            return LocalTranslationMatrix;
+        }
+    }
+
+    public Matrix4x4 LocalMatrix
+    {
+        get
+        {
+            return LocalScaleMatrix * LocalRotationMatrix * LocalTranslationMatrix;
+        }
+    }
+
+    public Matrix4x4 localMatrix
+    {
+        get
+        {
+            return LocalMatrix;
+        }
+    }
+
+    public Matrix4x4 LocalMatrixInverted
+    {
+        get
+        {
+            Matrix4x4.Invert(LocalMatrix, out var inverted);
+            return inverted;
+        }
+    }
+
+    public Matrix4x4 localMatrixInverted
+    {
+        get
+        {
+            return LocalMatrixInverted;
+        }
+    }
+
     public Matrix4x4 LocalToWorldMatrix
     {
         get
         {
             Transform? parent = _parent;
-            return parent != null ? parent.LocalMatrix * LocalMatrix : LocalMatrix;
+            return parent != null ? LocalMatrix * parent.LocalToWorldMatrix : LocalMatrix;
+        }
+    }
+
+    public Matrix4x4 localToWorldMatrix
+    {
+        get
+        {
+            return localToWorldMatrix;
         }
     }
 
@@ -158,22 +373,11 @@ public class Transform
         }
     }
 
-    public Matrix4x4 LocalMatrix
+    public Matrix4x4 worldToLocalMatrix
     {
         get
         {
-            return Matrix4x4.CreateScale(_scale)
-                * Matrix4x4.CreateFromQuaternion(_rotation)
-                * Matrix4x4.CreateTranslation(_position);
-        }
-    }
-
-    public Matrix4x4 LocalMatrixInverted
-    {
-        get
-        {
-            Matrix4x4.Invert(LocalMatrix, out var inverted);
-            return inverted;
+            return WorldToLocalMatrix;
         }
     }
 
@@ -189,6 +393,18 @@ public class Transform
         }
     }
 
+    public Vector3 eulerAngles
+    {
+        get
+        {
+            return WorldEulerAngles;
+        }
+        set
+        {
+            WorldEulerAngles = value;
+        }
+    }
+
     public Vector3 LocalEulerAngles
     {
         get
@@ -199,5 +415,225 @@ public class Transform
         {
             LocalRotation = value.ToQuaternion(_coordinateSystem);
         }
+    }
+
+    public Vector3 localEulerAngles
+    {
+        get
+        {
+            return LocalEulerAngles;
+        }
+        set
+        {
+            LocalEulerAngles = value;
+        }
+    }
+
+    public Transform(CoordinateSystem coordinateSystem)
+    {
+        _coordinateSystem = coordinateSystem;
+    }
+
+    public Transform(Transform? parent)
+    {
+        Parent = parent;
+    }
+
+    public Vector3 TransformDirection(Vector3 direction)
+    {
+        return Vector3.Transform(direction, WorldRotation);
+    }
+
+    public Vector3 TransformDirection(float x, float y, float z)
+    {
+        return TransformDirection(new Vector3(x, y, z));
+    }
+
+    public Vector3 TransformVector(Vector3 vector)
+    {
+        return Vector3.Transform(vector, WorldScaleMatrix * WorldRotationMatrix);
+    }
+
+    public Vector3 TransformVector(float x, float y, float z)
+    {
+        return TransformVector(new Vector3(x, y, z));
+    }
+
+    public Vector3 TransformPoint(Vector3 point)
+    {
+        return TransformVector(point) + WorldPosition;
+    }
+
+    public Vector3 TransformPoint(float x, float y, float z)
+    {
+        return TransformPoint(new Vector3(x, y, z));
+    }
+
+    public Vector3 InverseTransformDirection(Vector3 direction)
+    {
+        return Vector3.Transform(direction, Quaternion.Inverse(WorldRotation));
+    }
+
+    public Vector3 InverseTransformDirection(float x, float y, float z)
+    {
+        return InverseTransformDirection(new Vector3(x, y, z));
+    }
+
+    public Vector3 InverseTransformVector(Vector3 vector)
+    {
+        Matrix4x4.Invert(WorldScaleMatrix * WorldRotationMatrix, out var inverted);
+        return Vector3.Transform(vector, inverted);
+    }
+
+    public Vector3 InverseTransformVector(float x, float y, float z)
+    {
+        return InverseTransformVector(new Vector3(x, y, z));
+    }
+
+    public Vector3 InverseTransformPoint(Vector3 point)
+    {
+        return InverseTransformVector(point - WorldPosition);
+    }
+
+    public Vector3 InverseTransformPoint(float x, float y, float z)
+    {
+        return InverseTransformPoint(new Vector3(x, y, z));
+    }
+
+    public void Rotate(Vector3 eulers, Space relativeTo = Space.Self)
+    {
+        Quaternion quaternion = eulers.ToQuaternion(_coordinateSystem);
+        switch (relativeTo)
+        {
+            case Space.Self:
+            {
+                LocalRotation *= quaternion;
+                break;
+            }
+            case Space.World:
+            {
+                WorldRotation *= Quaternion.Inverse(WorldRotation) * quaternion * WorldRotation;
+                break;
+            }
+            default:
+            {
+                throw new ArgumentOutOfRangeException(nameof(relativeTo), relativeTo, null);
+            }
+        }
+    }
+
+    public void Rotate(Vector3 axis, float angle, Space relativeTo = Space.Self)
+    {
+        switch (relativeTo)
+        {
+            case Space.Self:
+            {
+                WorldRotation *= Quaternion.CreateFromAxisAngle(
+                    TransformDirection(axis),
+                    MathF.RadianOf(angle));
+                break;
+            }
+            case Space.World:
+            {
+                WorldRotation *= Quaternion.CreateFromAxisAngle(axis, MathF.RadianOf(angle));
+                break;
+            }
+            default:
+            {
+                throw new ArgumentOutOfRangeException(nameof(relativeTo), relativeTo, null);
+            }
+        }
+    }
+
+    public void RotationAround(Vector3 point, Vector3 axis, float angle)
+    {
+        Vector3 currWorldPos = WorldPosition;
+        Quaternion quaternion = Quaternion.CreateFromAxisAngle(axis, MathF.RadianOf(angle));
+        Vector3 diff = currWorldPos - point;
+        diff = Vector3.Transform(diff, quaternion);
+        _ = WorldPosition = point + diff;
+
+        Rotate(axis, angle, Space.World);
+    }
+
+    public void LookAt(Transform target)
+    {
+        LookAt(target, Vector3.UnitY);
+    }
+
+    public void LookAt(Transform target, Vector3 worldUp)
+    {
+        if (target == null)
+        {
+            throw new ArgumentNullException(nameof(target));
+        }
+
+        LookAt(target.WorldPosition, worldUp);
+    }
+
+    public void LookAt(Vector3 targetWorldPosition)
+    {
+        LookAt(targetWorldPosition, Vector3.UnitY);
+    }
+
+    public void LookAt(Vector3 targetWorldPosition, Vector3 worldUp)
+    {
+        Matrix4x4 lookAtMat4x4 = Matrix4x4Helper.CreateLookAt(
+            WorldPosition,
+            targetWorldPosition,
+            worldUp,
+            _coordinateSystem);
+
+        Matrix4x4.Decompose(
+            lookAtMat4x4,
+            out _,
+            out var newWorldRotation,
+            out _
+        );
+
+        WorldRotation = newWorldRotation;
+    }
+
+    public void Rotate(float x, float y, float z, Space relativeTo = Space.Self)
+    {
+        Rotate(new Vector3(x, y, z), relativeTo);
+    }
+
+    public void Translate(Vector3 translation, Space space = Space.Self)
+    {
+        switch (space)
+        {
+            case Space.World:
+            {
+                WorldPosition += translation;
+                break;
+            }
+            case Space.Self:
+            {
+                WorldPosition += TransformDirection(translation);
+                break;
+            }
+            default:
+            {
+                throw new ArgumentOutOfRangeException(nameof(space), space, null);
+            }
+        }
+    }
+
+    public void Translate(float x, float y, float z, Space space = Space.Self)
+    {
+        Translate(new Vector3(x, y, z), space);
+    }
+
+    public void Translate(Vector3 translation, Transform relativeTo)
+    {
+        WorldPosition += relativeTo != null
+            ? relativeTo.TransformDirection(translation)
+            : translation;
+    }
+
+    public void Translate(float x, float y, float z, Transform relativeTo)
+    {
+        Translate(new Vector3(x, y, z), relativeTo);
     }
 }
