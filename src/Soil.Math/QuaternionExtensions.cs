@@ -3,11 +3,14 @@ using System.Numerics;
 
 namespace Soil.Math;
 
+// based on https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
+// and https://stackoverflow.com/questions/12088610/conversion-between-euler-quaternion-like-in-unity3d-engine
 public static class QuaternionExtensions
 {
     private const float SingularityNorthPole = 0.499f;
 
     private const float SingularitySouthPole = -.499f;
+
     public static Vector3 ToEuler(
         this Quaternion q,
         CoordinateSystem coord = CoordinateSystem.RightHandled)
@@ -28,6 +31,7 @@ public static class QuaternionExtensions
             }
         }
     }
+
     private static Vector3 ToEulerInRightHandled(this Quaternion q)
     {
 
