@@ -2,6 +2,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Soil.Math\Soil.Math.csproj" />
+    <ProjectReference Include="..\Soil.Threading\Soil.Threading.csproj" />
+    <ProjectReference Include="..\Soil.ObjectPool\Soil.ObjectPool.csproj" />
+    <ProjectReference Include="..\Soil.Types\Soil.Types.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

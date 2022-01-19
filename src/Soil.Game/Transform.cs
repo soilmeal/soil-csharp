@@ -4,32 +4,29 @@ using Soil.Math;
 
 namespace Soil.Game;
 
-public class Transform
+public class Transform : Component
 {
-    private Transform? _parent;
-
     private Vector3 _position;
 
     private Vector3 _scale;
 
     private Quaternion _rotation;
 
-    private readonly CoordinateSystem _coordinateSystem = CoordinateSystem.LeftHanded;
-
     public Transform? Parent
     {
         get
         {
-            return _parent;
+            return GameObject?.Parent?.Transform;
         }
         set
         {
-            if (value == null)
+            GameObject? gameObject = GameObject;
+            if (gameObject == null)
             {
                 return;
             }
 
-            _parent = value;
+            gameObject.Parent = value?.GameObject;
         }
     }
 
@@ -49,7 +46,7 @@ public class Transform
     {
         get
         {
-            return Parent?._coordinateSystem ?? _coordinateSystem;
+            return GameObject.World.CoordinateSystem;
         }
     }
 
@@ -97,7 +94,7 @@ public class Transform
             Matrix4x4 matrix = LocalToWorldMatrix;
             matrix.Translation = value;
 
-            Transform? parent = _parent;
+            Transform? parent = Parent;
             if (parent != null)
             {
                 matrix *= parent.LocalMatrixInverted;
@@ -148,12 +145,12 @@ public class Transform
     {
         get
         {
-            Transform? parent = _parent;
+            Transform? parent = Parent;
             return parent != null ? parent.WorldRotation * _rotation : _rotation;
         }
         set
         {
-            Transform? parent = _parent;
+            Transform? parent = Parent;
             _rotation = parent != null ? Quaternion.Inverse(parent.WorldRotation) * value : value;
         }
     }
@@ -250,7 +247,7 @@ public class Transform
     {
         get
         {
-            Transform? parent = _parent;
+            Transform? parent = Parent;
             return parent != null ? parent.WorldScaleMatrix * LocalScaleMatrix : LocalScaleMatrix;
         }
     }
@@ -283,7 +280,7 @@ public class Transform
     {
         get
         {
-            Transform? parent = _parent;
+            Transform? parent = Parent;
             return parent != null
                 ? parent.WorldRotationMatrix * LocalRotationMatrix
                 : LocalRotationMatrix;
@@ -351,7 +348,7 @@ public class Transform
     {
         get
         {
-            Transform? parent = _parent;
+            Transform? parent = Parent;
             return parent != null ? LocalMatrix * parent.LocalToWorldMatrix : LocalMatrix;
         }
     }
@@ -385,11 +382,11 @@ public class Transform
     {
         get
         {
-            return WorldRotation.ToEuler(_coordinateSystem);
+            return WorldRotation.ToEuler(CoordinateSystem);
         }
         set
         {
-            WorldRotation = value.ToQuaternion(_coordinateSystem);
+            WorldRotation = value.ToQuaternion(CoordinateSystem);
         }
     }
 
@@ -409,11 +406,11 @@ public class Transform
     {
         get
         {
-            return LocalRotation.ToEuler(_coordinateSystem);
+            return LocalRotation.ToEuler(CoordinateSystem);
         }
         set
         {
-            LocalRotation = value.ToQuaternion(_coordinateSystem);
+            LocalRotation = value.ToQuaternion(CoordinateSystem);
         }
     }
 
@@ -429,14 +426,8 @@ public class Transform
         }
     }
 
-    public Transform(CoordinateSystem coordinateSystem)
+    public Transform()
     {
-        _coordinateSystem = coordinateSystem;
-    }
-
-    public Transform(Transform? parent)
-    {
-        Parent = parent;
     }
 
     public Vector3 TransformDirection(Vector3 direction)
@@ -502,7 +493,7 @@ public class Transform
 
     public void Rotate(Vector3 eulers, Space relativeTo = Space.Self)
     {
-        Quaternion quaternion = eulers.ToQuaternion(_coordinateSystem);
+        Quaternion quaternion = eulers.ToQuaternion(CoordinateSystem);
         switch (relativeTo)
         {
             case Space.Self:
@@ -582,7 +573,7 @@ public class Transform
             WorldPosition,
             targetWorldPosition,
             worldUp,
-            _coordinateSystem);
+            CoordinateSystem);
 
         Matrix4x4.Decompose(
             lookAtMat4x4,
