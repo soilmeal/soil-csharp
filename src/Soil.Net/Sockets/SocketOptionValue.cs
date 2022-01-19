@@ -61,14 +61,6 @@ public class SocketOptionValue
         return false;
     }
 
-    public void Apply(Socket socket)
-    {
-        if (socket == null)
-        {
-            throw new ArgumentNullException(nameof(socket));
-        }
-    }
-
     public bool TryGetValue([NotNullWhen(true)] out byte[]? value)
     {
         if (_value is byte[] bytesVal)
