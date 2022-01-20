@@ -17,22 +17,20 @@ public class ComponentLifecycleInfoRegistry
 
     public bool TryGetValue(Type type, out ComponentLifecycleInfo? info)
     {
-        return _infos.TryGetValue(type.FullName, out info);
+        return _infos.TryGetValue(type.FullName!, out info);
     }
 
     public class Builder
     {
-        private Dictionary<string, ComponentLifecycleInfo> _infos = new();
+        private readonly Dictionary<string, ComponentLifecycleInfo> _infos = new();
 
-        private static MethodInfo? FindLifecycleMethod(
-            Type type,
-            ComponentLifecycleType lifecycleType)
+        private static MethodInfo? FindLifecycleMethod(Type type, ComponentLifecycleStep step)
         {
             MethodInfo? methodInfo = type.GetMethods(BindingFlags.Instance)
                 .Where(method =>
                 {
                     ComponentLifecycleAttribute? attr = method.GetCustomAttribute<ComponentLifecycleAttribute>();
-                    return attr != null && attr.Value == lifecycleType;
+                    return attr != null && attr.Step == step;
                 })
                 .Where(method => method.ReturnType == typeof(void))
                 .Where(method => method.GetParameters().Length <= 0)
@@ -42,7 +40,12 @@ public class ComponentLifecycleInfoRegistry
                 return methodInfo;
             }
 
-            methodInfo = type.GetMethod(lifecycleType.FastToString(), BindingFlags.Instance);
+            methodInfo = type.GetMethod(step.FastToString(), BindingFlags.Instance);
+            if (methodInfo == null)
+            {
+                return null;
+            }
+
             if (methodInfo.ReturnType != typeof(void))
             {
                 return null;
@@ -56,36 +59,45 @@ public class ComponentLifecycleInfoRegistry
             return methodInfo;
         }
 
+        public Builder AddRange(Assembly[] assemblies)
+        {
+            if (assemblies == null || assemblies.Length <= 0)
+            {
+                return this;
+            }
+
+            foreach (var assembly in assemblies)
+            {
+                AddAll(assembly);
+            }
+            return this;
+        }
+
         public Builder AddAll(Assembly assembly)
         {
-            Type[] componentTypes = assembly.GetTypes()
+            Type[] types = assembly.GetTypes()
                 .Where(t => t.BaseType == typeof(Component))
                 .ToArray();
-            foreach (var componentType in componentTypes)
+            foreach (var type in types)
             {
-                if (componentType == null)
+                if (type == null)
                 {
                     continue;
                 }
 
-                var actions = new Dictionary<ComponentLifecycleType, Action<object>>();
-                foreach (var type in Enum.GetValues(typeof(ComponentLifecycleType)))
+                var actions = new Dictionary<ComponentLifecycleStep, Action<object>>();
+                foreach (var step in ComponentLifecycleStepExtensions.FastGetValues())
                 {
-                    ComponentLifecycleType lifecycleType = (ComponentLifecycleType)type;
-                    MethodInfo? methodInfo = FindLifecycleMethod(componentType, lifecycleType);
+                    MethodInfo? methodInfo = FindLifecycleMethod(type, step);
                     if (methodInfo == null)
                     {
                         continue;
                     }
 
-                    actions.TryAdd(
-                        lifecycleType,
-                        MethodInfoHelper.CreateAction(
-                            componentType,
-                            methodInfo));
+                    actions.TryAdd(step, MethodInfoHelper.CreateAction(type, methodInfo));
                 }
 
-                _infos.TryAdd(componentType.FullName, new ComponentLifecycleInfo(actions));
+                _infos.TryAdd(type.FullName!, new ComponentLifecycleInfo(actions));
             }
 
             return this;

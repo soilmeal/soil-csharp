@@ -12,21 +12,17 @@ public class Transform : Component
 
     private Quaternion _rotation;
 
+    private CoordinateSystem _coordinateSystem;
+
     public Transform? Parent
     {
         get
         {
-            return GameObject?.Parent?.Transform;
+            return GameObject!.Parent?.Transform;
         }
         set
         {
-            GameObject? gameObject = GameObject;
-            if (gameObject == null)
-            {
-                return;
-            }
-
-            gameObject.Parent = value?.GameObject;
+            GameObject!.Parent = value?.GameObject;
         }
     }
 
@@ -46,7 +42,11 @@ public class Transform : Component
     {
         get
         {
-            return GameObject.World.CoordinateSystem;
+            return _coordinateSystem;
+        }
+        internal set
+        {
+            _coordinateSystem = coordinateSystem;
         }
     }
 

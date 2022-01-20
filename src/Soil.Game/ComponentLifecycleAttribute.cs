@@ -5,10 +5,10 @@ namespace Soil.Game;
 [AttributeUsage(AttributeTargets.Method)]
 public class ComponentLifecycleAttribute : Attribute
 {
-    public ComponentLifecycleType Value { get; }
+    public ComponentLifecycleStep Step { get; }
 
-    public ComponentLifecycleAttribute(ComponentLifecycleType value)
+    public ComponentLifecycleAttribute(ComponentLifecycleStep Step)
     {
-        Value = value;
+        this.Step = Step;
     }
 }

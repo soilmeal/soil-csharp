@@ -4,20 +4,56 @@
     ".NETCoreApp,Version=v3.1": {
       "soil.math": {
         "type": "Project"
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
+        "type": "Project"
       }
     },
     ".NETStandard,Version=v2.1": {
       "soil.math": {
+        "type": "Project"
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
         "type": "Project"
       }
     },
     ".NETCoreApp,Version=v5.0": {
       "soil.math": {
         "type": "Project"
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
+        "type": "Project"
       }
     },
     "net6.0": {
       "soil.math": {
+        "type": "Project"
+      },
+      "soil.objectpool": {
+        "type": "Project"
+      },
+      "soil.threading": {
+        "type": "Project"
+      },
+      "soil.types": {
         "type": "Project"
       }
     }

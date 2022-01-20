@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Soil.Math;
-using Soil.Threading;
 
 namespace Soil.Game;
 
@@ -12,11 +10,11 @@ public class World
 
     private readonly ComponentLifecycleInfoRegistry _registry;
 
-    private readonly TimeSpan _frameMillis;
+    private readonly Timer _time;
 
-    private readonly IThreadFactory _threadFactory;
+    private readonly List<GameObject> _gameObjects = new(1024);
 
-    private readonly Thread _thread;
+    private readonly List<GameObject> _destroyReserved = new(1024);
 
     public CoordinateSystem CoordinateSystem
     {
@@ -26,7 +24,15 @@ public class World
         }
     }
 
-    internal ComponentLifecycleInfoRegistry Registry
+    public ITimer Time
+    {
+        get
+        {
+            return _time;
+        }
+    }
+
+    public ComponentLifecycleInfoRegistry Registry
     {
         get
         {
@@ -37,20 +43,24 @@ public class World
     public World(
         CoordinateSystem coordinateSystem,
         ComponentLifecycleInfoRegistry registry,
-        double fps)
+        TimeSpan fixedTimeStep)
     {
         _coordinateSystem = coordinateSystem;
         _registry = registry;
-        _frameMillis = TimeSpan.FromMilliseconds(fps / 1000);
+        _time = new Timer(fixedTimeStep);
+        _time.OnUpdate += HandleTimeUpdate;
+        _time.OnFixedUpdate += HandleTimeFixedUpdate;
     }
 
     public GameObject CreateObject(bool active = true, List<Component>? components = null)
     {
         var gameObject = new GameObject(this);
-        gameObject.SetActive(active);
-
         if (components == null)
         {
+            _gameObjects.Add(gameObject);
+
+            gameObject.SetActive(active);
+
             return gameObject;
         }
 
@@ -63,10 +73,70 @@ public class World
 
             gameObject.AddComponent(component);
         }
+
+        _gameObjects.Add(gameObject);
+
+        gameObject.SetActive(active);
+
         return gameObject;
     }
 
-    public void Update(float delta)
+    public void Update()
     {
+        TimeSpan currTime = DateTime.UtcNow.TimeOfDay;
+
+        foreach (var gameObject in _gameObjects)
+        {
+            gameObject.PreUpdate();
+        }
+
+        _time.Update(currTime);
+
+        foreach (var gameObject in _gameObjects)
+        {
+            gameObject.LateUpdate();
+        }
+
+        foreach (var gameObject in _destroyReserved)
+        {
+            gameObject.HandleDestroy(destroyed => _gameObjects.Remove(destroyed));
+
+            _gameObjects.Remove(gameObject);
+        }
+
+        _destroyReserved.Clear();
+    }
+
+    public void Reset()
+    {
+        _gameObjects.Clear();
+        _destroyReserved.Clear();
+        _time.Reset();
+    }
+
+    internal void Destroy(GameObject gameObject)
+    {
+        if (!_gameObjects.Contains(gameObject))
+        {
+            return;
+        }
+
+        _destroyReserved.Add(gameObject);
+    }
+
+    private void HandleTimeUpdate()
+    {
+        foreach (var gameObject in _gameObjects)
+        {
+            gameObject.Update();
+        }
+    }
+
+    private void HandleTimeFixedUpdate()
+    {
+        foreach (var gameObject in _gameObjects)
+        {
+            gameObject.FixedUpdate();
+        }
     }
 }
