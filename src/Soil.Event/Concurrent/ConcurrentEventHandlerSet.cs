@@ -1,10 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Soil.Collections.Generics;
 
-namespace Soil.Event;
+namespace Soil.Event.Concurrent;
 
 internal class ConcurrentEventHandlerSet<TEnum> : IEventHandlerSet<TEnum>
     where TEnum : struct, Enum

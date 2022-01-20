@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using Soil.Threading.Atomic;
 
-namespace Soil.Event;
+namespace Soil.Event.Concurrent;
 
 internal class ConcurrentEventQueueDispatcher<TEnum> : IEventQueueDispatcher<TEnum>
     where TEnum : struct, Enum
