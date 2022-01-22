@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Soil.Game;
@@ -79,14 +78,6 @@ public class GameObject : Object
         get
         {
             return _transform;
-        }
-    }
-
-    internal IEnumerable<GameObject> Children
-    {
-        get
-        {
-            return _children;
         }
     }
 
