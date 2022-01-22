@@ -106,6 +106,12 @@ public interface IByteBuffer : IReadOnlyByteBuffer
 
     int SetBytes(int index, ReadOnlyMemory<byte> src, int srcIndex, int length);
 
+    int SetBytes(int index, IReadOnlyByteBuffer src);
+
+    int SetBytes(int index, IReadOnlyByteBuffer src, int length);
+
+    int SetBytes(int index, IReadOnlyByteBuffer src, int srcIndex, int length);
+
     void ResetWrittenIndex();
 
     void Clear();

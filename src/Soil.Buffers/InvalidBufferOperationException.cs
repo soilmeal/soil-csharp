@@ -13,7 +13,8 @@ public class InvalidBufferOperationException : InvalidOperationException
 
     public const string MaxCapacityReached = "Max capacity reached.";
 
-    public const string ReleaseTwice = "Release Twice.";
+    public const string AlreadyReleased = "Already released.";
+
 
     public const string Uninitialized = "Uninitialized buffer.";
 

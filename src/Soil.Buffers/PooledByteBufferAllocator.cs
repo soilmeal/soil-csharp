@@ -34,7 +34,7 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
         int byteBufferRetainSize)
     {
         _unsafe = new UnsafeOp(this);
-        _bufferArrayPool = ArrayPool<byte>.Create(MaxCapacity, bufferArrayBucketSize);
+        _bufferArrayPool = ArrayPool<byte>.Create(Constants.MaxCapacity, bufferArrayBucketSize);
 
         IObjectPoolPolicy<PooledByteBuffer> policy = new PooledObjectPolicy(this);
         _byteBufferPool = byteBufferRetainSize > 0

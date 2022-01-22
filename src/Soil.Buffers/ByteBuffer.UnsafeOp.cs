@@ -4,7 +4,7 @@ namespace Soil.Buffers;
 
 public abstract partial class ByteBuffer : IByteBuffer
 {
-    public class UnsafeOp : IByteBuffer.IUnsafeOp
+    private class UnsafeOp : IByteBuffer.IUnsafeOp
     {
         private readonly ByteBuffer _parent;
 

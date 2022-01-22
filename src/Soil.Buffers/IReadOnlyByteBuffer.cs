@@ -99,6 +99,12 @@ public interface IReadOnlyByteBuffer
 
     int GetBytes(int index, Memory<byte> dest, int destIndex, int length);
 
+    int GetBytes(int index, IByteBuffer dest);
+
+    int GetBytes(int index, IByteBuffer dest, int length);
+
+    int GetBytes(int index, IByteBuffer dest, int destIndex, int length);
+
     void ResetReadIndex();
 
     void Release();

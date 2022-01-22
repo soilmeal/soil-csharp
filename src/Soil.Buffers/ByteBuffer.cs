@@ -61,7 +61,7 @@ public abstract partial class ByteBuffer : IByteBuffer
     {
         get
         {
-            return MaxCapacity;
+            return Constants.MaxCapacity;
         }
     }
 
@@ -579,6 +579,29 @@ public abstract partial class ByteBuffer : IByteBuffer
         return length;
     }
 
+    public int GetBytes(int index, IByteBuffer dest)
+    {
+        return GetBytes(index, dest, Math.Min(Capacity - index, dest.WritableBytes));
+    }
+
+    public int GetBytes(int index, IByteBuffer dest, int length)
+    {
+        return GetBytes(index, dest, 0, length);
+    }
+
+    public int GetBytes(int index, IByteBuffer dest, int destIndex, int length)
+    {
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = AsReadableSlice(index, length);
+        srcSlice.CopyTo(BufferUtilities.SpanSlice(dest.Unsafe.AsSpan(), destIndex, length));
+
+        return length;
+    }
+
     public IByteBuffer WriteByte(byte value)
     {
         int length = sizeof(byte);
@@ -1046,6 +1069,33 @@ public abstract partial class ByteBuffer : IByteBuffer
         return length;
     }
 
+    public int SetBytes(int index, IReadOnlyByteBuffer src)
+    {
+        return SetBytes(index, src, Math.Min(Capacity - index, src.ReadableBytes));
+    }
+
+    public int SetBytes(int index, IReadOnlyByteBuffer src, int length)
+    {
+        return SetBytes(index, src, 0, length);
+    }
+
+    public int SetBytes(int index, IReadOnlyByteBuffer src, int srcIndex, int length)
+    {
+        if (index < 0 || (index + length) >= Capacity)
+        {
+            throw new IndexOutOfRangeException("index + length out of range");
+        }
+
+        ReadOnlySpan<byte> srcSlice = BufferUtilities.ReadOnlySpanSlice(
+            src.ReadOnlyUnsafe.AsReadOnlySpan(),
+            srcIndex,
+            length);
+        Span<byte> bufSlice = AsWritableSlice(index, length);
+        srcSlice.CopyTo(bufSlice);
+
+        return length;
+    }
+
     public void Clear()
     {
         if (!IsInitialized)
@@ -1055,15 +1105,13 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         _readIdx = 0;
         _writtenIdx = 0;
-
-        Array.Fill<byte>(_buffer, 0);
     }
 
     public void Release()
     {
         if (!IsInitialized)
         {
-            throw new InvalidBufferOperationException(InvalidBufferOperationException.ReleaseTwice);
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.AlreadyReleased);
         }
 
         Clear();
