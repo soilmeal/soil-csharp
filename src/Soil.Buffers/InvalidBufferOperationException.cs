@@ -5,9 +5,9 @@ namespace Soil.Buffers;
 
 public class InvalidBufferOperationException : InvalidOperationException
 {
-    public const string ReadIndexExceed = "ReadIndex is exceeded WrittenIndex.";
+    public const string ReadIndexExceed = "ReadIndex is exceeded WriteIndex.";
 
-    public const string WrittenIndexExceed = "WrittenIndex is exceeded Capacity.";
+    public const string WriteIndexExceed = "WriteIndex is exceeded Capacity.";
 
     public const string InvalidEndianless = "Invalid endianless.";
 
@@ -40,22 +40,22 @@ public class InvalidBufferOperationException : InvalidOperationException
     public InvalidBufferOperationException(
         string? message,
         int readIndex,
-        int writtenIndex,
+        int writeIndex,
         int length)
-        : this(message, readIndex, writtenIndex, length, null)
+        : this(message, readIndex, writeIndex, length, null)
     {
     }
 
     public InvalidBufferOperationException(
         string? message,
         int readIndex,
-        int writtenIndex,
+        int writeIndex,
         int length,
         Exception? innerException)
         : base(message ?? DefaultMessage, innerException)
     {
         string actualMessage = base.Message;
-        bool infoPassed = readIndex >= 0 && writtenIndex >= 0 && length > 0;
+        bool infoPassed = readIndex >= 0 && writeIndex >= 0 && length > 0;
 
         int capacity = actualMessage.Length;
         capacity += infoPassed ? 30 : 0;
@@ -67,8 +67,8 @@ public class InvalidBufferOperationException : InvalidOperationException
         {
             builder.Append(" ReadIndex=")
                 .Append(readIndex)
-                .Append(", WrittenIndex=")
-                .Append(writtenIndex)
+                .Append(", WriteIndex=")
+                .Append(writeIndex)
                 .Append(", Length=")
                 .Append(length);
         }

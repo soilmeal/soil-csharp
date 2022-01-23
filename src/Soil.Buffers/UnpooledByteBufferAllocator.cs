@@ -24,4 +24,12 @@ public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
 
         return byteBuffer;
     }
+
+    public CompositeByteBuffer CompositeByteBuffer(Endianless endianless = Endianless.BigEndian)
+    {
+        var byteBuffer = new CompositeByteBuffer(this);
+        byteBuffer.Unsafe.Allocate(Constants.CompositionByteBufferCapacityHint, endianless);
+
+        return byteBuffer;
+    }
 }

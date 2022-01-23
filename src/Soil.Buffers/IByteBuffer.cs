@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 
 namespace Soil.Buffers;
 
 public interface IByteBuffer : IReadOnlyByteBuffer
 {
-    int WrittenIndex { get; }
+    int WriteIndex { get; }
 
     int WritableBytes { get; }
 
@@ -25,6 +26,70 @@ public interface IByteBuffer : IReadOnlyByteBuffer
     bool Writable();
 
     bool Writable(int length);
+
+    IByteBuffer SetByte(int index, byte value);
+
+    IByteBuffer SetSByte(int index, sbyte value);
+
+    int SetBytes(int index, byte[] src);
+
+    int SetBytes(int index, byte[] src, int length);
+
+    int SetBytes(int index, byte[] src, int srcIndex, int length);
+
+    int SetBytes(int index, ReadOnlySpan<byte> src);
+
+    int SetBytes(int index, ReadOnlySpan<byte> src, int length);
+
+    int SetBytes(int index, ReadOnlySpan<byte> src, int srcIndex, int length);
+
+    int SetBytes(int index, ReadOnlyMemory<byte> src);
+
+    int SetBytes(int index, ReadOnlyMemory<byte> src, int length);
+
+    int SetBytes(int index, ReadOnlyMemory<byte> src, int srcIndex, int length);
+
+    int SetBytes(int index, IReadOnlyByteBuffer src);
+
+    int SetBytes(int index, IReadOnlyByteBuffer src, int length);
+
+    int SetBytes(int index, IReadOnlyByteBuffer src, int srcIndex, int length);
+
+    IByteBuffer SetChar(int index, char value);
+
+    IByteBuffer SetChar(int index, char value, Endianless endianless);
+
+    IByteBuffer SetInt16(int index, short value);
+
+    IByteBuffer SetInt16(int index, short value, Endianless endianless);
+
+    IByteBuffer SetUInt16(int index, ushort value);
+
+    IByteBuffer SetUInt16(int index, ushort value, Endianless endianless);
+
+    IByteBuffer SetInt32(int index, int value);
+
+    IByteBuffer SetInt32(int index, int value, Endianless endianless);
+
+    IByteBuffer SetUInt32(int index, uint value);
+
+    IByteBuffer SetUInt32(int index, uint value, Endianless endianless);
+
+    IByteBuffer SetInt64(int index, long value);
+
+    IByteBuffer SetInt64(int index, long value, Endianless endianless);
+
+    IByteBuffer SetUInt64(int index, ulong value);
+
+    IByteBuffer SetUInt64(int index, ulong value, Endianless endianless);
+
+    IByteBuffer SetSingle(int index, float value);
+
+    IByteBuffer SetSingle(int index, float value, Endianless endianless);
+
+    IByteBuffer SetDouble(int index, double value);
+
+    IByteBuffer SetDouble(int index, double value, Endianless endianless);
 
     IByteBuffer WriteByte(byte value);
 
@@ -48,9 +113,11 @@ public interface IByteBuffer : IReadOnlyByteBuffer
 
     int WriteBytes(ReadOnlyMemory<byte> src, int srcIndex, int length);
 
-    int WriteBytes(IByteBuffer src);
+    int WriteBytes(IReadOnlyByteBuffer src);
 
-    int WriteBytes(IByteBuffer src, int length);
+    int WriteBytes(IReadOnlyByteBuffer src, int length);
+
+    int WriteBytes(IReadOnlyByteBuffer src, int srcIndex, int length);
 
     IByteBuffer WriteChar(char value);
 
@@ -88,31 +155,7 @@ public interface IByteBuffer : IReadOnlyByteBuffer
 
     IByteBuffer WriteDouble(double value, Endianless endianless);
 
-    int SetBytes(int index, byte[] src);
-
-    int SetBytes(int index, byte[] src, int length);
-
-    int SetBytes(int index, byte[] src, int srcIndex, int length);
-
-    int SetBytes(int index, ReadOnlySpan<byte> src);
-
-    int SetBytes(int index, ReadOnlySpan<byte> src, int length);
-
-    int SetBytes(int index, ReadOnlySpan<byte> src, int srcIndex, int length);
-
-    int SetBytes(int index, ReadOnlyMemory<byte> src);
-
-    int SetBytes(int index, ReadOnlyMemory<byte> src, int length);
-
-    int SetBytes(int index, ReadOnlyMemory<byte> src, int srcIndex, int length);
-
-    int SetBytes(int index, IReadOnlyByteBuffer src);
-
-    int SetBytes(int index, IReadOnlyByteBuffer src, int length);
-
-    int SetBytes(int index, IReadOnlyByteBuffer src, int srcIndex, int length);
-
-    void ResetWrittenIndex();
+    void ResetWriteIndex();
 
     void Clear();
 
@@ -120,16 +163,10 @@ public interface IByteBuffer : IReadOnlyByteBuffer
     {
         void Reallocate();
 
-        void SetWrittenIndex(int writtenIndex);
-
-        Span<byte> AsSpanToRecv();
+        void SetWriteIndex(int writeIndex);
 
         Memory<byte> AsMemoryToRecv();
 
-        ArraySegment<byte> AsSegmentToRecv();
-
-        Span<byte> AsSpan();
-
-        Memory<byte> AsMemory();
+        List<ArraySegment<byte>> AsSegmentsToRecv();
     }
 }

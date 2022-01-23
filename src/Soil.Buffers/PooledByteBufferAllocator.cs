@@ -12,6 +12,8 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
 
     private readonly IObjectPool<PooledByteBuffer> _byteBufferPool;
 
+    private readonly IObjectPool<CompositeByteBuffer> _compositeByteBufferPool;
+
     private readonly ArrayPool<byte> _bufferArrayPool;
 
     private readonly UnsafeOp _unsafe;
@@ -36,16 +38,32 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
         _unsafe = new UnsafeOp(this);
         _bufferArrayPool = ArrayPool<byte>.Create(Constants.MaxCapacity, bufferArrayBucketSize);
 
-        IObjectPoolPolicy<PooledByteBuffer> policy = new PooledObjectPolicy(this);
+        IObjectPoolPolicy<PooledByteBuffer> bufferPoolPolicy = new BufferPoolPolicy(this);
         _byteBufferPool = byteBufferRetainSize > 0
-            ? new TLSObjectPool<PooledByteBuffer>(policy, byteBufferRetainSize)
-            : new TLSUnlimitedObjectPool<PooledByteBuffer>(policy);
+            ? new TLSObjectPool<PooledByteBuffer>(bufferPoolPolicy, byteBufferRetainSize)
+            : new TLSUnlimitedObjectPool<PooledByteBuffer>(bufferPoolPolicy);
+
+
+        IObjectPoolPolicy<CompositeByteBuffer> compositionBufferPoolPolicy = new CompositeBufferPoolPolicy(this);
+        _compositeByteBufferPool = byteBufferRetainSize > 0
+            ? new TLSObjectPool<CompositeByteBuffer>(
+                compositionBufferPoolPolicy,
+                byteBufferRetainSize)
+            : new TLSUnlimitedObjectPool<CompositeByteBuffer>(compositionBufferPoolPolicy);
     }
 
     public override IByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian)
     {
         ByteBuffer byteBuffer = _byteBufferPool.Get();
         byteBuffer.Unsafe.Allocate(capacityHint, endianless);
+
+        return byteBuffer;
+    }
+
+    public CompositeByteBuffer CompositeByteBuffer(Endianless endianless = Endianless.BigEndian)
+    {
+        CompositeByteBuffer byteBuffer = _compositeByteBufferPool.Get();
+        byteBuffer.Unsafe.Allocate(Constants.CompositionByteBufferCapacityHint, endianless);
 
         return byteBuffer;
     }

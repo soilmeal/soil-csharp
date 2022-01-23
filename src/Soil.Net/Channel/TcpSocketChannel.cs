@@ -588,7 +588,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void HandleReadCompleted(int recvBytes, IByteBuffer byteBuffer)
     {
-        byteBuffer.Unsafe.SetWrittenIndex(byteBuffer.WrittenIndex + recvBytes);
+        byteBuffer.Unsafe.SetWriteIndex(byteBuffer.WriteIndex + recvBytes);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

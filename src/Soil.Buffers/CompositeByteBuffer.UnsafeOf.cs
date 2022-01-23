@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Soil.Buffers;
 
@@ -34,7 +35,7 @@ public partial class CompositeByteBuffer
 
         public void SetReadIndex(int readIndex)
         {
-            if (readIndex > _parent._writtenIdx)
+            if (readIndex > _parent._writeIdx)
             {
                 throw new InvalidBufferOperationException(
                     InvalidBufferOperationException.ReadIndexExceed);
@@ -43,18 +44,19 @@ public partial class CompositeByteBuffer
             _parent._readIdx = readIndex;
         }
 
-        public void SetWrittenIndex(int writtenIndex)
+        public void SetWriteIndex(int writeIndex)
         {
-            if (writtenIndex > _parent.Capacity)
+            if (writeIndex > _parent.Capacity)
             {
                 throw new InvalidBufferOperationException(
-                    InvalidBufferOperationException.WrittenIndexExceed);
+                    InvalidBufferOperationException.WriteIndexExceed);
             }
-            _parent._writtenIdx = writtenIndex;
+            _parent._writeIdx = writeIndex;
         }
 
-        public void Allocate(int _, Endianless endianless)
+        public void Allocate(int capacityHint, Endianless endianless)
         {
+            _parent._buffer = _allocator.Unsafe.Allocate(capacityHint);
             _parent._endianless = endianless;
         }
 
@@ -63,54 +65,24 @@ public partial class CompositeByteBuffer
             throw new NotSupportedException();
         }
 
-        public Memory<byte> AsMemory()
+        public Memory<byte> AsMemoryToSend()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public Memory<byte> AsMemoryToRecv()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
-        public Memory<byte> AsMemoryToSend()
+        public List<ArraySegment<byte>> AsSegmentsToRecv()
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
-        public ReadOnlyMemory<byte> AsReadOnlyMemory()
+        public List<ArraySegment<byte>> AsSegmentsToSend()
         {
-            throw new NotImplementedException();
-        }
-
-        public ReadOnlySpan<byte> AsReadOnlySpan()
-        {
-            throw new NotImplementedException();
-        }
-
-        public ArraySegment<byte> AsSegmentToRecv()
-        {
-            throw new NotImplementedException();
-        }
-
-        public ArraySegment<byte> AsSegmentToSend()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Span<byte> AsSpan()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Span<byte> AsSpanToRecv()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Span<byte> AsSpanToSend()
-        {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

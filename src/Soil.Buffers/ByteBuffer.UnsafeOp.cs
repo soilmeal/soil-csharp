@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Soil.Buffers;
 
@@ -34,7 +35,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         public void SetReadIndex(int readIndex)
         {
-            if (readIndex > _parent._writtenIdx)
+            if (readIndex > _parent._writeIdx)
             {
                 throw new InvalidBufferOperationException(
                     InvalidBufferOperationException.ReadIndexExceed);
@@ -43,14 +44,14 @@ public abstract partial class ByteBuffer : IByteBuffer
             _parent._readIdx = readIndex;
         }
 
-        public void SetWrittenIndex(int writtenIndex)
+        public void SetWriteIndex(int writeIndex)
         {
-            if (writtenIndex > _parent.Capacity)
+            if (writeIndex > _parent.Capacity)
             {
                 throw new InvalidBufferOperationException(
-                    InvalidBufferOperationException.WrittenIndexExceed);
+                    InvalidBufferOperationException.WriteIndexExceed);
             }
-            _parent._writtenIdx = writtenIndex;
+            _parent._writeIdx = writeIndex;
         }
 
         public void Allocate(int capacityHint, Endianless endianless)
@@ -64,60 +65,36 @@ public abstract partial class ByteBuffer : IByteBuffer
             _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer);
         }
 
-        public Span<byte> AsSpanToSend()
-        {
-            return _parent._buffer.AsSpan()[_parent._readIdx.._parent._writtenIdx];
-        }
-
-        public Span<byte> AsSpanToRecv()
-        {
-            return _parent._buffer.AsSpan()[_parent._writtenIdx.._parent.Capacity];
-        }
-
         public Memory<byte> AsMemoryToSend()
         {
-            return _parent._buffer.AsMemory()[_parent._readIdx.._parent._writtenIdx];
+            return _parent._buffer.AsMemory()[_parent._readIdx.._parent._writeIdx];
         }
 
         public Memory<byte> AsMemoryToRecv()
         {
-            return _parent._buffer.AsMemory()[_parent._writtenIdx.._parent.Capacity];
+            return _parent._buffer.AsMemory()[_parent._writeIdx.._parent.Capacity];
         }
 
-        public ArraySegment<byte> AsSegmentToSend()
+        public List<ArraySegment<byte>> AsSegmentsToSend()
         {
-            return new ArraySegment<byte>(
-                _parent._buffer,
-                _parent._readIdx,
-                _parent.ReadableBytes);
+            return new List<ArraySegment<byte>>()
+            {
+                new ArraySegment<byte>(
+                    _parent._buffer,
+                    _parent._readIdx,
+                    _parent.ReadableBytes),
+            };
         }
 
-        public ArraySegment<byte> AsSegmentToRecv()
+        public List<ArraySegment<byte>> AsSegmentsToRecv()
         {
-            return new ArraySegment<byte>(
-                _parent._buffer,
-                _parent._writtenIdx,
-                _parent.WritableBytes);
-        }
-
-        public Span<byte> AsSpan()
-        {
-            return _parent._buffer.AsSpan();
-        }
-
-        public Memory<byte> AsMemory()
-        {
-            return _parent._buffer.AsMemory();
-        }
-
-        public ReadOnlySpan<byte> AsReadOnlySpan()
-        {
-            return _parent._buffer.AsSpan();
-        }
-
-        public ReadOnlyMemory<byte> AsReadOnlyMemory()
-        {
-            return _parent._buffer.AsMemory();
+            return new List<ArraySegment<byte>>()
+            {
+                new ArraySegment<byte>(
+                    _parent._buffer,
+                    _parent._writeIdx,
+                    _parent.WritableBytes),
+            };
         }
     }
 }

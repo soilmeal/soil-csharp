@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 
 namespace Soil.Buffers;
 
@@ -16,6 +17,70 @@ public interface IReadOnlyByteBuffer
     bool Readable();
 
     bool Readable(int length);
+
+    byte GetByte(int index);
+
+    sbyte GetSByte(int index);
+
+    char GetChar(int index);
+
+    char GetChar(int index, Endianless endianless);
+
+    short GetInt16(int index);
+
+    short GetInt16(int index, Endianless endianless);
+
+    ushort GetUInt16(int index);
+
+    ushort GetUInt16(int index, Endianless endianless);
+
+    int GetInt32(int index);
+
+    int GetInt32(int index, Endianless endianless);
+
+    uint GetUInt32(int index);
+
+    uint GetUInt32(int index, Endianless endianless);
+
+    long GetInt64(int index);
+
+    long GetInt64(int index, Endianless endianless);
+
+    ulong GetUInt64(int index);
+
+    ulong GetUInt64(int index, Endianless endianless);
+
+    float GetSingle(int index);
+
+    float GetSingle(int index, Endianless endianless);
+
+    double GetDouble(int index);
+
+    double GetDouble(int index, Endianless endianless);
+
+    int GetBytes(int index, byte[] dest);
+
+    int GetBytes(int index, byte[] dest, int length);
+
+    int GetBytes(int index, byte[] dest, int destIndex, int length);
+
+    int GetBytes(int index, Span<byte> dest);
+
+    int GetBytes(int index, Span<byte> dest, int length);
+
+    int GetBytes(int index, Span<byte> dest, int destIndex, int length);
+
+    int GetBytes(int index, Memory<byte> dest);
+
+    int GetBytes(int index, Memory<byte> dest, int length);
+
+    int GetBytes(int index, Memory<byte> dest, int destIndex, int length);
+
+    int GetBytes(int index, IByteBuffer dest);
+
+    int GetBytes(int index, IByteBuffer dest, int length);
+
+    int GetBytes(int index, IByteBuffer dest, int destIndex, int length);
 
     byte ReadByte();
 
@@ -44,6 +109,8 @@ public interface IReadOnlyByteBuffer
     int ReadBytes(IByteBuffer dest);
 
     int ReadBytes(IByteBuffer dest, int length);
+
+    int ReadBytes(IByteBuffer dest, int destIndex, int length);
 
     char ReadChar();
 
@@ -81,30 +148,6 @@ public interface IReadOnlyByteBuffer
 
     double ReadDouble(Endianless endianless);
 
-    int GetBytes(int index, byte[] dest);
-
-    int GetBytes(int index, byte[] dest, int length);
-
-    int GetBytes(int index, byte[] dest, int destIndex, int length);
-
-    int GetBytes(int index, Span<byte> dest);
-
-    int GetBytes(int index, Span<byte> dest, int length);
-
-    int GetBytes(int index, Span<byte> dest, int destIndex, int length);
-
-    int GetBytes(int index, Memory<byte> dest);
-
-    int GetBytes(int index, Memory<byte> dest, int length);
-
-    int GetBytes(int index, Memory<byte> dest, int destIndex, int length);
-
-    int GetBytes(int index, IByteBuffer dest);
-
-    int GetBytes(int index, IByteBuffer dest, int length);
-
-    int GetBytes(int index, IByteBuffer dest, int destIndex, int length);
-
     void ResetReadIndex();
 
     void Release();
@@ -119,14 +162,8 @@ public interface IReadOnlyByteBuffer
 
         void Allocate(int capacityHint, Endianless endianless);
 
-        Span<byte> AsSpanToSend();
-
         Memory<byte> AsMemoryToSend();
 
-        ArraySegment<byte> AsSegmentToSend();
-
-        ReadOnlySpan<byte> AsReadOnlySpan();
-
-        ReadOnlyMemory<byte> AsReadOnlyMemory();
+        List<ArraySegment<byte>> AsSegmentsToSend();
     }
 }
