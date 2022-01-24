@@ -14,10 +14,10 @@ public class Constants
     public static readonly IChannelInboundPipe<IByteBuffer, Unit> DefaultInboundPipe = IChannelInboundPipe.Create<IByteBuffer, Unit>((_, byteBuffer) =>
     {
         byteBuffer.Release();
-        return Result.Create(ChannelPipeResultType.Completed, Unit.Instance);
+        return Result.Create(ChannelPipeResultType.CallNext, Unit.Instance);
     });
 
-    public static readonly IChannelOutboundPipe<IByteBuffer, IByteBuffer> DefaultOutboundPipe = IChannelOutboundPipe.Create<IByteBuffer, IByteBuffer>((_, message) => Result.Create(ChannelPipeResultType.Completed, message));
+    public static readonly IChannelOutboundPipe<IByteBuffer, IByteBuffer> DefaultOutboundPipe = IChannelOutboundPipe.Create<IByteBuffer, IByteBuffer>((_, message) => Result.Create(ChannelPipeResultType.CallNext, message));
 
     public static readonly IChannelLifecycleHandler DefaultLifecycleHandler = IChannelLifecycleHandler.Create((_) => { }, (_) => { });
 

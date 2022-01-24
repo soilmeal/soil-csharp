@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -327,7 +328,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                 .ConfigureAwait(false);
             if (recvBytes <= 0)
             {
-                // TODO: use injected configuration value to determine close
 #pragma warning disable CS4014
                 CloseAsync();
 #pragma warning restore CS4014
@@ -346,8 +346,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
             {
                 RunExceptionHandler(ex);
             }
-
-            // TODO: use injected configuration value to determine close
 
 #pragma warning disable CS4014
             CloseAsync();
@@ -385,19 +383,29 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         {
             var result = await RunOutboundPipe(message)
                 .ConfigureAwait(false);
-            if (!result.Is(ChannelPipeResultType.Completed) || !result.HasValue())
+            switch (result.Type)
             {
-                throw new InvalidOperationException($"outbound pipe failed - type={ ChannelPipeResultType.Completed.FastToString()}, hasValue={result.HasValue()}");
+                case ChannelPipeResultType.None:
+                case ChannelPipeResultType.ContinueIO:
+                {
+                    throw new InvalidOperationException($"outbound pipe failed - type={ result.Type.FastToString()}");
+                }
+                default:
+                {
+                    break;
+                }
+            }
+            if (!result.HasValue())
+            {
+                throw new InvalidOperationException($"outbound pipe failed - hasValue={result.HasValue()}");
             }
 
             byteBuffer = result.Value!;
-
             args.SetBuffer(byteBuffer.Unsafe.AsMemoryToSend());
             int sendBytes = await args.SendAsync(_socket)
                 .ConfigureAwait(false);
             if (sendBytes <= 0)
             {
-                // TODO: use injected configuration value to determine close
 #pragma warning disable CS4014
                 CloseAsync();
 #pragma warning restore CS4014
@@ -416,7 +424,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                 RunExceptionHandler(ex);
             }
 
-            // TODO: use injected configuration value to determine close
 #pragma warning disable CS4014
             CloseAsync();
 #pragma warning restore CS4014
@@ -536,13 +543,13 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
     {
         args.AcceptSocket = null;
+        args.BufferList = null;
         args.SetBuffer(null, 0, 0);
         _socketConfSection.SocketChannelEventArgsPool.Return(args);
     }
 
     private Task RunCloseAsync()
     {
-        // TODO: use injected configuration value
         if (!_eventLoop.IsInEventLoop)
         {
             return _eventLoop.StartNew(Close);
@@ -697,8 +704,13 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
             switch (result.Type)
             {
-                case ChannelPipeResultType.Completed:
+                case ChannelPipeResultType.CallNext:
                 {
+                    if (byteBuffer.IsInitialized)
+                    {
+                        byteBuffer.Release();
+                    }
+
                     TryRequestRead();
                     break;
                 }

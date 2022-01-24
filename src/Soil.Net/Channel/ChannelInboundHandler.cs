@@ -50,7 +50,7 @@ public abstract class ChannelInboundHandler<TInMsg> : IChannelInboundPipe<TInMsg
             byteBuffer.Release();
         }
 
-        return UnitResult.Create(ChannelPipeResultType.Completed);
+        return UnitResult.Create(ChannelPipeResultType.CallNext);
     }
 
     protected abstract void HandleReadComplete(IChannelHandlerContext ctx, TInMsg message);

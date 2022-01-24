@@ -11,11 +11,6 @@ public struct Result<TType, TValue>
 
     public readonly TValue? Value;
 
-    public Result(TType type)
-        : this(type, default)
-    {
-    }
-
     internal Result(TType type, TValue? value)
     {
         Type = type;
