@@ -4,9 +4,9 @@ namespace Soil.Buffers;
 
 public partial class CompositeByteBuffer
 {
-    private static int ComputeOffset(int index, int bytes, int beginOffset)
+    private static int ComputeOffset(int index, int bytes, Component component)
     {
-        return index + bytes - beginOffset;
+        return component.ByteBuffer.ReadIndex + (index + bytes - component.BeginOffset);
     }
 
     private static int ComputeDestOffset(int destIndex, int bytes)
@@ -14,9 +14,9 @@ public partial class CompositeByteBuffer
         return destIndex + bytes;
     }
 
-    private static int MinLengthToGet(int length, int bytes, int lengthOfComponent)
+    private static int MinLengthToGet(int length, int bytes, Component component)
     {
-        return Math.Min(length - bytes, lengthOfComponent);
+        return Math.Min(length - bytes, component.Length);
     }
 
     private sealed class Component

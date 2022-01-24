@@ -59,7 +59,7 @@ public abstract partial class ByteBuffer : IByteBuffer
     {
         get
         {
-            return Constants.MaxCapacity;
+            return _unsafe.Allocator.MaxCapacity;
         }
     }
 
@@ -83,7 +83,7 @@ public abstract partial class ByteBuffer : IByteBuffer
     {
         get
         {
-            return !ReferenceEquals(_buffer, Constants.DefaultBuffer) && _endianless != Endianless.None;
+            return !ReferenceEquals(_buffer, Constants.EmptyBuffer) && _endianless != Endianless.None;
         }
     }
 
@@ -103,9 +103,9 @@ public abstract partial class ByteBuffer : IByteBuffer
         }
     }
 
-    protected ByteBuffer(ByteBufferAllocator allocator)
+    protected ByteBuffer(IByteBufferAllocator allocator)
     {
-        _buffer = Constants.DefaultBuffer;
+        _buffer = Constants.EmptyBuffer;
         _endianless = Endianless.None;
         _unsafe = new(this, allocator);
 
@@ -121,6 +121,16 @@ public abstract partial class ByteBuffer : IByteBuffer
     public bool Readable(int length)
     {
         return ReadableBytes >= length;
+    }
+
+    public void DiscardReadBytes(int length)
+    {
+        if (!Readable(length))
+        {
+            throw new IndexOutOfRangeException();
+        }
+
+        _readIdx += length;
     }
 
     public bool Writable()
@@ -1044,7 +1054,7 @@ public abstract partial class ByteBuffer : IByteBuffer
         Clear();
 
         byte[] buffer = _buffer;
-        _buffer = Constants.DefaultBuffer;
+        _buffer = Constants.EmptyBuffer;
         _endianless = Endianless.None;
 
         Allocator.Unsafe.Return(this, buffer);

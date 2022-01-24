@@ -2,7 +2,7 @@ using System;
 
 namespace Soil.Buffers;
 
-public partial class UnpooledByteBufferAllocator : ByteBufferAllocator
+public partial class UnpooledByteBufferAllocator
 {
     public class UnsafeOp : IByteBufferAllocator.IUnsafeOp
     {

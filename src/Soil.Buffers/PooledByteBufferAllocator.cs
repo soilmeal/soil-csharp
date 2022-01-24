@@ -1,10 +1,11 @@
 using System.Buffers;
+using Soil.Buffers.Helper;
 using Soil.ObjectPool;
 using Soil.ObjectPool.Concurrent;
 
 namespace Soil.Buffers;
 
-public partial class PooledByteBufferAllocator : ByteBufferAllocator
+public partial class PooledByteBufferAllocator : IByteBufferAllocator
 {
     public const int DefaultByteBufferRetainSize = 4 * 1024;
 
@@ -16,9 +17,19 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
 
     private readonly ArrayPool<byte> _bufferArrayPool;
 
+    private readonly int _maxCapacity;
+
     private readonly UnsafeOp _unsafe;
 
-    public override IByteBufferAllocator.IUnsafeOp Unsafe
+    public int MaxCapacity
+    {
+        get
+        {
+            return _maxCapacity;
+        }
+    }
+
+    public IByteBufferAllocator.IUnsafeOp Unsafe
     {
         get
         {
@@ -34,9 +45,19 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
     public PooledByteBufferAllocator(
         int bufferArrayBucketSize,
         int byteBufferRetainSize)
+        : this(Constants.DefaultMaxCapacity, bufferArrayBucketSize, byteBufferRetainSize)
     {
+    }
+
+    public PooledByteBufferAllocator(
+        int maxCapacityHint,
+        int bufferArrayBucketSize,
+        int byteBufferRetainSize)
+    {
+        _maxCapacity = (int)BitOperationsHelper.RoundUpToPowerOf2((uint)maxCapacityHint);
+
         _unsafe = new UnsafeOp(this);
-        _bufferArrayPool = ArrayPool<byte>.Create(Constants.MaxCapacity, bufferArrayBucketSize);
+        _bufferArrayPool = ArrayPool<byte>.Create(_maxCapacity, bufferArrayBucketSize);
 
         IObjectPoolPolicy<PooledByteBuffer> bufferPoolPolicy = new BufferPoolPolicy(this);
         _byteBufferPool = byteBufferRetainSize > 0
@@ -52,7 +73,9 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
             : new TLSUnlimitedObjectPool<CompositeByteBuffer>(compositionBufferPoolPolicy);
     }
 
-    public override IByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian)
+    public IByteBuffer Allocate(
+        int capacityHint = Constants.DefaultCapacity,
+        Endianless endianless = Endianless.BigEndian)
     {
         ByteBuffer byteBuffer = _byteBufferPool.Get();
         byteBuffer.Unsafe.Allocate(capacityHint, endianless);

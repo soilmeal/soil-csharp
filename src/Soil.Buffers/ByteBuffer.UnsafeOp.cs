@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace Soil.Buffers;
 
@@ -9,13 +8,23 @@ public abstract partial class ByteBuffer : IByteBuffer
     {
         private readonly ByteBuffer _parent;
 
-        private readonly ByteBufferAllocator _allocator;
+        private readonly ByteBufferWriter _bufferWriter;
+
+        private readonly IByteBufferAllocator _allocator;
 
         public IByteBuffer Parent
         {
             get
             {
                 return _parent;
+            }
+        }
+
+        public IByteBufferWriter BufferWriter
+        {
+            get
+            {
+                return _bufferWriter;
             }
         }
 
@@ -27,9 +36,10 @@ public abstract partial class ByteBuffer : IByteBuffer
             }
         }
 
-        public UnsafeOp(ByteBuffer parent, ByteBufferAllocator allocator)
+        public UnsafeOp(ByteBuffer parent, IByteBufferAllocator allocator)
         {
             _parent = parent;
+            _bufferWriter = new ByteBufferWriter(parent);
             _allocator = allocator;
         }
 
@@ -65,36 +75,96 @@ public abstract partial class ByteBuffer : IByteBuffer
             _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer);
         }
 
+        public byte[] AsArray()
+        {
+            return _parent._buffer;
+        }
+
+        public Memory<byte> AsMemory()
+        {
+            return AsArray().AsMemory();
+        }
+
+        public Span<byte> AsSpan()
+        {
+            return AsArray().AsSpan();
+        }
+
+        public ReadOnlyMemory<byte> AsReadOnlyMemory()
+        {
+            return AsMemory();
+        }
+
+        public ReadOnlySpan<byte> AsReadOnlySpan()
+        {
+            return AsSpan();
+        }
+
         public Memory<byte> AsMemoryToSend()
         {
-            return _parent._buffer.AsMemory()[_parent._readIdx.._parent._writeIdx];
+            return AsMemory()[_parent._readIdx.._parent._writeIdx];
         }
 
         public Memory<byte> AsMemoryToRecv()
         {
-            return _parent._buffer.AsMemory()[_parent._writeIdx.._parent.Capacity];
+            return AsMemory()[_parent._writeIdx.._parent.Capacity];
         }
 
-        public List<ArraySegment<byte>> AsSegmentsToSend()
+        public ArraySegment<byte> AsSegmentToSend()
         {
-            return new List<ArraySegment<byte>>()
-            {
-                new ArraySegment<byte>(
-                    _parent._buffer,
-                    _parent._readIdx,
-                    _parent.ReadableBytes),
-            };
+            return new ArraySegment<byte>(AsArray(), _parent._readIdx, _parent.ReadableBytes);
         }
 
-        public List<ArraySegment<byte>> AsSegmentsToRecv()
+        public ArraySegment<byte> AsSegmentToRecv()
         {
-            return new List<ArraySegment<byte>>()
+            return new ArraySegment<byte>(AsArray(), _parent._writeIdx, _parent.WritableBytes);
+        }
+
+        private class ByteBufferWriter : IByteBufferWriter
+        {
+            private readonly ByteBuffer _parent;
+
+            public int MaxCapacity
             {
-                new ArraySegment<byte>(
-                    _parent._buffer,
-                    _parent._writeIdx,
-                    _parent.WritableBytes),
-            };
+                get
+                {
+                    return _parent.MaxCapacity;
+                }
+            }
+
+            public ByteBufferWriter(ByteBuffer parent)
+            {
+                _parent = parent;
+            }
+
+            public void Advance(int count)
+            {
+                _parent._writeIdx += count;
+            }
+
+            public Memory<byte> GetMemory(int sizeHint = 0)
+            {
+                EnsureCapacityIfNeed(sizeHint);
+
+                return _parent.Unsafe.AsMemoryToRecv();
+            }
+
+            public Span<byte> GetSpan(int sizeHint = 0)
+            {
+                EnsureCapacityIfNeed(sizeHint);
+
+                return _parent.Unsafe.AsMemoryToRecv().Span;
+            }
+
+            private void EnsureCapacityIfNeed(int sizeHint)
+            {
+                if (sizeHint <= 0 || sizeHint <= _parent.WritableBytes)
+                {
+                    return;
+                }
+
+                _parent.EnsureCapacity(_parent.WritableBytes - sizeHint);
+            }
         }
     }
 }

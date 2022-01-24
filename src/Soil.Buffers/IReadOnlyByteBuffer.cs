@@ -18,6 +18,8 @@ public interface IReadOnlyByteBuffer
 
     bool Readable(int length);
 
+    void DiscardReadBytes(int length);
+
     byte GetByte(int index);
 
     sbyte GetSByte(int index);
@@ -162,8 +164,12 @@ public interface IReadOnlyByteBuffer
 
         void Allocate(int capacityHint, Endianless endianless);
 
+        ReadOnlyMemory<byte> AsReadOnlyMemory();
+
+        ReadOnlySpan<byte> AsReadOnlySpan();
+
         Memory<byte> AsMemoryToSend();
 
-        List<ArraySegment<byte>> AsSegmentsToSend();
+        ArraySegment<byte> AsSegmentToSend();
     }
 }

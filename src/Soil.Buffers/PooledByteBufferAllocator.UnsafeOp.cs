@@ -2,7 +2,7 @@ using System;
 
 namespace Soil.Buffers;
 
-public partial class PooledByteBufferAllocator : ByteBufferAllocator
+public partial class PooledByteBufferAllocator
 {
     public class UnsafeOp : IByteBufferAllocator.IUnsafeOp
     {
@@ -23,7 +23,10 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
 
         public byte[] Allocate(int capacityHint)
         {
-            return _parent._bufferArrayPool.Rent(capacityHint);
+            int newCapacity = BufferUtilities.ComputeNextCapacity(capacityHint);
+            return newCapacity > 0
+                ? _parent._bufferArrayPool.Rent(capacityHint)
+                : throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
         }
 
         public byte[] Reallocate(byte[] oldBuffer)
@@ -36,12 +39,24 @@ public partial class PooledByteBufferAllocator : ByteBufferAllocator
 
         public void Return(IByteBuffer byteBuffer, byte[] buffer)
         {
-            if (byteBuffer is not PooledByteBuffer pooledByteBuffer)
+            switch (byteBuffer)
             {
-                return;
+                case PooledByteBuffer pooledByteBuffer:
+                {
+                    _parent._byteBufferPool.Return(pooledByteBuffer);
+                    break;
+                }
+                case CompositeByteBuffer compositeByteBuffer:
+                {
+                    _parent._compositeByteBufferPool.Return(compositeByteBuffer);
+                    break;
+                }
+                default:
+                {
+                    return;
+                }
             }
 
-            _parent._byteBufferPool.Return(pooledByteBuffer);
             Free(buffer);
         }
 

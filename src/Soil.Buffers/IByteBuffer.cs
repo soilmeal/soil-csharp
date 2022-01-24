@@ -161,12 +161,20 @@ public interface IByteBuffer : IReadOnlyByteBuffer
 
     public interface IUnsafeOp : IReadOnlyUnsafeOp
     {
+        IByteBufferWriter BufferWriter { get; }
+
         void Reallocate();
 
         void SetWriteIndex(int writeIndex);
 
+        byte[] AsArray();
+
+        Memory<byte> AsMemory();
+
+        Span<byte> AsSpan();
+
         Memory<byte> AsMemoryToRecv();
 
-        List<ArraySegment<byte>> AsSegmentsToRecv();
+        ArraySegment<byte> AsSegmentToRecv();
     }
 }

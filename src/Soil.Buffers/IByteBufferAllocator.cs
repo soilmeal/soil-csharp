@@ -2,9 +2,14 @@ namespace Soil.Buffers;
 
 public interface IByteBufferAllocator
 {
+    int MaxCapacity { get; }
+
     IUnsafeOp Unsafe { get; }
 
-    IByteBuffer Allocate(int capacityHint, Endianless endianless = Endianless.BigEndian);
+
+    IByteBuffer Allocate(int capacityHint = Constants.DefaultCapacity, Endianless endianless = Endianless.BigEndian);
+
+    CompositeByteBuffer CompositeByteBuffer(Endianless endianless = Endianless.BigEndian);
 
     public interface IUnsafeOp
     {

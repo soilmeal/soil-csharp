@@ -51,7 +51,7 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         get
         {
-            return Constants.MaxCapacity;
+            return _unsafe.Allocator.MaxCapacity;
         }
     }
 
@@ -75,7 +75,7 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         get
         {
-            return !ReferenceEquals(_buffer, Constants.DefaultBuffer) && _endianless != Endianless.None;
+            return !ReferenceEquals(_buffer, Constants.EmptyBuffer) && _endianless != Endianless.None;
         }
     }
 
@@ -113,7 +113,7 @@ public partial class CompositeByteBuffer : IByteBuffer
 
     public CompositeByteBuffer(IByteBufferAllocator allocator)
     {
-        _buffer = Constants.DefaultBuffer;
+        _buffer = Constants.EmptyBuffer;
         _endianless = Endianless.None;
         _unsafe = new UnsafeOp(this, allocator);
 
@@ -129,6 +129,16 @@ public partial class CompositeByteBuffer : IByteBuffer
     public bool Readable(int length)
     {
         return ReadableBytes >= length;
+    }
+
+    public void DiscardReadBytes(int length)
+    {
+        if (!Readable(length))
+        {
+            throw new IndexOutOfRangeException();
+        }
+
+        _readIdx += length;
     }
 
     public bool Writable()
@@ -169,7 +179,7 @@ public partial class CompositeByteBuffer : IByteBuffer
         try
         {
             int readableBytes = byteBuffer.ReadableBytes;
-            if (unchecked(Capacity + readableBytes) < 0)
+            if (unchecked(Capacity + readableBytes) >= MaxCapacity)
             {
                 throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
             }
@@ -281,6 +291,11 @@ public partial class CompositeByteBuffer : IByteBuffer
         if (Writable(length))
         {
             return;
+        }
+
+        if (Capacity + length >= MaxCapacity)
+        {
+            throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
         }
 
         IByteBuffer byteBuffer = Allocator.Allocate(length, _endianless);
@@ -1191,6 +1206,8 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         Clear();
 
+        _unsafe.Release();
+
         _lastAccessed.Reset();
 
         foreach (var component in _components)
@@ -1199,7 +1216,7 @@ public partial class CompositeByteBuffer : IByteBuffer
         }
 
         byte[] buffer = _buffer;
-        _buffer = Constants.DefaultBuffer;
+        _buffer = Constants.EmptyBuffer;
         _endianless = Endianless.None;
 
         Allocator.Unsafe.Return(this, buffer);
@@ -1323,7 +1340,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             throw new IndexOutOfRangeException();
         }
 
-        int offset = ComputeOffset(index, 0, component.BeginOffset);
+        int offset = ComputeOffset(index, 0, component);
         value = component.ByteBuffer.GetByte(offset);
 
         return length;
@@ -1347,18 +1364,24 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         ThrowIfOutOfRange(index, length);
 
+        int endOffset = index + length;
         int componentIndex = IndexOfComponent(index);
         int bytes = 0;
         int count = _components.Count;
-        do
+        while (componentIndex < count)
         {
             Component component = _components[componentIndex];
-            int offset = ComputeOffset(index, bytes, component.BeginOffset);
+            if (component.BeginOffset >= endOffset)
+            {
+                break;
+            }
+
+            int offset = ComputeOffset(index, bytes, component);
             int destOffset = ComputeDestOffset(destIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component.Length);
+            int lengthToGet = MinLengthToGet(length, bytes, component);
             bytes += component.ByteBuffer.GetBytes(offset, dest, destOffset, lengthToGet);
             componentIndex += 1;
-        } while (bytes <= length || componentIndex < count);
+        }
 
         if (bytes < length)
         {
@@ -1377,17 +1400,23 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         ThrowIfOutOfRange(index, length);
 
+        int endOffset = index + length;
         int componentIndex = IndexOfComponent(index);
         int bytes = 0;
         int count = _components.Count;
-        do
+        while (componentIndex < count)
         {
             Component component = _components[componentIndex];
-            int offset = ComputeOffset(index, bytes, component.BeginOffset);
-            int lengthToGet = MinLengthToGet(length, bytes, component.Length);
+            if (component.BeginOffset >= endOffset)
+            {
+                break;
+            }
+
+            int offset = ComputeOffset(index, bytes, component);
+            int lengthToGet = MinLengthToGet(length, bytes, component);
             bytes += component.ByteBuffer.GetBytes(offset, dest, lengthToGet);
             componentIndex += 1;
-        } while (bytes <= length || componentIndex < count);
+        }
 
         if (bytes < length)
         {
@@ -1401,18 +1430,24 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         ThrowIfOutOfRange(index, length);
 
+        int endOffset = index + length;
         int componentIndex = IndexOfComponent(index);
         int bytes = 0;
         int count = _components.Count;
-        do
+        while (componentIndex < count)
         {
             Component component = _components[componentIndex];
-            int offset = ComputeOffset(index, bytes, component.BeginOffset);
+            if (component.BeginOffset >= endOffset)
+            {
+                break;
+            }
+
+            int offset = ComputeOffset(index, bytes, component);
             int destOffset = ComputeDestOffset(destIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component.Length);
+            int lengthToGet = MinLengthToGet(length, bytes, component);
             bytes += component.ByteBuffer.GetBytes(offset, dest, destOffset, lengthToGet);
             componentIndex += 1;
-        } while (bytes <= length || componentIndex < count);
+        }
 
         if (bytes < length)
         {
@@ -1578,7 +1613,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             throw new IndexOutOfRangeException();
         }
 
-        int offset = ComputeOffset(index, 0, component.BeginOffset);
+        int offset = ComputeOffset(index, 0, component);
         component.ByteBuffer.SetByte(offset, value);
 
         return length;
@@ -1598,18 +1633,24 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         ThrowIfOutOfRange(index, length);
 
+        int endOffset = index + length;
         int componentIndex = IndexOfComponent(index);
         int bytes = 0;
         int count = _components.Count;
-        do
+        while (componentIndex < count)
         {
             Component component = _components[componentIndex];
-            int offset = ComputeOffset(index, bytes, component.BeginOffset);
+            if (component.BeginOffset >= endOffset)
+            {
+                break;
+            }
+
+            int offset = ComputeOffset(index, bytes, component);
             int srcOffset = ComputeDestOffset(srcIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component.Length);
+            int lengthToGet = MinLengthToGet(length, bytes, component);
             bytes += component.ByteBuffer.SetBytes(offset, src, srcOffset, lengthToGet);
             componentIndex += 1;
-        } while (bytes <= length || componentIndex < count);
+        }
 
         if (bytes < length)
         {
@@ -1628,17 +1669,23 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         ThrowIfOutOfRange(index, length);
 
+        int endOffset = index + length;
         int componentIndex = IndexOfComponent(index);
         int bytes = 0;
         int count = _components.Count;
-        do
+        while (componentIndex < count)
         {
             Component component = _components[componentIndex];
-            int offset = ComputeOffset(index, bytes, component.BeginOffset);
-            int lengthToGet = MinLengthToGet(length, bytes, component.Length);
+            if (component.BeginOffset >= endOffset)
+            {
+                break;
+            }
+
+            int offset = ComputeOffset(index, bytes, component);
+            int lengthToGet = MinLengthToGet(length, bytes, component);
             bytes += component.ByteBuffer.SetBytes(offset, src, lengthToGet);
             componentIndex += 1;
-        } while (bytes <= length || componentIndex < count);
+        }
 
         if (bytes < length)
         {
@@ -1652,18 +1699,24 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         ThrowIfOutOfRange(index, length);
 
+        int endOffset = index + length;
         int componentIndex = IndexOfComponent(index);
         int bytes = 0;
         int count = _components.Count;
-        do
+        while (componentIndex < count)
         {
             Component component = _components[componentIndex];
-            int offset = ComputeOffset(index, bytes, component.BeginOffset);
+            if (component.BeginOffset >= endOffset)
+            {
+                break;
+            }
+
+            int offset = ComputeOffset(index, bytes, component);
             int srcOffset = ComputeDestOffset(srcIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component.Length);
+            int lengthToGet = MinLengthToGet(length, bytes, component);
             bytes += component.ByteBuffer.SetBytes(offset, src, srcOffset, lengthToGet);
             componentIndex += 1;
-        } while (bytes <= length || componentIndex < count);
+        }
 
         if (bytes < length)
         {
