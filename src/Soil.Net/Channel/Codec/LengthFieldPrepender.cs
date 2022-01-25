@@ -49,6 +49,13 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         return Result.Create(ChannelPipeResultType.CallNext, result);
     }
 
+    public IChannelOutboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(
+        IChannelOutboundPipe<IByteBuffer, TNewMessage> other)
+        where TNewMessage : class
+    {
+        return ((IChannelOutboundPipe<IByteBuffer, IByteBuffer>)this).Connect(other);
+    }
+
 
     private IByteBuffer GenerateByteSizeLengthBuffer(IChannelHandlerContext ctx, IByteBuffer message)
     {

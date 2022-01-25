@@ -21,4 +21,11 @@ public class ProtoBufNetEncoder<T> : IChannelOutboundPipe<T, IByteBuffer>
         Serializer.Serialize(byteBuffer.Unsafe.BufferWriter, message);
         return Result.Create(ChannelPipeResultType.CallNext, byteBuffer);
     }
+
+    public IChannelOutboundPipe<T, TNewMessage> Connect<TNewMessage>(
+        IChannelOutboundPipe<IByteBuffer, TNewMessage> other)
+        where TNewMessage : class
+    {
+        return ((IChannelOutboundPipe<T, IByteBuffer>)this).Connect(other);
+    }
 }

@@ -22,4 +22,10 @@ public class ProtoBufNetDecoder<T> : IChannelInboundPipe<IByteBuffer, T>
         message.Release();
         return Result.Create(ChannelPipeResultType.CallNext, decoded);
     }
+
+    public IChannelInboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(IChannelInboundPipe<T, TNewMessage> other)
+        where TNewMessage : class
+    {
+        return ((IChannelInboundPipe<IByteBuffer, T>)this).Connect(other);
+    }
 }
