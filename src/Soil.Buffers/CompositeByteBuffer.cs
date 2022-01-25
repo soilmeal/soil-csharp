@@ -43,7 +43,7 @@ public partial class CompositeByteBuffer : IByteBuffer
         get
         {
             int count = _components.Count;
-            return count > 0 ? _components[count - 1].EndOffset : 0;
+            return count > 0 ? _components[count - 1].EndOffset + 1 : 0;
         }
     }
 
@@ -186,6 +186,9 @@ public partial class CompositeByteBuffer : IByteBuffer
 
             Component component = new Component(byteBuffer);
             _components.Insert(componentIndex, component);
+
+            wasAdded = true;
+
             if (componentIndex > 0)
             {
                 component.AdjustOffset(_components[componentIndex - 1]);
@@ -1309,7 +1312,7 @@ public partial class CompositeByteBuffer : IByteBuffer
 
     private void ThrowIfOutOfRange(int index, int length)
     {
-        if (index < 0 || (index + length) >= Capacity)
+        if (index < 0 || (index + length) > Capacity)
         {
             throw new IndexOutOfRangeException();
         }

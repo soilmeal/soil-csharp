@@ -83,7 +83,7 @@ public partial class CompositeByteBuffer
 
         public void AdjustOffset(Component prevComponent)
         {
-            AdjustOffset(prevComponent._endOffset);
+            AdjustOffset(prevComponent._endOffset + 1);
         }
 
         public void AdjustOffset(int beginOffset)

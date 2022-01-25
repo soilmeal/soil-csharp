@@ -1082,7 +1082,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     private void ThrowIfOutOfRange(int index, int length)
     {
-        if (index < 0 || (index + length) >= Capacity)
+        if (index < 0 || (index + length) > Capacity)
         {
             throw new IndexOutOfRangeException();
         }
