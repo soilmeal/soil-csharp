@@ -6,7 +6,7 @@ using Soil.Types;
 namespace Soil.Net.Channel.Codec.ProtoBufNet;
 
 public class ProtoBufNetDecoder<T> : IChannelInboundPipe<IByteBuffer, T>
-    where T : class, IExtension
+    where T : class, IExtensible
 {
     public Result<ChannelPipeResultType, T> Transform(
         IChannelHandlerContext ctx,

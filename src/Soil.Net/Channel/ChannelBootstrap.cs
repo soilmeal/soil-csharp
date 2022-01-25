@@ -71,7 +71,20 @@ public class ChannelBootstrap
 
     public ChannelBootstrap Allocator(int bufferArrayPoolBucketSize, int byteBufferRetainSize)
     {
-        return Allocator(new PooledByteBufferAllocator(bufferArrayPoolBucketSize, byteBufferRetainSize));
+        return Allocator(new PooledByteBufferAllocator(
+            bufferArrayPoolBucketSize,
+            byteBufferRetainSize));
+    }
+
+    public ChannelBootstrap Allocator(
+        int maxCapacityHint,
+        int bufferArrayBucketSize,
+        int byteBufferRetainSize)
+    {
+        return Allocator(new PooledByteBufferAllocator(
+            maxCapacityHint,
+            bufferArrayBucketSize,
+            byteBufferRetainSize));
     }
 
     public ChannelBootstrap EventLoopGroup(IEventLoopGroup eventLoopGroup)

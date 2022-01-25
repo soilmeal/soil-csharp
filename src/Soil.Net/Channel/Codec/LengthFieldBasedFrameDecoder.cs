@@ -4,7 +4,7 @@ using Soil.Types;
 
 namespace Soil.Net.Channel.Codec;
 
-public class LengthFieldBasedFrameDecoder
+public class LengthFieldBasedFrameDecoder : IChannelInboundPipe<IByteBuffer, IByteBuffer>
 {
     private readonly int _lengthFieldLength;
 

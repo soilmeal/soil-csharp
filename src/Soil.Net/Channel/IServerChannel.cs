@@ -8,7 +8,5 @@ public interface IServerChannel : IChannel
 
     ChannelConfiguration ChildConfiguration { get; }
 
-    bool TryGetChild(ulong id, out IChannel? child);
-
     void RequestAccept();
 }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -30,8 +29,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     private readonly SocketChannelConfigurationSection _socketConfSection;
 
     private readonly ChannelConfiguration _childConfiguration;
-
-    private readonly ConcurrentDictionary<ulong, IChannel> _children = new();
 
     public ulong Id
     {
@@ -211,12 +208,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     ~TcpSocketServerChannel()
     {
         Dispose(false);
-    }
-
-
-    public bool TryGetChild(ulong id, out IChannel? child)
-    {
-        return _children.TryGetValue(id, out child);
     }
 
     public Task BindAsync(EndPoint endPoint)
@@ -605,14 +596,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         try
         {
             InitHandler.InitChannel(child);
-
-            _children.AddOrUpdate(child.Id,
-                (_) => child,
-                (_, oldChild) =>
-                {
-                    oldChild.CloseAsync();
-                    return child;
-                });
 
             child.EventLoop.StartNew(() =>
             {
