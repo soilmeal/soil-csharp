@@ -43,8 +43,8 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         IByteBuffer lengthByteBuffer = _lengtBufferGenerator(ctx, message);
 
         IByteBuffer result = ctx.Allocator.CompositeByteBuffer()
-            .AddComponent(lengthByteBuffer)
-            .AddComponent(message);
+            .AddComponent(true, lengthByteBuffer)
+            .AddComponent(true, message);
 
         return Result.Create(ChannelPipeResultType.CallNext, result);
     }

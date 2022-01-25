@@ -61,7 +61,7 @@ public class LengthFieldBasedFrameDecoder : IChannelInboundPipe<IByteBuffer, IBy
             return Result.Create(ChannelPipeResultType.ContinueIO, message);
         }
 
-        message.DiscardReadBytes((int)frameLength);
+        message.DiscardReadBytes(_lengthFieldLength);
         return Result.Create(ChannelPipeResultType.CallNext, message);
     }
 
