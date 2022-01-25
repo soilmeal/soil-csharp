@@ -470,14 +470,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     private void Close()
     {
-        try
-        {
-            _socket.Shutdown(_socketConfSection.ShutdownHow);
-        }
-        finally
-        {
-            _socket.Close();
-        }
+        _socket.Close();
     }
 
     private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
