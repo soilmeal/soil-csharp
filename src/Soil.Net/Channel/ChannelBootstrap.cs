@@ -13,54 +13,7 @@ namespace Soil.Net.Channel;
 
 public class ChannelBootstrap
 {
-    private AddressFamily _addressFamily = System.Net.Sockets.AddressFamily.Unknown;
-
-    private SocketType _socketType = System.Net.Sockets.SocketType.Unknown;
-
-    private ProtocolType _protocolType = System.Net.Sockets.ProtocolType.Unknown;
-
     private readonly ChannelConfiguration.Builder _configurationBuilder = new();
-
-    private bool _initialized = false;
-
-    public ChannelBootstrap AddressFamily(AddressFamily addressFamily)
-    {
-        if (addressFamily != System.Net.Sockets.AddressFamily.InterNetwork
-            && addressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
-        {
-            throw new ArgumentOutOfRangeException(nameof(addressFamily), addressFamily, null);
-        }
-
-        _addressFamily = addressFamily;
-
-        return this;
-    }
-
-    public ChannelBootstrap SocketType(SocketType socketType)
-    {
-        if (socketType != System.Net.Sockets.SocketType.Stream
-            && socketType != System.Net.Sockets.SocketType.Dgram)
-        {
-            throw new ArgumentOutOfRangeException(nameof(socketType), socketType, null);
-        }
-
-        _socketType = socketType;
-
-        return this;
-    }
-
-    public ChannelBootstrap ProtocolType(ProtocolType protocolType)
-    {
-        if (protocolType != System.Net.Sockets.ProtocolType.Tcp
-            && protocolType != System.Net.Sockets.ProtocolType.Udp)
-        {
-            throw new ArgumentOutOfRangeException(nameof(protocolType), protocolType, null);
-        }
-
-        _protocolType = protocolType;
-
-        return this;
-    }
 
     public ChannelBootstrap Allocator(IByteBufferAllocator allocator)
     {
@@ -197,9 +150,14 @@ public class ChannelBootstrap
 
     public async Task<IChannel> BindAsync(EndPoint endPoint)
     {
+        if (endPoint == null)
+        {
+            throw new ArgumentNullException(nameof(endPoint));
+        }
+
         try
         {
-            IChannel channel = Initalize();
+            IChannel channel = Initalize(endPoint.AddressFamily);
 
             await channel.BindAsync(endPoint);
 
@@ -213,9 +171,14 @@ public class ChannelBootstrap
 
     public async Task<IChannel> StartAsync(EndPoint endPoint)
     {
+        if (endPoint == null)
+        {
+            throw new ArgumentNullException(nameof(endPoint));
+        }
+
         try
         {
-            IChannel channel = Initalize();
+            IChannel channel = Initalize(endPoint.AddressFamily);
 
             await channel.StartAsync(endPoint);
 
@@ -227,45 +190,22 @@ public class ChannelBootstrap
         }
     }
 
-    public async Task<IChannel> StartAsync(IPAddress address, int port)
+    public Task<IChannel> StartAsync(IPAddress address, int port)
     {
-        try
-        {
-            IChannel channel = Initalize();
-
-            await channel.StartAsync(address, port);
-
-            return channel;
-        }
-        catch
-        {
-            throw;
-        }
+        return StartAsync(new IPEndPoint(address, port));
     }
 
-    public async Task<IChannel> StartAsync(string host, int port)
+    public Task<IChannel> StartAsync(string host, int port)
     {
-        try
-        {
-            IChannel channel = Initalize();
+        EndPoint endPoint = IPAddress.TryParse(host, out var address)
+            ? new IPEndPoint(address, port)
+            : new DnsEndPoint(host, port);
 
-            await channel.StartAsync(host, port);
-
-            return channel;
-        }
-        catch
-        {
-            throw;
-        }
+        return StartAsync(endPoint);
     }
 
-    private IChannel Initalize()
+    private IChannel Initalize(AddressFamily addressFamily)
     {
-        if (_initialized)
-        {
-            throw new InvalidOperationException("already initialized");
-        }
-
         if (_configurationBuilder.Allocator == null)
         {
             IByteBufferAllocator defaultAllocator = new PooledByteBufferAllocator();
@@ -296,43 +236,8 @@ public class ChannelBootstrap
 
         SocketChannelConfigurationSection.SetIfAbsent(_configurationBuilder);
 
-        AddressFamily addressFamily = GetOrDefaultAddressFamily();
-        SocketType socketType = GetOrDefaultSocketType();
-        ProtocolType protocolType = GetOrDefaultProtocolType();
-
-        IChannel? channel = SocketChannelFactory.Create(
-            addressFamily,
-            socketType,
-            protocolType,
-            _configurationBuilder.Build());
-        if (channel == null)
-        {
-            throw new InvalidOperationException("not supported yet");
-        }
-
-        _initialized = true;
+        IChannel channel = new TcpSocketChannel(addressFamily, _configurationBuilder.Build());
 
         return channel;
-    }
-
-    private AddressFamily GetOrDefaultAddressFamily()
-    {
-        return _addressFamily != System.Net.Sockets.AddressFamily.Unknown
-            ? _addressFamily
-            : System.Net.Sockets.AddressFamily.InterNetwork;
-    }
-
-    private SocketType GetOrDefaultSocketType()
-    {
-        return _socketType != System.Net.Sockets.SocketType.Unknown
-            ? _socketType
-            : System.Net.Sockets.SocketType.Stream;
-    }
-
-    private ProtocolType GetOrDefaultProtocolType()
-    {
-        return _protocolType != System.Net.Sockets.ProtocolType.Unknown
-            ? _protocolType
-            : System.Net.Sockets.ProtocolType.Tcp;
     }
 }
