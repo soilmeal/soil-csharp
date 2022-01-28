@@ -43,7 +43,7 @@ public class LengthFieldBasedFrameDecoder : IChannelInboundPipe<IByteBuffer, IBy
     public IChannelInboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(IChannelInboundPipe<IByteBuffer, TNewMessage> other)
         where TNewMessage : class
     {
-        return ((IChannelInboundPipe<IByteBuffer, IByteBuffer>)this).Connect(other);
+        return IChannelInboundPipe.Connect(this, other);
     }
 
     public Result<ChannelPipeResultType, IByteBuffer> Transform(

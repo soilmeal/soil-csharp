@@ -8,6 +8,12 @@ namespace Soil.Net.Channel.Codec.ProtoBufNet;
 public class ProtoBufNetDecoder<T> : IChannelInboundPipe<IByteBuffer, T>
     where T : class, IExtensible
 {
+    public IChannelInboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(IChannelInboundPipe<T, TNewMessage> other)
+        where TNewMessage : class
+    {
+        return IChannelInboundPipe.Connect(this, other);
+    }
+
     public Result<ChannelPipeResultType, T> Transform(
         IChannelHandlerContext ctx,
         IByteBuffer message)
@@ -21,11 +27,5 @@ public class ProtoBufNetDecoder<T> : IChannelInboundPipe<IByteBuffer, T>
         T decoded = Serializer.Deserialize<T>(message.Unsafe.AsMemoryToSend());
         message.Release();
         return Result.Create(ChannelPipeResultType.CallNext, decoded);
-    }
-
-    public IChannelInboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(IChannelInboundPipe<T, TNewMessage> other)
-        where TNewMessage : class
-    {
-        return ((IChannelInboundPipe<IByteBuffer, T>)this).Connect(other);
     }
 }

@@ -53,7 +53,7 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         IChannelOutboundPipe<IByteBuffer, TNewMessage> other)
         where TNewMessage : class
     {
-        return ((IChannelOutboundPipe<IByteBuffer, IByteBuffer>)this).Connect(other);
+        return IChannelOutboundPipe.Connect(this, other);
     }
 
 
