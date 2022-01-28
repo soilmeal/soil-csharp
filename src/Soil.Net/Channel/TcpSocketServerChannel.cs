@@ -12,10 +12,6 @@ namespace Soil.Net.Channel;
 
 public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 {
-    private static readonly AtomicUInt64 _idGenerator = new();
-
-    private readonly ulong _id = _idGenerator.Increment();
-
     private readonly AtomicInt32 _status = new((int)ChannelStatus.None);
 
     private readonly Socket _socket;
@@ -29,14 +25,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     private readonly SocketChannelConfigurationSection _socketConfSection;
 
     private readonly ChannelConfiguration _childConfiguration;
-
-    public ulong Id
-    {
-        get
-        {
-            return _id;
-        }
-    }
 
     public AddressFamily AddressFamily
     {

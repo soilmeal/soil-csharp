@@ -35,6 +35,8 @@ public class Constants
         SocketError.NoRecovery,
     };
 
+    public const double DefaultWaitMillisecondsBeforeRetry = 5000.0;
+
     // TODO: create 'Soil.Util' and define 'DebugDefined' static method.
 #if DEBUG
     public static readonly bool DefaultInvokeHandlerWhenCloseSocketErrorCaught = true;

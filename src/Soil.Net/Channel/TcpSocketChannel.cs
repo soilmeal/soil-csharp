@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -13,10 +14,6 @@ namespace Soil.Net.Channel;
 
 public class TcpSocketChannel : ISocketChannel, IDisposable
 {
-    private static readonly AtomicUInt64 _idGenerator = new();
-
-    private readonly ulong _id = _idGenerator.Increment();
-
     private readonly AtomicInt32 _status = new((int)ChannelStatus.None);
 
     private readonly Socket _socket;
@@ -30,14 +27,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     private readonly ChannelConfiguration _configuration;
 
     private readonly SocketChannelConfigurationSection _socketConfSection;
-
-    public ulong Id
-    {
-        get
-        {
-            return _id;
-        }
-    }
 
     public AddressFamily AddressFamily
     {
@@ -238,12 +227,16 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     public Task StartAsync()
     {
-        throw new NotSupportedException(ExceptionMsgs.NotSupportedOperationByThisChannel);
+        ThrowNotSupportedException();
+
+        return Task.CompletedTask;
     }
 
     public Task StartAsync(int backlog)
     {
-        throw new NotSupportedException(ExceptionMsgs.NotSupportedOperationByThisChannel);
+        ThrowNotSupportedException();
+
+        return Task.CompletedTask;
     }
 
     public async Task StartAsync(EndPoint endPoint)
@@ -278,7 +271,9 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     public Task StartAsync(EndPoint endPoint, int backlog)
     {
-        throw new NotSupportedException(ExceptionMsgs.NotSupportedOperationByThisChannel);
+        ThrowNotSupportedException();
+
+        return Task.CompletedTask;
     }
 
     public Task StartAsync(IPAddress address, int port)
@@ -290,7 +285,9 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     public Task StartAsync(IPAddress address, int port, int backlog)
     {
-        throw new NotSupportedException(ExceptionMsgs.NotSupportedOperationByThisChannel);
+        ThrowNotSupportedException();
+
+        return Task.CompletedTask;
     }
 
     public Task StartAsync(string host, int port)
@@ -305,7 +302,9 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     public Task StartAsync(string host, int port, int backlog)
     {
-        throw new NotSupportedException(ExceptionMsgs.NotSupportedOperationByThisChannel);
+        ThrowNotSupportedException();
+
+        return Task.CompletedTask;
     }
 
     public async void RequestRead(IByteBuffer? byteBuffer = null)
@@ -535,7 +534,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         }
         finally
         {
-            _socket.Close();
+            _socket.Disconnect(false);
         }
     }
 
@@ -730,8 +729,9 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         }
     }
 
-    private static class ExceptionMsgs
+    [DoesNotReturn]
+    private void ThrowNotSupportedException()
     {
-        public const string NotSupportedOperationByThisChannel = "Not supported operation by socket channel.";
+        throw new NotSupportedException("Not supported operation by socket channel.");
     }
 }

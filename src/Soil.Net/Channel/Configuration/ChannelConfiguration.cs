@@ -21,6 +21,8 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
 
     private readonly IChannelPipeline _pipeline;
 
+    private readonly IChannelRetryStrategy? _retryStrategy;
+
     private readonly bool _autoRequest;
 
     private readonly IReadOnlyDictionary<string, IReadOnlyChannelConfigurationSection> _sections;
@@ -73,6 +75,14 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         }
     }
 
+    public IChannelRetryStrategy? RetryStrategy
+    {
+        get
+        {
+            return _retryStrategy;
+        }
+    }
+
     public bool AutoRequest
     {
         get
@@ -95,6 +105,7 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         IChannelLifecycleHandler lifecycleHandler,
         IChannelExceptionHandler exceptionHandler,
         IChannelPipeline pipeline,
+        IChannelRetryStrategy? retryStrategy,
         bool autoRequest,
         IReadOnlyDictionary<string, IReadOnlyChannelConfigurationSection> sections)
     {
@@ -104,6 +115,7 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         _lifecycleHandler = lifecycleHandler;
         _exceptionHandler = exceptionHandler;
         _pipeline = pipeline;
+        _retryStrategy = retryStrategy;
         _autoRequest = autoRequest;
         _sections = sections;
     }
@@ -128,6 +140,8 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         private IChannelExceptionHandler? _exceptionHandler;
 
         private IChannelPipeline? _pipeline;
+
+        private IChannelRetryStrategy? _retryStrategy;
 
         private bool _autoRequest = true;
 
@@ -170,6 +184,14 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             get
             {
                 return _exceptionHandler;
+            }
+        }
+
+        public IChannelRetryStrategy? RetryStrategy
+        {
+            get
+            {
+                return _retryStrategy;
             }
         }
 
@@ -235,6 +257,13 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             return this;
         }
 
+        public Builder SetRetryStrategy(IChannelRetryStrategy? retryStrategy)
+        {
+            _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
+
+            return this;
+        }
+
         public Builder SetAutoRequest(bool autoRequest)
         {
             _autoRequest = autoRequest;
@@ -246,7 +275,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         {
             IByteBufferAllocator allocator = _allocator ?? throw new InvalidOperationException("set Allocator first");
             IEventLoopGroup eventLoopGroup = _eventLoopGroup ?? throw new InvalidOperationException("set EventLoopGroup first");
-            IChannelInitHandler? initHandler = _initHandler;
             IChannelLifecycleHandler lifecycleHandler = _lifecycleHandler ?? throw new InvalidOperationException("set LifecycleHandler first");
             IChannelExceptionHandler exceptionHandler = _exceptionHandler ?? throw new InvalidOperationException("set ExceptionHandler first");
             IChannelPipeline pipeline = _pipeline ?? DefaultChannelPipeline.Instance;
@@ -254,10 +282,11 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             return new ChannelConfiguration(
                 allocator,
                 eventLoopGroup,
-                initHandler,
+                _initHandler,
                 lifecycleHandler,
                 exceptionHandler,
                 pipeline,
+                _retryStrategy,
                 _autoRequest,
                 _sections);
         }

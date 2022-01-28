@@ -59,7 +59,7 @@ public abstract class AbstractChannelConfigurationSection<TDerived> : IChannelCo
             return false;
         }
 
-        section = (TSection)Sections;
+        section = (TSection)tmpSection;
         return section != null;
     }
 }

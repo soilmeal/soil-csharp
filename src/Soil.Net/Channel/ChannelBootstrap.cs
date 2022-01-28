@@ -78,6 +78,11 @@ public class ChannelBootstrap
         return LifecycleHandler(IChannelLifecycleHandler.Create(activeAction, inactiveAction));
     }
 
+    public ChannelBootstrap ExceptionHandler(Action<IChannelHandlerContext, Exception> handler)
+    {
+        return ExceptionHandler(IChannelExceptionHandler.Create(handler));
+    }
+
     public ChannelBootstrap ExceptionHandler(IChannelExceptionHandler exceptionHandler)
     {
         _configurationBuilder.SetExceptionHandler(exceptionHandler);
@@ -105,11 +110,6 @@ public class ChannelBootstrap
             Constants.DefaultOutboundPipe);
     }
 
-    public ChannelBootstrap ExceptionHandler(Action<IChannelHandlerContext, Exception> handler)
-    {
-        return ExceptionHandler(IChannelExceptionHandler.Create(handler));
-    }
-
     public ChannelBootstrap Pipeline(IChannelPipeline pipeline)
     {
         _configurationBuilder.SetPipeline(pipeline);
@@ -120,6 +120,25 @@ public class ChannelBootstrap
     public ChannelBootstrap AutoRequest(bool autoRequest)
     {
         _configurationBuilder.SetAutoRequest(autoRequest);
+
+        return this;
+    }
+
+    public ChannelBootstrap RetryStrategy(int maxRetryCount)
+    {
+        return RetryStrategy(maxRetryCount, Constants.DefaultWaitMillisecondsBeforeRetry);
+    }
+
+    public ChannelBootstrap RetryStrategy(int maxRetryCount, double waitMillisecondsBeforeRetry)
+    {
+        return RetryStrategy(new ChannelMaxRetryCountStrategy(
+            maxRetryCount,
+            waitMillisecondsBeforeRetry));
+    }
+
+    public ChannelBootstrap RetryStrategy(IChannelRetryStrategy retryStrategy)
+    {
+        _configurationBuilder.SetRetryStrategy(retryStrategy);
 
         return this;
     }
@@ -236,7 +255,12 @@ public class ChannelBootstrap
 
         SocketChannelConfigurationSection.SetIfAbsent(_configurationBuilder);
 
-        IChannel channel = new TcpSocketChannel(addressFamily, _configurationBuilder.Build());
+        ChannelConfiguration configuration = _configurationBuilder.Build();
+        IChannelRetryStrategy? retryStrategy = configuration.RetryStrategy;
+
+        IChannel channel = retryStrategy != null
+            ? new RetryableTcpSocketChannel(addressFamily, configuration)
+            : new TcpSocketChannel(addressFamily, configuration);
 
         return channel;
     }
