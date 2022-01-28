@@ -1,7 +1,6 @@
 using System;
 using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Soil.Net.Channel;
@@ -14,11 +13,19 @@ public static class ServerBootstrapExtensions
         this ServerChannelBootstrap bootstrap,
         IConfigurationSection section)
     {
-        ChannelSection channelSection = section.Get<ChannelSection>();
-        ThrowIfPortOutOfRange(channelSection);
+        ArgumentNullException.ThrowIfNull(section);
 
-        IPAddress address = DetectAddress(channelSection);
-        ThrowIfIPAddressIsNone(channelSection, address);
+        ChannelSection channelSection = section.Get<ChannelSection>();
+        ArgumentNullException.ThrowIfNull(channelSection);
+        ThrowIfPortOutOfRange(channelSection.Port);
+
+        IPAddress? address;
+        if (!IPAddress.TryParse(channelSection.Address, out address))
+        {
+            address = IPAddress.None;
+
+        }
+        ThrowIfIPAddressIsNone(address);
 
         return bootstrap.BindAsync(new IPEndPoint(address, channelSection.Port));
     }
@@ -27,74 +34,40 @@ public static class ServerBootstrapExtensions
             this ServerChannelBootstrap bootstrap,
             IConfigurationSection section)
     {
-        ChannelSection channelSection = section.Get<ChannelSection>();
-        ThrowIfPortOutOfRange(channelSection);
+        ArgumentNullException.ThrowIfNull(section);
 
-        IPAddress address = DetectAddress(channelSection);
-        ThrowIfIPAddressIsNone(channelSection, address);
+        ChannelSection channelSection = section.Get<ChannelSection>();
+        ArgumentNullException.ThrowIfNull(channelSection);
+        ThrowIfPortOutOfRange(channelSection.Port);
+
+        IPAddress? address;
+        if (!IPAddress.TryParse(channelSection.Address, out address))
+        {
+            address = IPAddress.None;
+
+        }
+        ThrowIfIPAddressIsNone(address);
 
         return bootstrap.StartAsync(
             new IPEndPoint(address, channelSection.Port),
             channelSection.Backlog);
     }
 
-    private static IPAddress DetectAddress(ChannelSection section)
+    private static void ThrowIfPortOutOfRange(
+        int port,
+        [CallerArgumentExpression("port")] string? portExpression = null)
     {
-        // IPAddress? address = null;
-        if (!section.AutoDetectAddress)
+        if (port < IPEndPoint.MinPort || port > IPEndPoint.MaxPort)
         {
-            IPAddress? address;
-            return IPAddress.TryParse(section.Address, out address) ? address : IPAddress.None;
-        }
-
-        NetworkInterface[] networkInterfaces = NetworkInterface.GetAllNetworkInterfaces();
-        foreach (var networkInterface in networkInterfaces)
-        {
-            if (networkInterface.OperationalStatus != OperationalStatus.Up)
-            {
-                continue;
-            }
-
-            if (networkInterface.IsReceiveOnly)
-            {
-                continue;
-            }
-
-            NetworkInterfaceType networkInterfaceType = networkInterface.NetworkInterfaceType;
-            if (networkInterfaceType != NetworkInterfaceType.Ethernet
-                && networkInterfaceType != NetworkInterfaceType.Wireless80211)
-            {
-                continue;
-            }
-
-            foreach (var addressInfo in networkInterface.GetIPProperties().UnicastAddresses)
-            {
-                AddressFamily addressFamily = addressInfo.Address.AddressFamily;
-                if (addressFamily == AddressFamily.InterNetwork
-                    || addressFamily == AddressFamily.InterNetworkV6)
-                {
-                    return addressInfo.Address;
-                }
-            }
-        }
-
-        return IPAddress.None;
-    }
-
-    private static void ThrowIfPortOutOfRange(ChannelSection channelSection)
-    {
-        if (channelSection.Port < IPEndPoint.MinPort
-            || channelSection.Port > IPEndPoint.MaxPort)
-        {
-            throw new InvalidOperationException($"\"Port\" out of range. Port={channelSection.Port}");
+            throw new ArgumentOutOfRangeException(portExpression ?? nameof(port), port, null);
         }
     }
 
-    private static void ThrowIfIPAddressIsNone(ChannelSection channelSection, IPAddress address)
+    private static void ThrowIfIPAddressIsNone(IPAddress address)
     {
         if (address == IPAddress.None)
         {
-            throw new InvalidOperationException($"\"Address\" not found. Address={channelSection.Address}, AutoDetectAddress={channelSection.AutoDetectAddress}");
+            throw new ArgumentException($"invalid address");
         }
     }
 }

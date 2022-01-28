@@ -10,6 +10,4 @@ public class ChannelSection
     public int Port { get; set; }
 
     public int Backlog { get; set; } = Constants.DefaultBacklog;
-
-    public bool AutoDetectAddress { get; set; } = false;
 }
