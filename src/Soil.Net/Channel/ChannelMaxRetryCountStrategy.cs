@@ -1,16 +1,18 @@
+using System;
+
 namespace Soil.Net.Channel;
 
-public class ChannelMaxRetryCountStrategy : IChannelRetryStrategy
+public class ChannelMaxReconnectCountStrategy : IChannelReconnectStrategy
 {
-    private readonly int _maxRetryCount;
+    private readonly int _maxReconnectCount;
 
-    private readonly double _waitMillisecondsBeforeRetry;
+    private readonly double _waitMillisecondsBeforeReconnect;
 
-    public int MaxRetryCount
+    public int MaxReconnectCount
     {
         get
         {
-            return _maxRetryCount;
+            return _maxReconnectCount;
         }
     }
 
@@ -18,23 +20,35 @@ public class ChannelMaxRetryCountStrategy : IChannelRetryStrategy
     {
         get
         {
-            return _waitMillisecondsBeforeRetry;
+            return _waitMillisecondsBeforeReconnect;
         }
     }
 
-    public ChannelMaxRetryCountStrategy(int maxRetryCount)
-        : this(maxRetryCount, Constants.DefaultWaitMillisecondsBeforeRetry)
+    public ChannelMaxReconnectCountStrategy(int maxReconnectCount)
+        : this(maxReconnectCount, Constants.DefaultWaitMillisecondsBeforeReconnect)
     {
     }
 
-    public ChannelMaxRetryCountStrategy(int maxRetryCount, double waitMilliseconds)
+    public ChannelMaxReconnectCountStrategy(int maxReconnectCount, double waitMilliseconds)
     {
-        _maxRetryCount = maxRetryCount;
-        _waitMillisecondsBeforeRetry = waitMilliseconds;
+        _maxReconnectCount = maxReconnectCount;
+        _waitMillisecondsBeforeReconnect = waitMilliseconds;
     }
 
-    public double HandleRetry(int currentRetryCount)
+    public double TryReconnecct(
+        int currentReconnectCount,
+        ChannelReconnectReason reason,
+        Exception? cause)
     {
-        return currentRetryCount < _maxRetryCount ? _waitMillisecondsBeforeRetry : 0.0;
+        switch (reason)
+        {
+            case ChannelReconnectReason.InactivedByLocal:
+            case ChannelReconnectReason.InactivedByRemote:
+            {
+                return 0.0;
+            }
+        }
+
+        return currentReconnectCount <= _maxReconnectCount ? _waitMillisecondsBeforeReconnect : 0.0;
     }
 }

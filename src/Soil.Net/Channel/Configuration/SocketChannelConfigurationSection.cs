@@ -162,6 +162,11 @@ public class SocketChannelConfigurationSection : AbstractReadOnlyConfigurationSe
         }
     }
 
+    public bool ContainsInCloseError(SocketException ex)
+    {
+        return ContainsInCloseError(ex.SocketErrorCode);
+    }
+
     public bool ContainsInCloseError(SocketError socketError)
     {
         return _closeErrors.Contains(socketError);

@@ -500,7 +500,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     {
         ChangeStatusToRunning();
 
-        RunLifecycleHandlerActive();
+        // RunLifecycleHandlerActive();
 
         if (!_configuration.AutoRequest)
         {
@@ -521,19 +521,19 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     {
         ChangeStatusToNone();
 
-        RunLifecycleHandlerInactive();
+        // RunLifecycleHandlerInactive();
     }
 
-    private void RunLifecycleHandlerActive()
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            InvokeLifecycleActive();
-            return;
-        }
+    // private void RunLifecycleHandlerActive()
+    // {
+    //     if (_eventLoop.IsInEventLoop)
+    //     {
+    //         InvokeLifecycleActive();
+    //         return;
+    //     }
 
-        _eventLoop.StartNew(() => InvokeLifecycleActive());
-    }
+    //     _eventLoop.StartNew(() => InvokeLifecycleActive());
+    // }
 
     private void RunInitHandler(Socket socket)
     {
@@ -546,16 +546,16 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         _eventLoop.StartNew(() => InvokeInitHandler(socket));
     }
 
-    private void RunLifecycleHandlerInactive()
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            InvokeLifecycleInactive();
-            return;
-        }
+    // private void RunLifecycleHandlerInactive()
+    // {
+    //     if (_eventLoop.IsInEventLoop)
+    //     {
+    //         InvokeLifecycleInactive();
+    //         return;
+    //     }
 
-        _eventLoop.StartNew(() => InvokeLifecycleInactive());
-    }
+    //     _eventLoop.StartNew(() => InvokeLifecycleInactive());
+    // }
 
     private void RunExceptionHandler(Exception ex)
     {
@@ -600,27 +600,27 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         }
     }
 
-    private void InvokeLifecycleActive()
-    {
-        try
-        {
-            LifecycleHandler.HandleChannelActive(this);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-        }
-    }
+    // private void InvokeLifecycleActive()
+    // {
+    //     try
+    //     {
+    //         LifecycleHandler.HandleChannelActive(this);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         RunExceptionHandler(ex);
+    //     }
+    // }
 
-    private void InvokeLifecycleInactive()
-    {
-        try
-        {
-            LifecycleHandler.HandleChannelInactive(this);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-        }
-    }
+    // private void InvokeLifecycleInactive()
+    // {
+    //     try
+    //     {
+    //         LifecycleHandler.HandleChannelInactive(this);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         RunExceptionHandler(ex);
+    //     }
+    // }
 }

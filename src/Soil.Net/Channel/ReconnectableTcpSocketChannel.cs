@@ -9,7 +9,7 @@ using Soil.Types;
 
 namespace Soil.Net.Channel;
 
-public class RetryableTcpSocketChannel : IRetryableChannel
+public class ReconnectableTcpSocketChannel : IReconnectableChannel
 {
     private readonly TcpSocketChannel _channel;
 
@@ -19,25 +19,27 @@ public class RetryableTcpSocketChannel : IRetryableChannel
 
     private readonly ChannelConfiguration _configuration;
 
-    private int _currentRetryCount = 0;
+    private readonly SocketChannelConfigurationSection _socketConfSection;
+
+    private bool _started = false;
 
     private EndPoint? _endPoint;
 
-    public RetryableTcpSocketChannel(
+    public ReconnectableTcpSocketChannel(
         AddressFamily addressFamily,
         ChannelConfiguration configuration)
         : this(new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp), configuration)
     {
     }
 
-    public RetryableTcpSocketChannel(
+    public ReconnectableTcpSocketChannel(
         Socket socket,
         ChannelConfiguration configuration)
         : this(socket, configuration, ChannelStatus.None)
     {
     }
 
-    public RetryableTcpSocketChannel(
+    public ReconnectableTcpSocketChannel(
         Socket socket,
         ChannelConfiguration configuration,
         ChannelStatus status)
@@ -45,18 +47,18 @@ public class RetryableTcpSocketChannel : IRetryableChannel
         _pipeline = configuration.Pipeline;
 
         _configuration = configuration;
+        _socketConfSection = configuration.GetSection<SocketChannelConfigurationSection>();
 
         var innerConfigurationBuilder = new ChannelConfiguration.Builder()
             .SetAllocator(configuration.Allocator)
             .SetEventLoopGroup(configuration.EventLoopGroup)
-            .SetLifecycleHandler(new RetryableChannelLifecycleHandler(this))
-            .SetExceptionHandler(new RetryableChannelExceptionHandler(this))
+            .SetLifecycleHandler(new InnerLifecycleHandler(this))
+            .SetExceptionHandler(new InnerExceptionHandler(this))
             .SetPipeline(IChannelPipeline.Create(
-                new RetryableChannelInboundPipe(this),
-                new RetryableChannelOutboundPipe(this)))
+                new InnerInboundPipe(this),
+                new InnerOutboundPipe(this)))
             .SetAutoRequest(configuration.AutoRequest);
-        innerConfigurationBuilder.AddSection(
-            configuration.GetSection<SocketChannelConfigurationSection>());
+        innerConfigurationBuilder.AddSection(_socketConfSection);
 
         _channel = new TcpSocketChannel(socket, innerConfigurationBuilder.Build(), status);
 
@@ -171,11 +173,19 @@ public class RetryableTcpSocketChannel : IRetryableChannel
         }
     }
 
-    public IChannelRetryStrategy? RetryStrategy
+    public IChannelReconnectStrategy ReconnectStrategy
     {
         get
         {
-            return _configuration.RetryStrategy;
+            return _configuration.ReconnectStrategy!;
+        }
+    }
+
+    public IChannelReconnectHandler ReconnectHandler
+    {
+        get
+        {
+            return _configuration.ReconnectHandler!;
         }
     }
 
@@ -230,16 +240,21 @@ public class RetryableTcpSocketChannel : IRetryableChannel
 
             _endPoint = endPoint;
         }
-        catch
+        catch (Exception startEx)
         {
-            bool success = await RetryAsync(endPoint);
-            if (success)
+            try
             {
-                _endPoint = endPoint;
-                return;
-            }
+                await RunReconnectAsync(
+                           endPoint,
+                           ChannelReconnectReason.ThrownWhenStart,
+                           startEx);
 
-            throw;
+                _endPoint = endPoint;
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 
@@ -302,16 +317,36 @@ public class RetryableTcpSocketChannel : IRetryableChannel
         EventLoop.StartNew(() => InvokeLifecycleActive());
     }
 
-    private void RunLifecycleHandlerInactive()
+    private void RunLifecycleHandlerInactive(ChannelInactiveReason reason, Exception? cause)
     {
         if (EventLoop.IsInEventLoop)
         {
-            InvokeLifecycleInactive();
+            InvokeLifecycleInactive(reason, cause);
             return;
         }
 
-        EventLoop.StartNew(() => InvokeLifecycleInactive());
+        EventLoop.StartNew(() => InvokeLifecycleInactive(reason, cause));
     }
+
+    private void RunReconnectHandlerStart()
+    {
+        if (EventLoop.IsInEventLoop)
+        {
+            InvokeReconnectHandlerStart();
+            return;
+        }
+
+        EventLoop.StartNew(() => InvokeReconnectHandlerStart());
+    }
+
+    private void RunReconnectHandlerEnd()
+    {
+        if (EventLoop.IsInEventLoop)
+        {
+            return;
+        }
+    }
+
 
     private void InvokeLifecycleActive()
     {
@@ -325,11 +360,11 @@ public class RetryableTcpSocketChannel : IRetryableChannel
         }
     }
 
-    private void InvokeLifecycleInactive()
+    private void InvokeLifecycleInactive(ChannelInactiveReason reason, Exception? cause)
     {
         try
         {
-            LifecycleHandler.HandleChannelInactive(this);
+            LifecycleHandler.HandleChannelInactive(this, reason, cause);
         }
         catch (Exception ex)
         {
@@ -337,93 +372,173 @@ public class RetryableTcpSocketChannel : IRetryableChannel
         }
     }
 
-    private Task<bool> RunRetryAsync(EndPoint? endPoint)
+    private void InvokeReconnectHandlerStart()
+    {
+        if (!_started)
+        {
+            return;
+        }
+
+        try
+        {
+            ReconnectHandler.HandleReconnectStart(_ctx);
+        }
+        catch (Exception ex)
+        {
+            RunExceptionHandler(ex);
+        }
+    }
+
+    private void InvokeReconnectHandlerEnd(bool isSuccess)
+    {
+        if (!_started)
+        {
+            return;
+        }
+
+        try
+        {
+            ReconnectHandler.HandleReconnectEnd(_ctx, isSuccess);
+        }
+        catch (Exception ex)
+        {
+            RunExceptionHandler(ex);
+        }
+    }
+
+    private Task RunReconnectAsync(
+        EndPoint endPoint,
+        ChannelReconnectReason reason,
+        Exception? cause)
     {
         if (EventLoop.IsInEventLoop)
         {
-            return InvokeRetryAsync(endPoint);
+            return InvokeReconnectAsync(endPoint, reason, cause);
         }
 
-        return EventLoop.StartNew(() => InvokeRetryAsync(endPoint))
+        return EventLoop.StartNew(() => InvokeReconnectAsync(endPoint, reason, cause))
             .Unwrap();
     }
 
-    private Task<bool> InvokeRetryAsync(EndPoint? endPoint)
-    {
-        _currentRetryCount = 0;
-        return RetryAsync(endPoint);
-    }
-
-    private async Task<bool> RetryAsync(EndPoint? endPoint)
+    private async Task InvokeReconnectAsync(
+        EndPoint endPoint,
+        ChannelReconnectReason reason,
+        Exception? cause)
     {
         if (endPoint == null)
         {
             throw new InvalidOperationException("Call Bind() or Start() first");
         }
 
-        IChannelRetryStrategy? strategy = _configuration.RetryStrategy;
-        if (strategy == null)
+        IChannelReconnectStrategy reconnectStrategy = ReconnectStrategy;
+        if (reconnectStrategy == null)
         {
-            return false;
+            throw new InvalidOperationException("ReconnectStrategy is null");
         }
 
-        double waitMilliseconds = strategy.HandleRetry(_currentRetryCount++);
-        if (waitMilliseconds <= 0.0)
+        IChannelReconnectHandler reconnectHandler = ReconnectHandler;
+        if (reconnectHandler == null)
         {
-            return false;
+            throw new InvalidOperationException("ReconnectHandler is null");
         }
 
-        try
+        int currentReconnectCount = 0;
+
+        Exception? lastException = null;
+        bool reconnectStartCalled = false;
+        while (true)
         {
-            await Task.Delay(TimeSpan.FromMilliseconds(waitMilliseconds));
+            double waitMilliseconds;
+            try
+            {
+                waitMilliseconds = reconnectStrategy.TryReconnecct(
+                    ++currentReconnectCount,
+                    reason,
+                    cause);
+                if (waitMilliseconds <= 0.0)
+                {
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                RunExceptionHandler(ex);
+                lastException = ex;
+                break;
+            }
 
-            await _channel.StartAsync(endPoint);
 
-            _currentRetryCount = 0;
+            if (!reconnectStartCalled)
+            {
+                reconnectStartCalled = true;
+                InvokeReconnectHandlerStart();
+            }
 
-            return true;
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(waitMilliseconds));
+
+                await _channel.StartAsync(endPoint);
+
+                InvokeReconnectHandlerEnd(true);
+
+                return;
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+            }
         }
-        catch
-        {
-            return await RetryAsync(endPoint);
-        }
+
+        InvokeReconnectHandlerEnd(false);
+
+        throw new InvalidOperationException("retry failed", lastException);
     }
 
-    private class RetryableChannelLifecycleHandler : IChannelLifecycleHandler
+    private class InnerLifecycleHandler : IChannelLifecycleHandler
     {
-        private readonly RetryableTcpSocketChannel _parent;
+        private readonly ReconnectableTcpSocketChannel _parent;
 
-        public RetryableChannelLifecycleHandler(RetryableTcpSocketChannel parent)
+        public InnerLifecycleHandler(ReconnectableTcpSocketChannel parent)
         {
             _parent = parent;
         }
 
         public void HandleChannelActive(IChannel channel)
         {
+            if (_parent._started)
+            {
+                return;
+            }
+
+            _parent._started = true;
             _parent.RunLifecycleHandlerActive();
         }
 
-        public void HandleChannelInactive(IChannel channel)
+        public void HandleChannelInactive(
+            IChannel channel,
+            ChannelInactiveReason reason,
+            Exception? cause)
         {
-            _parent.RunRetryAsync(_parent._endPoint)
+            ChannelReconnectReason reconnectReason = reason.ConvertToReconnectReason();
+            _parent.RunReconnectAsync(_parent._endPoint!, reconnectReason, cause)
                 .ContinueWith((task) =>
                 {
-                    bool success = task.Result;
-                    if (success)
+                    if (!task.IsFaulted)
                     {
                         return;
                     }
 
-                    _parent.RunLifecycleHandlerInactive();
+                    _parent.RunLifecycleHandlerInactive(reason, task.Exception ?? cause);
                 });
         }
     }
 
-    private class RetryableChannelExceptionHandler : IChannelExceptionHandler
+    private class InnerExceptionHandler : IChannelExceptionHandler
     {
-        private readonly RetryableTcpSocketChannel _parent;
+        private readonly ReconnectableTcpSocketChannel _parent;
 
-        public RetryableChannelExceptionHandler(RetryableTcpSocketChannel parent)
+        public InnerExceptionHandler(ReconnectableTcpSocketChannel parent)
         {
             _parent = parent;
         }
@@ -434,11 +549,11 @@ public class RetryableTcpSocketChannel : IRetryableChannel
         }
     }
 
-    private class RetryableChannelInboundPipe : IChannelInboundPipe<IByteBuffer, Unit>
+    private class InnerInboundPipe : IChannelInboundPipe<IByteBuffer, Unit>
     {
-        private readonly RetryableTcpSocketChannel _parent;
+        private readonly ReconnectableTcpSocketChannel _parent;
 
-        public RetryableChannelInboundPipe(RetryableTcpSocketChannel parent)
+        public InnerInboundPipe(ReconnectableTcpSocketChannel parent)
         {
             _parent = parent;
         }
@@ -451,11 +566,11 @@ public class RetryableTcpSocketChannel : IRetryableChannel
         }
     }
 
-    private class RetryableChannelOutboundPipe : IChannelOutboundPipe<object, IByteBuffer>
+    private class InnerOutboundPipe : IChannelOutboundPipe<object, IByteBuffer>
     {
-        private readonly RetryableTcpSocketChannel _parent;
+        private readonly ReconnectableTcpSocketChannel _parent;
 
-        public RetryableChannelOutboundPipe(RetryableTcpSocketChannel parent)
+        public InnerOutboundPipe(ReconnectableTcpSocketChannel parent)
         {
             _parent = parent;
         }

@@ -19,9 +19,11 @@ public class Constants
 
     public static readonly IChannelOutboundPipe<IByteBuffer, IByteBuffer> DefaultOutboundPipe = IChannelOutboundPipe.Create<IByteBuffer, IByteBuffer>((_, message) => Result.Create(ChannelPipeResultType.CallNext, message));
 
-    public static readonly IChannelLifecycleHandler DefaultLifecycleHandler = IChannelLifecycleHandler.Create((_) => { }, (_) => { });
+    public static readonly IChannelLifecycleHandler DefaultLifecycleHandler = IChannelLifecycleHandler.Create((_) => { }, (_, _, _) => { });
 
     public static readonly IChannelExceptionHandler DefaultExceptionHandler = IChannelExceptionHandler.Create((_, _) => { });
+
+    public static readonly IChannelReconnectHandler DefaultReconnectHandler = IChannelReconnectHandler.Create((_) => { }, (_, _) => { });
 
     public static readonly HashSet<SocketError> DefaultCloseSocketErrors = new()
     {
@@ -35,7 +37,7 @@ public class Constants
         SocketError.NoRecovery,
     };
 
-    public const double DefaultWaitMillisecondsBeforeRetry = 5000.0;
+    public const double DefaultWaitMillisecondsBeforeReconnect = 5000.0;
 
     // TODO: create 'Soil.Util' and define 'DebugDefined' static method.
 #if DEBUG

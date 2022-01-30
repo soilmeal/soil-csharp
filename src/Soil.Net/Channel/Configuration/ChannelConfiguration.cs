@@ -21,7 +21,9 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
 
     private readonly IChannelPipeline _pipeline;
 
-    private readonly IChannelRetryStrategy? _retryStrategy;
+    private readonly IChannelReconnectStrategy? _reconnectStrategy;
+
+    private readonly IChannelReconnectHandler? _reconnectHandler;
 
     private readonly bool _autoRequest;
 
@@ -75,11 +77,19 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         }
     }
 
-    public IChannelRetryStrategy? RetryStrategy
+    public IChannelReconnectStrategy? ReconnectStrategy
     {
         get
         {
-            return _retryStrategy;
+            return _reconnectStrategy;
+        }
+    }
+
+    public IChannelReconnectHandler? ReconnectHandler
+    {
+        get
+        {
+            return _reconnectHandler;
         }
     }
 
@@ -105,7 +115,8 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         IChannelLifecycleHandler lifecycleHandler,
         IChannelExceptionHandler exceptionHandler,
         IChannelPipeline pipeline,
-        IChannelRetryStrategy? retryStrategy,
+        IChannelReconnectStrategy? reconnectStrategy,
+        IChannelReconnectHandler? reconnectHandler,
         bool autoRequest,
         IReadOnlyDictionary<string, IReadOnlyChannelConfigurationSection> sections)
     {
@@ -115,7 +126,8 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         _lifecycleHandler = lifecycleHandler;
         _exceptionHandler = exceptionHandler;
         _pipeline = pipeline;
-        _retryStrategy = retryStrategy;
+        _reconnectStrategy = reconnectStrategy;
+        _reconnectHandler = reconnectHandler;
         _autoRequest = autoRequest;
         _sections = sections;
     }
@@ -141,7 +153,9 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
 
         private IChannelPipeline? _pipeline;
 
-        private IChannelRetryStrategy? _retryStrategy;
+        private IChannelReconnectStrategy? _reconnectStrategy;
+
+        private IChannelReconnectHandler? _reconnectHandler;
 
         private bool _autoRequest = true;
 
@@ -187,11 +201,19 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             }
         }
 
-        public IChannelRetryStrategy? RetryStrategy
+        public IChannelReconnectStrategy? ReconnectStrategy
         {
             get
             {
-                return _retryStrategy;
+                return _reconnectStrategy;
+            }
+        }
+
+        public IChannelReconnectHandler? ReconnectHandler
+        {
+            get
+            {
+                return _reconnectHandler;
             }
         }
 
@@ -257,9 +279,16 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             return this;
         }
 
-        public Builder SetRetryStrategy(IChannelRetryStrategy? retryStrategy)
+        public Builder SetReconnectStrategy(IChannelReconnectStrategy reconnectStrategy)
         {
-            _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
+            _reconnectStrategy = reconnectStrategy ?? throw new ArgumentNullException(nameof(reconnectStrategy));
+
+            return this;
+        }
+
+        public Builder SetReconnectHandler(IChannelReconnectHandler reconnectHandler)
+        {
+            _reconnectHandler = reconnectHandler ?? throw new ArgumentNullException(nameof(reconnectHandler));
 
             return this;
         }
@@ -286,7 +315,8 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
                 lifecycleHandler,
                 exceptionHandler,
                 pipeline,
-                _retryStrategy,
+                _reconnectStrategy,
+                _reconnectHandler,
                 _autoRequest,
                 _sections);
         }

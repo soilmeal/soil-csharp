@@ -72,7 +72,7 @@ public class ChannelBootstrap
 
     public ChannelBootstrap LifecycleHandler(
         Action<IChannel> activeAction,
-        Action<IChannel> inactiveAction)
+        Action<IChannel, ChannelInactiveReason, Exception?> inactiveAction)
     {
 
         return LifecycleHandler(IChannelLifecycleHandler.Create(activeAction, inactiveAction));
@@ -124,21 +124,37 @@ public class ChannelBootstrap
         return this;
     }
 
-    public ChannelBootstrap RetryStrategy(int maxRetryCount)
+    public ChannelBootstrap ReconnectStrategy(int maxReconnectCount)
     {
-        return RetryStrategy(maxRetryCount, Constants.DefaultWaitMillisecondsBeforeRetry);
+        return ReconnectStrategy(maxReconnectCount, Constants.DefaultWaitMillisecondsBeforeReconnect);
     }
 
-    public ChannelBootstrap RetryStrategy(int maxRetryCount, double waitMillisecondsBeforeRetry)
+    public ChannelBootstrap ReconnectStrategy(
+        int maxReconnectCount,
+        double waitMillisecondsBeforeReconnect)
     {
-        return RetryStrategy(new ChannelMaxRetryCountStrategy(
-            maxRetryCount,
-            waitMillisecondsBeforeRetry));
+        return ReconnectStrategy(new ChannelMaxReconnectCountStrategy(
+            maxReconnectCount,
+            waitMillisecondsBeforeReconnect));
     }
 
-    public ChannelBootstrap RetryStrategy(IChannelRetryStrategy retryStrategy)
+    public ChannelBootstrap ReconnectStrategy(IChannelReconnectStrategy reconnectStrategy)
     {
-        _configurationBuilder.SetRetryStrategy(retryStrategy);
+        _configurationBuilder.SetReconnectStrategy(reconnectStrategy);
+
+        return this;
+    }
+
+    public ChannelBootstrap ReconnectHandler(
+        Action<IChannelHandlerContext> onStart,
+        Action<IChannelHandlerContext, bool> onEnd)
+    {
+        return ReconnectHandler(IChannelReconnectHandler.Create(onStart, onEnd));
+    }
+
+    public ChannelBootstrap ReconnectHandler(IChannelReconnectHandler reconnectHandler)
+    {
+        _configurationBuilder.SetReconnectHandler(reconnectHandler);
 
         return this;
     }
@@ -255,13 +271,19 @@ public class ChannelBootstrap
 
         SocketChannelConfigurationSection.SetIfAbsent(_configurationBuilder);
 
-        ChannelConfiguration configuration = _configurationBuilder.Build();
-        IChannelRetryStrategy? retryStrategy = configuration.RetryStrategy;
+        IChannelReconnectStrategy? reconnectStrategy = _configurationBuilder.ReconnectStrategy;
 
-        IChannel channel = retryStrategy != null
-            ? new RetryableTcpSocketChannel(addressFamily, configuration)
-            : new TcpSocketChannel(addressFamily, configuration);
+        if (reconnectStrategy == null)
+        {
+            return new TcpSocketChannel(addressFamily, _configurationBuilder.Build());
+        }
 
-        return channel;
+        IChannelReconnectHandler? reconnectHandler = _configurationBuilder.ReconnectHandler;
+        if (reconnectHandler == null)
+        {
+            _configurationBuilder.SetReconnectHandler(Constants.DefaultReconnectHandler);
+        }
+
+        return new ReconnectableTcpSocketChannel(addressFamily, _configurationBuilder.Build());
     }
 }

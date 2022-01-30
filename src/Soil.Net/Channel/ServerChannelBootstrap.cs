@@ -121,16 +121,16 @@ public class ServerChannelBootstrap
 
     public ServerChannelBootstrap LifecycleHandler(
         Action<IChannel> activeAction,
-        Action<IChannel> inactiveAction)
+        Action<IChannel, ChannelInactiveReason, Exception?> inactiveAction)
     {
         return LifecycleHandler(activeAction, inactiveAction, activeAction, inactiveAction);
     }
 
     public ServerChannelBootstrap LifecycleHandler(
         Action<IChannel> masterActiveAction,
-        Action<IChannel> masterInactiveAction,
+        Action<IChannel, ChannelInactiveReason, Exception?> masterInactiveAction,
         Action<IChannel> childActiveAction,
-        Action<IChannel> childInactiveAction)
+        Action<IChannel, ChannelInactiveReason, Exception?> childInactiveAction)
     {
 
         return LifecycleHandler(

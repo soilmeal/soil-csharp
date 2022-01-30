@@ -1,6 +1,8 @@
 namespace Soil.Net.Channel;
 
-public interface IRetryableChannel : IChannel
+public interface IReconnectableChannel : IChannel
 {
-    IChannelRetryStrategy? RetryStrategy { get; }
+    IChannelReconnectStrategy? ReconnectStrategy { get; }
+
+    IChannelReconnectHandler? ReconnectHandler { get; }
 }
