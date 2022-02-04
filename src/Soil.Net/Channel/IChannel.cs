@@ -9,6 +9,8 @@ namespace Soil.Net.Channel;
 
 public interface IChannel
 {
+    ChannelId Id { get; }
+
     AddressFamily AddressFamily { get; }
 
     SocketType SocketType { get; }

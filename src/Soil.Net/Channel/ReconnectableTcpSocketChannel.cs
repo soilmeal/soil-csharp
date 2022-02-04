@@ -65,6 +65,14 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         _ctx = new ChannelHandlerContext(this);
     }
 
+    public ChannelId Id
+    {
+        get
+        {
+            return _channel.Id;
+        }
+    }
+
     public AddressFamily AddressFamily
     {
         get

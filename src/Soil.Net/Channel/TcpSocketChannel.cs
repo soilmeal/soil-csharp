@@ -14,6 +14,7 @@ namespace Soil.Net.Channel;
 
 public class TcpSocketChannel : ISocketChannel, IDisposable
 {
+    private readonly ChannelId _id;
     private readonly AtomicInt32 _status = new((int)ChannelStatus.None);
 
     private readonly Socket _socket;
@@ -28,6 +29,14 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     private readonly SocketChannelConfigurationSection _socketConfSection;
 
+
+    public ChannelId Id
+    {
+        get
+        {
+            return _id;
+        }
+    }
     public AddressFamily AddressFamily
     {
         get
@@ -174,6 +183,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         Socket socket,
         ChannelConfiguration configuration)
     {
+        _id = new ChannelId(this);
         _socket = socket;
         _eventLoop = configuration.EventLoopGroup.Next();
         _pipeline = configuration.Pipeline;
