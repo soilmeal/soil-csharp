@@ -608,9 +608,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         }
         catch (Exception ex)
         {
-#pragma warning disable CS4014 
-            child.CloseAsync();
-#pragma warning restore CS4014 
+            socket.Close();
 
             RunExceptionHandler(ex);
         }

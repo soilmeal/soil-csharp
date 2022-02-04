@@ -4,7 +4,7 @@ namespace Soil.Net.Channel;
 
 public interface IChannelInitHandler
 {
-    IChannel InitChannel(IChannel channel);
+    void InitChannel(IChannel channel);
 
     public static IChannelInitHandler Create(Func<IChannel, IChannel> func)
     {
@@ -20,9 +20,9 @@ public interface IChannelInitHandler
             _action = func;
         }
 
-        public IChannel InitChannel(IChannel channel)
+        public void InitChannel(IChannel channel)
         {
-            return _action.Invoke(channel);
+            _action.Invoke(channel);
         }
     }
 }
