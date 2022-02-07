@@ -4,6 +4,8 @@ namespace Soil.Net.Channel;
 
 public interface IChannelHandlerContext
 {
+    ChannelId Id { get; }
+
     IByteBufferAllocator Allocator { get; }
 
     void RequestRead(IByteBuffer? byteBuffer = null);

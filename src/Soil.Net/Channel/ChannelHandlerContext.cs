@@ -6,6 +6,14 @@ public class ChannelHandlerContext : IChannelHandlerContext
 {
     private readonly IChannel _channel;
 
+    public ChannelId Id
+    {
+        get
+        {
+            return _channel.Id;
+        }
+    }
+
     public IByteBufferAllocator Allocator
     {
         get
