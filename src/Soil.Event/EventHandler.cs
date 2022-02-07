@@ -1,3 +1,3 @@
 namespace Soil.Event;
 
-public delegate void EventHandler<TEvent>(TEvent? eventData);
+public delegate void EventHandler<TEvent>(TEvent eventData);

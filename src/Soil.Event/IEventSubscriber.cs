@@ -40,24 +40,13 @@ public class EventSubscriber
             return this;
         }
 
-        public Builder<TEnum> AddHandler<TEvent>(TEnum type, Action<TEvent> handler)
-        {
-            if (handler == null)
-            {
-                throw new ArgumentNullException(nameof(handler));
-            }
-
-            _handlers.TryAdd(type, WrapHandler(handler));
-
-            return this;
-        }
-
         public EventSubscriber<TEnum> Build()
         {
             return new EventSubscriber<TEnum>(_handlers);
         }
 
-        private static EventHandler<Event<TEnum>> WrapHandler<TEvent>(Action<TEvent> handler)
+        private static EventHandler<Event<TEnum>> WrapHandler<TEvent>(EventHandler<TEvent> handler)
+            where TEvent : Event<TEnum>
         {
             return (evt) =>
             {

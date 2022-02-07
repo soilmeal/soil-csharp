@@ -8,7 +8,7 @@ public class ImmediateEventDispatcher<TEnum> : IEventDispatcher<TEnum>
 {
     private readonly IEventHandlerSet<TEnum> _handlerSet;
 
-    private ImmediateEventDispatcher(IEventHandlerSet<TEnum> handlerSets)
+    internal ImmediateEventDispatcher(IEventHandlerSet<TEnum> handlerSets)
     {
         _handlerSet = handlerSets;
     }
@@ -27,13 +27,18 @@ public class ImmediateEventDispatcher<TEnum> : IEventDispatcher<TEnum>
     {
         _handlerSet.Dispatch(eventData);
     }
+}
 
-    public static ImmediateEventDispatcher<TEnum> Create()
+public class ImmediateEventDispatcher
+{
+    public static ImmediateEventDispatcher<TEnum> Create<TEnum>()
+        where TEnum : struct, Enum
     {
         return new ImmediateEventDispatcher<TEnum>(new EventHandlerSet<TEnum>());
     }
 
-    public static ImmediateEventDispatcher<TEnum> CreateConcurrent()
+    public static ImmediateEventDispatcher<TEnum> CreateConcurrent<TEnum>()
+        where TEnum : struct, Enum
     {
         return new ImmediateEventDispatcher<TEnum>(new ConcurrentEventHandlerSet<TEnum>());
     }

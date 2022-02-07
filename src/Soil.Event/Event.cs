@@ -2,7 +2,7 @@ using System;
 
 namespace Soil.Event;
 
-public abstract class Event<TEnum>
+public abstract record Event<TEnum>
     where TEnum : struct, Enum
 {
     private readonly TEnum _type;
