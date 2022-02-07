@@ -16,6 +16,12 @@
       },
       "soil.types": {
         "type": "Project"
+      },
+      "soil.utils": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       }
     },
     ".NETStandard,Version=v2.1": {
@@ -33,6 +39,12 @@
       },
       "soil.types": {
         "type": "Project"
+      },
+      "soil.utils": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       }
     },
     ".NETCoreApp,Version=v5.0": {
@@ -50,6 +62,12 @@
       },
       "soil.types": {
         "type": "Project"
+      },
+      "soil.utils": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       }
     },
     "net6.0": {
@@ -67,6 +85,12 @@
       },
       "soil.types": {
         "type": "Project"
+      },
+      "soil.utils": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       }
     }
   }

@@ -27,6 +27,8 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
 
     private readonly bool _autoRequest;
 
+    private readonly IChannelIdGenerator _idGenerator;
+
     private readonly IReadOnlyDictionary<string, IReadOnlyChannelConfigurationSection> _sections;
 
     public IByteBufferAllocator Allocator
@@ -101,6 +103,14 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         }
     }
 
+    public IChannelIdGenerator IdGenerator
+    {
+        get
+        {
+            return _idGenerator;
+        }
+    }
+
     protected override IReadOnlyDictionary<string, IReadOnlyChannelConfigurationSection> Sections
     {
         get
@@ -118,6 +128,7 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         IChannelReconnectStrategy? reconnectStrategy,
         IChannelReconnectHandler? reconnectHandler,
         bool autoRequest,
+        IChannelIdGenerator idGenerator,
         IReadOnlyDictionary<string, IReadOnlyChannelConfigurationSection> sections)
     {
         _allocator = allocator;
@@ -129,6 +140,7 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         _reconnectStrategy = reconnectStrategy;
         _reconnectHandler = reconnectHandler;
         _autoRequest = autoRequest;
+        _idGenerator = idGenerator;
         _sections = sections;
     }
 
@@ -158,6 +170,8 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         private IChannelReconnectHandler? _reconnectHandler;
 
         private bool _autoRequest = true;
+
+        private IChannelIdGenerator? _idGenerator;
 
         private readonly Dictionary<string, IReadOnlyChannelConfigurationSection> _sections = new();
 
@@ -222,6 +236,14 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             get
             {
                 return _autoRequest;
+            }
+        }
+
+        public IChannelIdGenerator? IdGenerator
+        {
+            get
+            {
+                return _idGenerator;
             }
         }
 
@@ -300,6 +322,13 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             return this;
         }
 
+        public Builder SetIdGenerator(IChannelIdGenerator idGenerator)
+        {
+            _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+
+            return this;
+        }
+
         public ChannelConfiguration Build()
         {
             IByteBufferAllocator allocator = _allocator ?? throw new InvalidOperationException("set Allocator first");
@@ -307,6 +336,7 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             IChannelLifecycleHandler lifecycleHandler = _lifecycleHandler ?? throw new InvalidOperationException("set LifecycleHandler first");
             IChannelExceptionHandler exceptionHandler = _exceptionHandler ?? throw new InvalidOperationException("set ExceptionHandler first");
             IChannelPipeline pipeline = _pipeline ?? DefaultChannelPipeline.Instance;
+            IChannelIdGenerator idGenerator = _idGenerator ?? new DefaultChannelIdGenerator();
 
             return new ChannelConfiguration(
                 allocator,
@@ -318,6 +348,7 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
                 _reconnectStrategy,
                 _reconnectHandler,
                 _autoRequest,
+                idGenerator,
                 _sections);
         }
     }

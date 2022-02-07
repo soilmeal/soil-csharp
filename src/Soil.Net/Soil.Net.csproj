@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Soil.Threading\Soil.Threading.csproj" />
     <ProjectReference Include="..\Soil.Types\Soil.Types.csproj" />
     <ProjectReference Include="..\Soil.ObjectPool\Soil.ObjectPool.csproj" />
+    <ProjectReference Include="..\Soil.Utils\Soil.Utils.csproj" />
 
   </ItemGroup>
 </Project>

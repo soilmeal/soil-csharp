@@ -183,7 +183,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         Socket socket,
         ChannelConfiguration configuration)
     {
-        _id = new ChannelId(this);
+        _id = configuration.IdGenerator.Generate(this);
         _socket = socket;
         _eventLoop = configuration.EventLoopGroup.Next();
         _pipeline = configuration.Pipeline;

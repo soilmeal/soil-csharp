@@ -54,7 +54,8 @@
           "Soil.Buffers": "1.0.0",
           "Soil.ObjectPool": "1.0.0",
           "Soil.Threading": "1.0.0",
-          "Soil.Types": "1.0.0"
+          "Soil.Types": "1.0.0",
+          "Soil.Utils": "1.0.0"
         }
       },
       "soil.objectpool": {
@@ -65,6 +66,12 @@
       },
       "soil.types": {
         "type": "Project"
+      },
+      "soil.utils": {
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       }
     }
   }

@@ -190,7 +190,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         ChannelConfiguration configuration,
         ChannelConfiguration childConfiguration)
     {
-        _id = new ChannelId(this);
+        _id = configuration.IdGenerator.Generate(this);
         _socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
         _eventLoop = configuration.EventLoopGroup;
 

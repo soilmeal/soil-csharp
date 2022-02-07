@@ -330,6 +330,10 @@ public class ServerChannelBootstrap
             _childConfigurationBuilder.SetExceptionHandler(Constants.DefaultExceptionHandler);
         }
 
+        IChannelIdGenerator idGenerator = new DefaultChannelIdGenerator();
+        _masterConfigurationBuilder.SetIdGenerator(idGenerator);
+        _childConfigurationBuilder.SetIdGenerator(idGenerator);
+
         SocketChannelConfigurationSection.SetIfAbsent(_masterConfigurationBuilder);
         SocketChannelConfigurationSection.SetIfAbsent(_childConfigurationBuilder);
 
