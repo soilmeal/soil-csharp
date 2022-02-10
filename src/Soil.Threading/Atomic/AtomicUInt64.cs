@@ -94,6 +94,11 @@ public class AtomicUInt64 : IAtomicInteger<ulong>
             ToInt64(comparand)));
     }
 
+    public static implicit operator AtomicUInt64(ulong value)
+    {
+        return new AtomicUInt64(value);
+    }
+
     public static implicit operator ulong(AtomicUInt64 atomic)
     {
         return atomic.Read();

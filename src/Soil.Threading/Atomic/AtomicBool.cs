@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Soil.Threading.Atomic;
 
@@ -39,5 +37,15 @@ public class AtomicBool : IAtomic<bool>
         int comparandInt = Convert.ToInt32(comparand);
         int result = Interlocked.CompareExchange(ref _value, otherInt, comparandInt);
         return Convert.ToBoolean(result);
+    }
+
+    public static implicit operator bool(AtomicBool value)
+    {
+        return value.Read();
+    }
+
+    public static implicit operator AtomicBool(bool value)
+    {
+        return new AtomicBool(value);
     }
 }

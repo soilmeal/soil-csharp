@@ -46,6 +46,11 @@ public class AtomicDouble : IAtomicNumeric<double>
         return _impl.CompareExchange(other, comparand);
     }
 
+    public static implicit operator AtomicDouble(double value)
+    {
+        return new AtomicDouble(value);
+    }
+
     public static implicit operator double(AtomicDouble atomic)
     {
         return atomic.Read();

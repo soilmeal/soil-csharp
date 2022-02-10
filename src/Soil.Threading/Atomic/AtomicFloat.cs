@@ -53,6 +53,11 @@ public class AtomicFloat : IAtomicNumeric<float>
         return Interlocked.CompareExchange(ref _value, other, comparand);
     }
 
+    public static implicit operator AtomicFloat(float value)
+    {
+        return new AtomicFloat(value);
+    }
+
     public static implicit operator float(AtomicFloat atomic)
     {
         return atomic.Read();

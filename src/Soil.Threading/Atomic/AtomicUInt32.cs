@@ -94,6 +94,11 @@ public class AtomicUInt32 : IAtomicInteger<uint>
             ToInt32(comparand)));
     }
 
+    public static implicit operator AtomicUInt32(uint value)
+    {
+        return new AtomicUInt32(value);
+    }
+
     public static implicit operator long(AtomicUInt32 atomic)
     {
         uint val = atomic;

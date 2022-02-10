@@ -81,6 +81,11 @@ public class AtomicInt32 : IAtomicInteger<int>
         return Interlocked.CompareExchange(ref _value, other, comparand);
     }
 
+    public static implicit operator AtomicInt32(int value)
+    {
+        return new AtomicInt32(value);
+    }
+
     public static implicit operator int(AtomicInt32 atomic)
     {
         return atomic.Read();

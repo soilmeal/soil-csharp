@@ -81,6 +81,11 @@ public class AtomicInt64 : IAtomicInteger<long>
         return Interlocked.CompareExchange(ref _value, other, comparand);
     }
 
+    public static implicit operator AtomicInt64(long value)
+    {
+        return new AtomicInt64(value);
+    }
+
     public static implicit operator long(AtomicInt64 atomic)
     {
         return atomic.Read();
