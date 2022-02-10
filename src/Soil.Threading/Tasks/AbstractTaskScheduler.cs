@@ -12,6 +12,12 @@ public abstract class AbstractTaskScheduler : TaskScheduler, IDisposable
 
     public abstract void Dispose();
 
+    public abstract void JoinAll();
+
+    public abstract void JoinAll(TimeSpan timeout);
+
+    public abstract void JoinAll(int millisecondsTimeout);
+
     protected abstract void Dispose(bool disposing);
 
     public class Builder

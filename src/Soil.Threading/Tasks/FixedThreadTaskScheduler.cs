@@ -4,12 +4,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Soil.Threading.Atomic;
 
 namespace Soil.Threading.Tasks;
 
 public class FixedThreadTaskScheduler : AbstractTaskScheduler
 {
     private readonly int _maximumConcurrencyLevel;
+
+    private readonly IThreadFactory _threadFactory;
+
+    private readonly BlockingCollection<Task> _tasks;
+
+    private readonly Thread[] _threads;
+
+    private readonly HashSet<int> _managedThreadIds;
+
+    private readonly AtomicBool _disposed = false;
+
     public override int MaximumConcurrencyLevel
     {
         get
@@ -18,7 +30,6 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
         }
     }
 
-    private readonly IThreadFactory _threadFactory;
     public override IThreadFactory ThreadFactory
     {
         get
@@ -26,12 +37,6 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
             return _threadFactory;
         }
     }
-
-    private readonly BlockingCollection<Task> _tasks;
-
-    private readonly Thread[] _threads;
-
-    private readonly HashSet<int> _managedThreadIds;
 
     internal FixedThreadTaskScheduler(
         int maximumConcurrencyLevel,
@@ -73,6 +78,49 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
         return _managedThreadIds.Contains(managedThreadId);
     }
 
+    public override void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public override void JoinAll()
+    {
+        Dispose();
+
+        Parallel.ForEach(_threads, thread => thread.Join());
+    }
+
+    public override void JoinAll(TimeSpan timeout)
+    {
+        Dispose();
+
+        Parallel.ForEach(_threads, thread => thread.Join(timeout));
+    }
+
+    public override void JoinAll(int millisecondsTimeout)
+    {
+        Dispose();
+
+        Parallel.ForEach(_threads, thread => thread.Join(millisecondsTimeout));
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (!disposing)
+        {
+            return;
+        }
+
+        if (_disposed.Exchange(true))
+        {
+            return;
+        }
+
+        _tasks.CompleteAdding();
+        _tasks.Dispose();
+    }
+
     protected override IEnumerable<Task>? GetScheduledTasks()
     {
         return _tasks.ToArray();
@@ -99,22 +147,5 @@ public class FixedThreadTaskScheduler : AbstractTaskScheduler
         {
             TryExecuteTask(task);
         }
-    }
-
-    public override void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (!disposing)
-        {
-            return;
-        }
-
-        _tasks.CompleteAdding();
-        _tasks.Dispose();
     }
 }
