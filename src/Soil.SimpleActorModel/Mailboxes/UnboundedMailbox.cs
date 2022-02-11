@@ -4,7 +4,7 @@ namespace Soil.SimpleActorModel.Mailboxes;
 
 public class UnboundedMailbox : Mailbox
 {
-    public UnboundedMailbox(ActorCell owner)
+    public UnboundedMailbox(IActorContext owner)
         : base(owner, new UnboundedMessageQueue())
     {
     }

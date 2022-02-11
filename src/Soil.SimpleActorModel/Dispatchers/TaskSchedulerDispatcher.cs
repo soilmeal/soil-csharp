@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Soil.SimpleActorModel.Actors;
 using Soil.SimpleActorModel.Mailboxes;
+using Soil.SimpleActorModel.Messages;
 using Soil.Threading;
 using Soil.Threading.Atomic;
 using Soil.Threading.Tasks;
@@ -12,8 +13,6 @@ namespace Soil.SimpleActorModel.Dispatchers;
 
 public class TaskSchedulerDispatcher : IDispatcher
 {
-    private readonly string _name;
-
     private readonly int _throughputPerActor;
 
     private readonly AbstractTaskScheduler _taskScheduler;
@@ -21,14 +20,6 @@ public class TaskSchedulerDispatcher : IDispatcher
     private readonly TaskFactory _taskFactory;
 
     private readonly AtomicBool _disposed = false;
-
-    public string Name
-    {
-        get
-        {
-            return _name;
-        }
-    }
 
     public int ThroughputPerActor
     {
@@ -38,13 +29,12 @@ public class TaskSchedulerDispatcher : IDispatcher
         }
     }
 
-    public TaskSchedulerDispatcher(string name, int throughputPerActor)
+    public TaskSchedulerDispatcher(int throughputPerActor)
     {
-        _name = name;
         _throughputPerActor = throughputPerActor;
         IThreadFactory threadFactory = new IThreadFactory.Builder()
             .SetPriority(ThreadPriority.Normal)
-            .Build(new ThreadNameFormatter($"{name}-{{0}}"));
+            .Build(new ThreadNameFormatter("task-scheduler-dispatcher-{0}"));
 
         _taskScheduler = new AbstractTaskScheduler.Builder()
             .SetThreadFactory(threadFactory)

@@ -1,8 +1,12 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Soil.SimpleActorModel.Actors;
+using Soil.SimpleActorModel.Messages;
+using Soil.SimpleActorModel.Messages.System;
 using Soil.Threading.Atomic;
 
 namespace Soil.SimpleActorModel.Mailboxes;
@@ -11,7 +15,9 @@ public abstract class Mailbox : IMessageQueue
 {
     private readonly AtomicInt32 _state = (int)MailboxState.Open;
 
-    private readonly ActorCell _owner;
+    private readonly IActorContext _owner;
+
+    private readonly IProducerConsumerCollection<SystemMessage> _systemMessages = new ConcurrentQueue<SystemMessage>();
 
     private readonly IMessageQueue _messageQueue;
 
@@ -63,25 +69,29 @@ public abstract class Mailbox : IMessageQueue
         }
     }
 
-    protected Mailbox(ActorCell owner, IMessageQueue messageQueue)
+    protected Mailbox(IActorContext owner, IMessageQueue messageQueue)
     {
         _owner = owner;
         _messageQueue = messageQueue;
     }
 
+    public bool TryAddSystemMessage(SystemMessage systemMessage)
+    {
+        return _systemMessages.TryAdd(systemMessage);
+    }
+
+    public bool TryTakeSystemMessage(out SystemMessage? systemMessage)
+    {
+        return _systemMessages.TryTake(out systemMessage);
+    }
+
     public bool TryAdd(Envelope item)
     {
-        return !IsClosed && _messageQueue.TryAdd(item);
+        return _messageQueue.TryAdd(item);
     }
 
     public bool TryTake(out Envelope item)
     {
-        if (IsClosed)
-        {
-            item = default;
-            return false;
-        }
-
         return _messageQueue.TryTake(out item);
     }
 
@@ -115,17 +125,36 @@ public abstract class Mailbox : IMessageQueue
         return TryChangeState(MailboxState.Open, MailboxState.Scheduled);
     }
 
-
     public void Process()
     {
-        ProcessMessage();
-
-        if (!TryBackToOpen())
+        try
         {
-            return;
-        }
+            if (IsClosed)
+            {
+                return;
+            }
 
-        _owner.Dispatcher.TryExecuteMailbox(this);
+            ProcessMessage();
+            ProcessAllSystemMessage();
+        }
+        finally
+        {
+            TryBackToOpen();
+            _owner.Dispatcher.TryExecuteMailbox(this);
+        }
+    }
+
+    private void ProcessAllSystemMessage()
+    {
+        while (TryTakeSystemMessage(out SystemMessage? systemMessage))
+        {
+            if (systemMessage == null)
+            {
+                continue;
+            }
+
+            _owner.InvokeSystem(systemMessage);
+        }
     }
 
     private void ProcessMessage()
@@ -136,10 +165,12 @@ public abstract class Mailbox : IMessageQueue
     private void ProcessMessage(int throughput)
     {
         int processCount = 0;
-        Envelope envelope;
-        while (processCount < throughput && TryTake(out envelope))
+        while (processCount < throughput && TryTake(out Envelope envelope))
         {
             _owner.Invoke(envelope);
+
+            ProcessAllSystemMessage();
+
             processCount += 1;
         }
     }
@@ -178,6 +209,6 @@ public abstract class Mailbox : IMessageQueue
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool HasState(MailboxState state)
     {
-        return GetState() == MailboxState.Closed;
+        return GetState() == state;
     }
 }

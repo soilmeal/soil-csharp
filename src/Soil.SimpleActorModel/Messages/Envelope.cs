@@ -1,6 +1,6 @@
 using Soil.SimpleActorModel.Actors;
 
-namespace Soil.SimpleActorModel;
+namespace Soil.SimpleActorModel.Messages;
 
 public struct Envelope
 {

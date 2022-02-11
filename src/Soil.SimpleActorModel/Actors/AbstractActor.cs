@@ -2,35 +2,51 @@ namespace Soil.SimpleActorModel.Actors;
 
 public abstract class AbstractActor
 {
-    public static readonly Receiver EmptyReceiver = (_) => false;
+    private IActorContext _context;
 
-    public Receiver Receiver
+    public IActorContext Context
     {
         get
         {
-            return Receive;
+            return _context;
+        }
+        internal set
+        {
+            _context = value;
         }
     }
 
-    public abstract IActorContext Context { get; }
+    protected AbstractActor()
+    {
+        _context = ActorContexts.None;
+    }
 
-    protected AbstractActor() { }
+    public virtual void HandleCreate()
+    {
+        OnCreate();
+    }
 
-    public virtual void PreStart()
+    public virtual void HandleStart()
+    {
+        OnStart();
+    }
+
+    public virtual void HandleStop()
+    {
+        OnStop();
+    }
+
+    public abstract void HandleReceive(object message);
+
+    protected virtual void OnCreate()
     {
     }
 
-    public virtual void PostStart()
+    protected virtual void OnStart()
     {
     }
 
-    public virtual void PreStop()
+    protected virtual void OnStop()
     {
     }
-
-    public virtual void PostStop()
-    {
-    }
-
-    protected abstract bool Receive(object message);
 }

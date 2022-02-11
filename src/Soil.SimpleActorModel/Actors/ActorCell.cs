@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Soil.Collections.Generics;
 using Soil.SimpleActorModel.Dispatchers;
 using Soil.SimpleActorModel.Mailboxes;
+using Soil.SimpleActorModel.Messages;
+using Soil.SimpleActorModel.Messages.System;
 
 namespace Soil.SimpleActorModel.Actors;
 
-public class ActorCell : IActorContext, IActorRef
+public class ActorCell : IActorContext, IEquatable<ActorCell>
 {
     private readonly AbstractActor _actor;
 
@@ -19,7 +20,7 @@ public class ActorCell : IActorContext, IActorRef
 
     private readonly CopyOnWriteList<IActorRef> _children = new();
 
-    private IActorRef _sender = IActorRef.NoSender;
+    private IActorRef _sender = ActorRefs.NoSender;
 
     public IActorRef Parent
     {
@@ -69,71 +70,111 @@ public class ActorCell : IActorContext, IActorRef
         }
     }
 
-    public ActorCell(
-        AbstractActor actor,
-        IActorRef parent,
-        IDispatcher dispatcher,
-        Mailbox mailbox)
+    public ActorCell(IActorRef parent, ActorProps props)
     {
-        _actor = actor;
+        _actor = props.ActorFactory.Create();
+        _actor.Context = this;
+
         _parent = parent;
-        _dispatcher = dispatcher;
-        _mailbox = mailbox;
+        _dispatcher = props.DispatcherProvider.Provide();
+        _mailbox = props.MailboxProvider.Provide(this);
+    }
+
+    public IActorRef Create(ActorProps props)
+    {
+        var child = new ActorCell(this, props);
+        _children.Add(child);
+
+        child.Mailbox.TryAddSystemMessage(Messages.System.Create.Instance);
+        child.Dispatcher.TryExecuteMailbox(child.Mailbox);
+
+        return child;
+    }
+
+    public void Start()
+    {
+        _mailbox.TryAddSystemMessage(Messages.System.Start.Instance);
+        _dispatcher.TryExecuteMailbox(_mailbox);
+    }
+
+    public void Stop()
+    {
+        foreach (var child in _children)
+        {
+            child.Stop();
+        }
+
+        _mailbox.TryAddSystemMessage(Messages.System.Stop.Instance);
+        _dispatcher.TryExecuteMailbox(_mailbox);
+    }
+
+    public void Send(object message)
+    {
+        Send(message, ActorRefs.NoSender);
+    }
+
+    public void Send(object message, IActorRef sender)
+    {
+        _dispatcher.Dispatch(this, new Envelope(message, sender));
     }
 
     public void Invoke(Envelope envelope)
     {
         _sender = envelope.Sender;
-        throw new NotImplementedException();
+        _actor.HandleReceive(envelope.Message);
     }
 
-    public IActorRef Create(AbstractActor actor)
+    public void InvokeSystem(SystemMessage message)
     {
-        throw new NotImplementedException();
+        _sender = this;
+
+        switch (message)
+        {
+            case Messages.System.Create:
+            {
+                _actor.HandleCreate();
+                break;
+            }
+            case Messages.System.Start:
+            {
+                _actor.HandleStart();
+                if (_mailbox.Count > 0)
+                {
+                    _dispatcher.TryExecuteMailbox(_mailbox);
+                }
+                break;
+            }
+            case Messages.System.Stop:
+            {
+                _actor.HandleStop();
+                _mailbox.Close();
+                break;
+            }
+        }
     }
 
-    public void Start()
+    public bool Equals(IActorRef? other)
     {
-        throw new NotImplementedException();
+        return other is ActorCell actorCell && Equals(actorCell);
     }
 
-    public void Stop()
+    public override bool Equals(object? obj)
     {
-        throw new NotImplementedException();
+        return obj is ActorCell actorCell && Equals(actorCell);
     }
 
-    public void Stop(int millisecondsTimeout)
+    public bool Equals(ActorCell? other)
     {
-        throw new NotImplementedException();
+        return ReferenceEquals(this, other);
     }
 
-    public void Stop(TimeSpan timeout)
+    public override int GetHashCode()
     {
-        throw new NotImplementedException();
+        return base.GetHashCode();
     }
 
-    public bool Send(object message)
+    public override string? ToString()
     {
-        throw new NotImplementedException();
-    }
-
-    public bool Send(object message, IActorRef sender)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> SendAsync(object message)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> SendAsync(object message, IActorRef sender)
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool Equals(IActorRef other)
-    {
-        throw new NotImplementedException();
+        return base.ToString();
     }
 }

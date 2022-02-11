@@ -1,12 +1,11 @@
 using Soil.SimpleActorModel.Actors;
 using Soil.SimpleActorModel.Mailboxes;
+using Soil.SimpleActorModel.Messages;
 
 namespace Soil.SimpleActorModel.Dispatchers;
 
 public interface IDispatcher : IExecutor
 {
-    string Name { get; }
-
     int ThroughputPerActor { get; }
 
     void Dispatch(ActorCell actorCell, Envelope envelope);
