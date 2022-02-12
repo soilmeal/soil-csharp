@@ -1,20 +1,20 @@
-using Soil.SimpleActorModel.Dispatchers;
-using Soil.SimpleActorModel.Mailboxes;
+using Soil.SimpleActorModel.Dispatcher;
+using Soil.SimpleActorModel.Message;
 
 namespace Soil.SimpleActorModel.Actors;
 
 public class ActorRoot : ActorCell
 {
-    private static readonly IDispatcherProvider _rootDispatcherProvider = new DefaultDispatcherProvider(new DispatcherProps(DefaultDispatcherType.CurrentThreadDispatcherType, int.MaxValue));
+    private static readonly ActorProps _rootProps = new ActorProps()
+        .WithDispatcher(
+            Dispatchers.ActorRootDispatcherId,
+            DispatcherType.CurrentThread,
+            int.MaxValue)
+        .WithMailbox(MailboxType.UnboundedMailboxType)
+        .WithActorFactory(new ActorRootActorFactory());
 
-    private static readonly IMailboxProvider _rootMailboxProvider = new DefaultMailboxProvider(new MailboxProps(DefaultMailboxType.UnboundedMailboxType));
-
-    private static readonly ActorProps _rootProps = new ActorProps(
-        _rootDispatcherProvider,
-        _rootMailboxProvider)
-        .SetActorFactory(new ActorRootActorFactory());
-    public ActorRoot()
-        : base(ActorRefs.None, _rootProps)
+    public ActorRoot(ActorSystem system)
+        : base(system, system, _rootProps)
     {
     }
 

@@ -1,32 +1,16 @@
 using System;
-using Soil.SimpleActorModel.Dispatchers;
-using Soil.SimpleActorModel.Mailboxes;
+using Soil.SimpleActorModel.Dispatcher;
+using Soil.SimpleActorModel.Message;
 
 namespace Soil.SimpleActorModel.Actors;
 
 public class ActorProps
 {
-    private readonly IDispatcherProvider _dispatcherProvider;
+    private readonly DispatcherProps _dispatcherProps = new();
 
-    private readonly IMailboxProvider _mailboxProvider;
+    private readonly MailboxProps _mailboxProps = new();
 
     private IActorFactory _actorFactory;
-
-    public IDispatcherProvider DispatcherProvider
-    {
-        get
-        {
-            return _dispatcherProvider;
-        }
-    }
-
-    public IMailboxProvider MailboxProvider
-    {
-        get
-        {
-            return _mailboxProvider;
-        }
-    }
 
     public IActorFactory ActorFactory
     {
@@ -36,21 +20,67 @@ public class ActorProps
         }
     }
 
-    public ActorProps(IDispatcherProvider dispatcherProvider, IMailboxProvider mailboxProvider)
+    public DispatcherProps DispatcherProps
     {
-        _dispatcherProvider = dispatcherProvider;
-        _mailboxProvider = mailboxProvider;
-        _actorFactory = ActorFactories.None;
+        get
+        {
+            return _dispatcherProps;
+        }
     }
 
-    public ActorProps SetActorFactory(IActorFactory actorFactory)
+    public MailboxProps MailboxProps
     {
-        _actorFactory = actorFactory ?? throw new ArgumentNullException(nameof(actorFactory));
+        get
+        {
+            return _mailboxProps;
+        }
+    }
+
+    public ActorProps()
+    {
+        _actorFactory = Actors.NoneFactory;
+    }
+
+    public ActorProps WithDispatcher(string id)
+    {
+        _dispatcherProps.SetId(id);
+
         return this;
     }
 
-    public ActorProps SetActorFactory(Func<AbstractActor> actorFactoryFunc)
+    public ActorProps WithDispatcher(string id, string type)
     {
-        return SetActorFactory(IActorFactory.CreateFactory(actorFactoryFunc));
+        _dispatcherProps.SetId(id)
+            .SetType(type);
+
+        return this;
+    }
+
+    public ActorProps WithDispatcher(string id, string type, int throughputPerActor)
+    {
+        _dispatcherProps.SetId(id)
+            .SetType(type)
+            .SetThroughputPerActor(throughputPerActor);
+
+        return this;
+    }
+
+    public ActorProps WithMailbox(string type)
+    {
+        _mailboxProps.SetType(type);
+
+        return this;
+    }
+
+    public ActorProps WithActorFactory(IActorFactory actorFactory)
+    {
+        _actorFactory = actorFactory ?? throw new ArgumentNullException(nameof(actorFactory));
+
+        return this;
+    }
+
+    public ActorProps WithActorFactory(Func<AbstractActor> actorFactoryFunc)
+    {
+        return WithActorFactory(IActorFactory.CreateFactory(actorFactoryFunc));
     }
 }

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Soil.SimpleActorModel.Dispatchers;
-using Soil.SimpleActorModel.Messages;
-using Soil.SimpleActorModel.Messages.System;
+using Soil.SimpleActorModel.Dispatcher;
+using Soil.SimpleActorModel.Message;
+using Soil.SimpleActorModel.Message.System;
 
 namespace Soil.SimpleActorModel.Actors;
 

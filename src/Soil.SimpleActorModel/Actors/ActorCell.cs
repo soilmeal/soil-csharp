@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
 using Soil.Collections.Generics;
-using Soil.SimpleActorModel.Dispatchers;
-using Soil.SimpleActorModel.Mailboxes;
-using Soil.SimpleActorModel.Messages;
-using Soil.SimpleActorModel.Messages.System;
+using Soil.SimpleActorModel.Dispatcher;
+using Soil.SimpleActorModel.Message;
+using Soil.SimpleActorModel.Message.System;
 
 namespace Soil.SimpleActorModel.Actors;
 
 public class ActorCell : IActorContext, IEquatable<ActorCell>
 {
+    private readonly ActorSystem _system;
+
     private readonly AbstractActor _actor;
 
     private readonly IActorRef _parent;
@@ -70,22 +71,24 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         }
     }
 
-    public ActorCell(IActorRef parent, ActorProps props)
+    public ActorCell(ActorSystem system, IActorRef parent, ActorProps props)
     {
+        _system = system;
+
         _actor = props.ActorFactory.Create();
         _actor.Context = this;
 
         _parent = parent;
-        _dispatcher = props.DispatcherProvider.Provide();
-        _mailbox = props.MailboxProvider.Provide(this);
+        _dispatcher = system.GetOrCreateDispatcher(props.DispatcherProps);
+        _mailbox = system.CreateMailbox(this, props.MailboxProps);
     }
 
     public IActorRef Create(ActorProps props)
     {
-        var child = new ActorCell(this, props);
+        var child = new ActorCell(_system, this, props);
         _children.Add(child);
 
-        child.Mailbox.TryAddSystemMessage(Messages.System.Create.Instance);
+        child.Mailbox.TryAddSystemMessage(Message.System.Create.Instance);
         child.Dispatcher.TryExecuteMailbox(child.Mailbox);
 
         return child;
@@ -93,7 +96,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     public void Start()
     {
-        _mailbox.TryAddSystemMessage(Messages.System.Start.Instance);
+        _mailbox.TryAddSystemMessage(Message.System.Start.Instance);
         _dispatcher.TryExecuteMailbox(_mailbox);
     }
 
@@ -104,7 +107,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
             child.Stop();
         }
 
-        _mailbox.TryAddSystemMessage(Messages.System.Stop.Instance);
+        _mailbox.TryAddSystemMessage(Message.System.Stop.Instance);
         _dispatcher.TryExecuteMailbox(_mailbox);
     }
 
@@ -130,12 +133,12 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
         switch (message)
         {
-            case Messages.System.Create:
+            case Message.System.Create:
             {
                 _actor.HandleCreate();
                 break;
             }
-            case Messages.System.Start:
+            case Message.System.Start:
             {
                 _actor.HandleStart();
                 if (_mailbox.Count > 0)
@@ -144,7 +147,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
                 }
                 break;
             }
-            case Messages.System.Stop:
+            case Message.System.Stop:
             {
                 _actor.HandleStop();
                 _mailbox.Close();
