@@ -106,6 +106,11 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         _actorRoot.Start();
     }
 
+    public Task StartAsync()
+    {
+        return _actorRoot.StartAsync();
+    }
+
     public void Stop(bool waitChildren)
     {
         _actorRoot.Stop(waitChildren);

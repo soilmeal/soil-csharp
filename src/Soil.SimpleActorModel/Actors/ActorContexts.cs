@@ -107,6 +107,11 @@ public static class ActorContexts
             throw new NotSupportedException();
         }
 
+        public Task StartAsync()
+        {
+            throw new NotSupportedException();
+        }
+
         public void Stop(bool waitChildren)
         {
             throw new NotSupportedException();

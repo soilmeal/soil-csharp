@@ -6,7 +6,7 @@ public abstract class Actor : AbstractActor
 {
     public override void HandleReceive(object message)
     {
-        throw new NotImplementedException();
+        OnReceive(message);
     }
 
     protected abstract void OnReceive(object message);

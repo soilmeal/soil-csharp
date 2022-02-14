@@ -17,6 +17,8 @@ public interface IActorRef : IEquatable<IActorRef>
 
     void Start();
 
+    Task StartAsync();
+
     void Stop(bool waitChildren);
 
     Task StopAsync(bool waitChildren);

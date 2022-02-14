@@ -17,13 +17,13 @@ public abstract class Mailbox : IMessageQueue
 
     private readonly IProducerConsumerCollection<SystemMessage> _systemMessages = new ConcurrentQueue<SystemMessage>();
 
-    private readonly IMessageQueue _messageQueue;
+    private readonly IMessageQueue _messages;
 
     public int Count
     {
         get
         {
-            return _messageQueue.Count;
+            return _messages.Count;
         }
     }
 
@@ -31,7 +31,7 @@ public abstract class Mailbox : IMessageQueue
     {
         get
         {
-            return _messageQueue.IsSynchronized;
+            return _messages.IsSynchronized;
         }
     }
 
@@ -39,7 +39,7 @@ public abstract class Mailbox : IMessageQueue
     {
         get
         {
-            return _messageQueue.SyncRoot;
+            return _messages.SyncRoot;
         }
     }
 
@@ -55,7 +55,7 @@ public abstract class Mailbox : IMessageQueue
     {
         get
         {
-            return _messageQueue;
+            return _messages;
         }
     }
 
@@ -70,7 +70,12 @@ public abstract class Mailbox : IMessageQueue
     protected Mailbox(IActorContext owner, IMessageQueue messageQueue)
     {
         _owner = owner;
-        _messageQueue = messageQueue;
+        _messages = messageQueue;
+    }
+
+    public bool HasAnyMessage()
+    {
+        return _systemMessages.Count > 0 || _messages.Count > 0;
     }
 
     public bool TryAddSystemMessage(SystemMessage systemMessage)
@@ -85,17 +90,17 @@ public abstract class Mailbox : IMessageQueue
 
     public bool TryAdd(Envelope item)
     {
-        return _messageQueue.TryAdd(item);
+        return _messages.TryAdd(item);
     }
 
     public bool TryTake(out Envelope item)
     {
-        return _messageQueue.TryTake(out item);
+        return _messages.TryTake(out item);
     }
 
     public void Clear()
     {
-        _messageQueue.Clear();
+        _messages.Clear();
     }
 
     public void Close()
@@ -105,12 +110,12 @@ public abstract class Mailbox : IMessageQueue
 
     public void CopyTo(Envelope[] array, int index)
     {
-        _messageQueue.CopyTo(array, index);
+        _messages.CopyTo(array, index);
     }
 
     public void CopyTo(Array array, int index)
     {
-        _messageQueue.CopyTo(array, index);
+        _messages.CopyTo(array, index);
     }
 
     public bool TrySetScheduled()
@@ -138,6 +143,7 @@ public abstract class Mailbox : IMessageQueue
         finally
         {
             TryBackToOpen();
+
             _owner.Dispatcher.TryExecuteMailbox(this);
         }
     }
@@ -177,17 +183,17 @@ public abstract class Mailbox : IMessageQueue
 
     public Envelope[] ToArray()
     {
-        return _messageQueue.ToArray();
+        return _messages.ToArray();
     }
 
     public IEnumerator<Envelope> GetEnumerator()
     {
-        return _messageQueue.GetEnumerator();
+        return _messages.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return _messageQueue.GetEnumerator();
+        return _messages.GetEnumerator();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

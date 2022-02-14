@@ -40,6 +40,11 @@ public static class ActorRefs
             throw new NotSupportedException();
         }
 
+        public Task StartAsync()
+        {
+            throw new NotSupportedException();
+        }
+
         public void Stop(bool waitChildren)
         {
             throw new NotSupportedException();
@@ -113,6 +118,11 @@ public static class ActorRefs
         }
 
         public void Start()
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task StartAsync()
         {
             throw new NotSupportedException();
         }

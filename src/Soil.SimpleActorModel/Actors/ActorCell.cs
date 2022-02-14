@@ -131,16 +131,30 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     public void Start()
     {
+        StartAsync()
+            .Wait();
+    }
+
+    public async Task StartAsync()
+    {
+        if (!CanStart())
+        {
+            throw new InvalidOperationException("start parent first!");
+        }
+
         ActorRefState oldState = CompareExchangeState(
             ActorRefState.Starting,
             ActorRefState.Created);
         if (oldState != ActorRefState.Created)
         {
-            throw new InvalidOperationException("Already called Start()");
+            return;
         }
 
-        _mailbox.TryAddSystemMessage(Message.System.Start.Instance);
+        Start start = Message.System.Start.Create();
+        _mailbox.TryAddSystemMessage(start);
         _dispatcher.TryExecuteMailbox(_mailbox);
+
+        await start.Task;
     }
 
     public void Stop(bool waitChildren)
@@ -150,14 +164,13 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
             ActorRefState.Running);
         if (oldState != ActorRefState.Running)
         {
-            throw new InvalidOperationException("Already called Stop()");
+            return;
         }
 
         StopChildren(waitChildren).Wait();
 
         Stop stop = Message.System.Stop.Create();
-        _mailbox.TryAddSystemMessage(stop);
-        _dispatcher.TryExecuteMailbox(_mailbox);
+        Send(stop);
 
         stop.Task.Wait();
     }
@@ -169,14 +182,13 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
             ActorRefState.Running);
         if (oldState != ActorRefState.Running)
         {
-            throw new InvalidOperationException("Already called Stop()");
+            return;
         }
 
         await StopChildren(waitChildren);
 
         Stop stop = Message.System.Stop.Create();
-        _mailbox.TryAddSystemMessage(stop);
-        _dispatcher.TryExecuteMailbox(_mailbox);
+        Send(stop);
 
         await stop.Task;
     }
@@ -193,8 +205,20 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     public void Invoke(Envelope envelope)
     {
-        _sender = envelope.Sender;
-        _actor.HandleReceive(envelope.Message);
+        switch (envelope.Message)
+        {
+            case Stop stop:
+            {
+                InvokeSystem(stop);
+                break;
+            }
+            default:
+            {
+                _sender = envelope.Sender;
+                _actor.HandleReceive(envelope.Message);
+                break;
+            }
+        }
     }
 
     public void InvokeSystem(SystemMessage message)
@@ -206,11 +230,22 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
                 _actor.HandleCreate();
                 break;
             }
-            case Message.System.Start:
+            case Start start:
             {
-                _actor.HandleStart();
+                try
+                {
+                    _actor.HandleStart();
 
-                ExchangeState(ActorRefState.Running);
+                    start.TaskCompletionSource.TrySetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    start.TaskCompletionSource.TrySetException(ex);
+                }
+                finally
+                {
+                    ExchangeState(ActorRefState.Running);
+                }
                 break;
             }
             case Stop stop:
@@ -281,6 +316,21 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
     private ActorRefState CompareExchangeState(ActorRefState state, ActorRefState comparandState)
     {
         return (ActorRefState)_state.CompareExchange((int)state, (int)comparandState);
+    }
+
+    private bool CanStart()
+    {
+        if (_parent is not ActorRoot)
+        {
+            return true;
+        }
+
+        return _parent.State switch
+        {
+            ActorRefState.Created
+            or ActorRefState.Closed => false,
+            _ => true,
+        };
     }
 
     private Task StopChildren(bool waitChildren)
