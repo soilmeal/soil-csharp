@@ -132,8 +132,8 @@ public abstract class Mailbox : IMessageQueue
                 return;
             }
 
-            ProcessMessage();
             ProcessAllSystemMessage();
+            ProcessMessage();
         }
         finally
         {
@@ -163,7 +163,9 @@ public abstract class Mailbox : IMessageQueue
     private void ProcessMessage(int throughput)
     {
         int processCount = 0;
-        while (processCount < throughput && TryTake(out Envelope envelope))
+        while (_owner.CanReceiveMessage()
+            && processCount < throughput
+            && TryTake(out Envelope envelope))
         {
             _owner.Invoke(envelope);
 

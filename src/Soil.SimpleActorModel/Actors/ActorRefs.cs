@@ -10,22 +10,36 @@ public static class ActorRefs
 
     private class NoneActorRef : IActorRef, IEquatable<NoneActorRef>
     {
+        public ActorRefState State
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public AbstractActor GetActor()
+        {
+            throw new NotSupportedException();
+        }
+
+        public T GetActor<T>()
+            where T : AbstractActor
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool CanReceiveMessage()
+        {
+            throw new NotSupportedException();
+        }
+
         public void Start()
         {
             throw new NotSupportedException();
         }
 
         public void Stop()
-        {
-            throw new NotSupportedException();
-        }
-
-        public void Stop(int millisecondsTimeout)
-        {
-            throw new NotSupportedException();
-        }
-
-        public void Stop(TimeSpan timeout)
         {
             throw new NotSupportedException();
         }
@@ -68,22 +82,36 @@ public static class ActorRefs
 
     private class NoSenderActorRef : IActorRef, IEquatable<NoSenderActorRef>
     {
+        public ActorRefState State
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        public AbstractActor GetActor()
+        {
+            throw new NotSupportedException();
+        }
+
+        public T GetActor<T>()
+            where T : AbstractActor
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool CanReceiveMessage()
+        {
+            throw new NotSupportedException();
+        }
+
         public void Start()
         {
             throw new NotSupportedException();
         }
 
         public void Stop()
-        {
-            throw new NotSupportedException();
-        }
-
-        public void Stop(int millisecondsTimeout)
-        {
-            throw new NotSupportedException();
-        }
-
-        public void Stop(TimeSpan timeout)
         {
             throw new NotSupportedException();
         }

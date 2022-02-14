@@ -17,6 +17,14 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
 
     private readonly ActorRoot _actorRoot;
 
+    public ActorRefState State
+    {
+        get
+        {
+            return _actorRoot.State;
+        }
+    }
+
     public IActorRef Parent
     {
         get
@@ -76,6 +84,22 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         return _mailboxFactory.Create(context, props);
     }
 
+    public AbstractActor GetActor()
+    {
+        throw new NotSupportedException();
+    }
+
+    public T GetActor<T>()
+        where T : AbstractActor
+    {
+        throw new NotSupportedException();
+    }
+
+    public bool CanReceiveMessage()
+    {
+        throw new NotSupportedException();
+    }
+
     public void Start()
     {
         _actorRoot.Start();
@@ -88,12 +112,12 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
 
     public void Send(object message)
     {
-        _actorRoot.Send(message);
+        throw new NotSupportedException();
     }
 
     public void Send(object message, IActorRef sender)
     {
-        _actorRoot.Send(message, sender);
+        throw new NotSupportedException();
     }
 
     public IActorRef Create(ActorProps props)

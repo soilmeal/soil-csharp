@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using Soil.Collections.Generics;
 using Soil.SimpleActorModel.Dispatcher;
 using Soil.SimpleActorModel.Message;
 using Soil.SimpleActorModel.Message.System;
+using Soil.Threading.Atomic;
 
 namespace Soil.SimpleActorModel.Actors;
 
@@ -21,7 +24,19 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     private readonly CopyOnWriteList<IActorRef> _children = new();
 
+    private readonly AtomicInt32 _state = (int)ActorRefState.Created;
+
+    private readonly ManualResetEventSlim _stopSync = new(false);
+
     private IActorRef _sender = ActorRefs.NoSender;
+
+    public ActorRefState State
+    {
+        get
+        {
+            return GetState();
+        }
+    }
 
     public IActorRef Parent
     {
@@ -83,6 +98,26 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         _mailbox = system.CreateMailbox(this, props.MailboxProps);
     }
 
+    public AbstractActor GetActor()
+    {
+        return _actor;
+    }
+
+    public T GetActor<T>() where T : AbstractActor
+    {
+        return (T)_actor;
+    }
+
+    public bool CanReceiveMessage()
+    {
+        return GetState() switch
+        {
+            ActorRefState.Running
+            or ActorRefState.Closing => true,
+            _ => false,
+        };
+    }
+
     public IActorRef Create(ActorProps props)
     {
         var child = new ActorCell(_system, this, props);
@@ -96,12 +131,28 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     public void Start()
     {
+        ActorRefState oldState = CompareExchangeState(
+            ActorRefState.Starting,
+            ActorRefState.Created);
+        if (oldState != ActorRefState.Created)
+        {
+            return;
+        }
+
         _mailbox.TryAddSystemMessage(Message.System.Start.Instance);
         _dispatcher.TryExecuteMailbox(_mailbox);
     }
 
     public void Stop()
     {
+        ActorRefState oldState = CompareExchangeState(
+            ActorRefState.Closing,
+            ActorRefState.Running);
+        if (oldState != ActorRefState.Running)
+        {
+            return;
+        }
+
         foreach (var child in _children)
         {
             child.Stop();
@@ -109,6 +160,8 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
         _mailbox.TryAddSystemMessage(Message.System.Stop.Instance);
         _dispatcher.TryExecuteMailbox(_mailbox);
+
+        _stopSync.Wait();
     }
 
     public void Send(object message)
@@ -129,8 +182,6 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     public void InvokeSystem(SystemMessage message)
     {
-        _sender = this;
-
         switch (message)
         {
             case Message.System.Create:
@@ -141,16 +192,23 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
             case Message.System.Start:
             {
                 _actor.HandleStart();
-                if (_mailbox.Count > 0)
-                {
-                    _dispatcher.TryExecuteMailbox(_mailbox);
-                }
+
+                ExchangeState(ActorRefState.Running);
                 break;
             }
             case Message.System.Stop:
             {
                 _actor.HandleStop();
+
+                ExchangeState(ActorRefState.Closed);
+
+                _stopSync.Set();
+
                 _mailbox.Close();
+                break;
+            }
+            default:
+            {
                 break;
             }
         }
@@ -179,5 +237,23 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
     public override string? ToString()
     {
         return base.ToString();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ActorRefState GetState()
+    {
+        return (ActorRefState)_state.Read();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ActorRefState ExchangeState(ActorRefState state)
+    {
+        return (ActorRefState)_state.Exchange((int)state);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ActorRefState CompareExchangeState(ActorRefState state, ActorRefState comparandState)
+    {
+        return (ActorRefState)_state.CompareExchange((int)state, (int)comparandState);
     }
 }

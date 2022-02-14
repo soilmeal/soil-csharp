@@ -12,6 +12,14 @@ public static class ActorContexts
 
     private class NoneActorContext : IActorContext
     {
+        public ActorRefState State
+        {
+            get
+            {
+                throw new NotSupportedException();
+            }
+        }
+
         public IActorRef Parent
         {
             get
@@ -50,6 +58,22 @@ public static class ActorContexts
             {
                 throw new NotSupportedException();
             }
+        }
+
+        public AbstractActor GetActor()
+        {
+            throw new NotSupportedException();
+        }
+
+        public T GetActor<T>()
+            where T : AbstractActor
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool CanReceiveMessage()
+        {
+            throw new NotSupportedException();
         }
 
         public IActorRef Create(ActorProps props)
