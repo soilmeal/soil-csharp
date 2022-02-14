@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Soil.Collections.Generics;
 using Soil.SimpleActorModel.Dispatcher;
 using Soil.SimpleActorModel.Message;
@@ -25,8 +27,6 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
     private readonly CopyOnWriteList<IActorRef> _children = new();
 
     private readonly AtomicInt32 _state = (int)ActorRefState.Created;
-
-    private readonly ManualResetEventSlim _stopSync = new(false);
 
     private IActorRef _sender = ActorRefs.NoSender;
 
@@ -136,32 +136,49 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
             ActorRefState.Created);
         if (oldState != ActorRefState.Created)
         {
-            return;
+            throw new InvalidOperationException("Already called Start()");
         }
 
         _mailbox.TryAddSystemMessage(Message.System.Start.Instance);
         _dispatcher.TryExecuteMailbox(_mailbox);
     }
 
-    public void Stop()
+    public void Stop(bool waitChildren)
     {
         ActorRefState oldState = CompareExchangeState(
             ActorRefState.Closing,
             ActorRefState.Running);
         if (oldState != ActorRefState.Running)
         {
-            return;
+            throw new InvalidOperationException("Already called Stop()");
         }
 
-        foreach (var child in _children)
-        {
-            child.Stop();
-        }
+        StopChildren(waitChildren).Wait();
 
-        _mailbox.TryAddSystemMessage(Message.System.Stop.Instance);
+        Stop stop = Message.System.Stop.Create();
+        _mailbox.TryAddSystemMessage(stop);
         _dispatcher.TryExecuteMailbox(_mailbox);
 
-        _stopSync.Wait();
+        stop.Task.Wait();
+    }
+
+    public async Task StopAsync(bool waitChildren)
+    {
+        ActorRefState oldState = CompareExchangeState(
+            ActorRefState.Closing,
+            ActorRefState.Running);
+        if (oldState != ActorRefState.Running)
+        {
+            throw new InvalidOperationException("Already called Stop()");
+        }
+
+        await StopChildren(waitChildren);
+
+        Stop stop = Message.System.Stop.Create();
+        _mailbox.TryAddSystemMessage(stop);
+        _dispatcher.TryExecuteMailbox(_mailbox);
+
+        await stop.Task;
     }
 
     public void Send(object message)
@@ -196,15 +213,24 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
                 ExchangeState(ActorRefState.Running);
                 break;
             }
-            case Message.System.Stop:
+            case Stop stop:
             {
-                _actor.HandleStop();
+                try
+                {
+                    _actor.HandleStop();
 
-                ExchangeState(ActorRefState.Closed);
+                    stop.TaskCompletionSource.TrySetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    stop.TaskCompletionSource.TrySetException(ex);
+                }
+                finally
+                {
+                    ExchangeState(ActorRefState.Closed);
 
-                _stopSync.Set();
-
-                _mailbox.Close();
+                    _mailbox.Close();
+                }
                 break;
             }
             default:
@@ -255,5 +281,16 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
     private ActorRefState CompareExchangeState(ActorRefState state, ActorRefState comparandState)
     {
         return (ActorRefState)_state.CompareExchange((int)state, (int)comparandState);
+    }
+
+    private Task StopChildren(bool waitChildren)
+    {
+        if (_children.Count <= 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        Task task = Task.WhenAll(_children.Select(child => child.StopAsync(waitChildren)));
+        return waitChildren ? task : Task.CompletedTask;
     }
 }

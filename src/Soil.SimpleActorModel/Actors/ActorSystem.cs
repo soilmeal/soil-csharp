@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Soil.SimpleActorModel.Dispatcher;
 using Soil.SimpleActorModel.Message;
 using Soil.SimpleActorModel.Message.System;
@@ -105,9 +106,14 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         _actorRoot.Start();
     }
 
-    public void Stop()
+    public void Stop(bool waitChildren)
     {
-        _actorRoot.Stop();
+        _actorRoot.Stop(waitChildren);
+    }
+
+    public Task StopAsync(bool waitChildren)
+    {
+        return _actorRoot.StopAsync(waitChildren);
     }
 
     public void Send(object message)

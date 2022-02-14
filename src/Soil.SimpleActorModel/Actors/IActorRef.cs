@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Actors;
 
@@ -16,7 +17,9 @@ public interface IActorRef : IEquatable<IActorRef>
 
     void Start();
 
-    void Stop();
+    void Stop(bool waitChildren);
+
+    Task StopAsync(bool waitChildren);
 
     void Send(object message);
 

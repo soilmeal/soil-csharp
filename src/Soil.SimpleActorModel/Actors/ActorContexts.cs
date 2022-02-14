@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Soil.SimpleActorModel.Dispatcher;
 using Soil.SimpleActorModel.Message;
 using Soil.SimpleActorModel.Message.System;
@@ -106,7 +107,12 @@ public static class ActorContexts
             throw new NotSupportedException();
         }
 
-        public void Stop()
+        public void Stop(bool waitChildren)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task StopAsync(bool waitChildren)
         {
             throw new NotSupportedException();
         }

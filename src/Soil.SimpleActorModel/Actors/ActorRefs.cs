@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Actors;
 
@@ -39,7 +40,12 @@ public static class ActorRefs
             throw new NotSupportedException();
         }
 
-        public void Stop()
+        public void Stop(bool waitChildren)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task StopAsync(bool waitChildren)
         {
             throw new NotSupportedException();
         }
@@ -111,7 +117,12 @@ public static class ActorRefs
             throw new NotSupportedException();
         }
 
-        public void Stop()
+        public void Stop(bool waitChildren)
+        {
+            throw new NotSupportedException();
+        }
+
+        public Task StopAsync(bool waitChildren)
         {
             throw new NotSupportedException();
         }
