@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Soil.SimpleActorModel.Message;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Soil.SimpleActorModel.Message;
 
@@ -15,7 +15,7 @@ public static class MessageQueues
         {
             get
             {
-                throw new NotSupportedException();
+                return 0;
             }
         }
 
@@ -23,56 +23,64 @@ public static class MessageQueues
         {
             get
             {
-                throw new NotSupportedException();
+                return false;
             }
         }
 
+#pragma warning disable CS8766
+        [MaybeNull]
         public object SyncRoot
         {
             get
             {
-                throw new NotSupportedException();
+                return null;
             }
         }
+#pragma warning restore CS8766
 
         public void Clear()
         {
-            throw new NotSupportedException();
         }
 
         public void CopyTo(Envelope[] array, int index)
         {
-            throw new NotSupportedException();
         }
 
         public void CopyTo(Array array, int index)
         {
-            throw new NotSupportedException();
         }
 
+#pragma warning disable CS8766
+        [return: MaybeNull]
         public IEnumerator<Envelope> GetEnumerator()
         {
-            throw new NotSupportedException();
+            return null;
         }
 
+        [return: MaybeNull]
         public Envelope[] ToArray()
         {
-            throw new NotSupportedException();
+            return null;
         }
+#pragma warning restore CS8766
 
         public bool TryAdd(Envelope item)
         {
-            throw new NotSupportedException();
+            return false;
         }
 
         public bool TryTake(out Envelope item)
         {
-            throw new NotSupportedException();
+            item = default;
+            return false;
         }
 
+#pragma warning disable CS8768
+        [return: MaybeNull]
         IEnumerator IEnumerable.GetEnumerator()
         {
-            throw new NotSupportedException();
+            return null;
         }
+#pragma warning restore CS8768
     }
 }

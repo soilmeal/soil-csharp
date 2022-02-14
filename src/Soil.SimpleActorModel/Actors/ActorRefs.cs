@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Actors;
@@ -15,54 +16,65 @@ public static class ActorRefs
         {
             get
             {
-                throw new NotSupportedException();
+                return ActorRefState.Closed;
             }
         }
 
-        public AbstractActor GetActor()
+#pragma warning disable CS8766
+        [return: MaybeNull]
+        public AbstractActor Actor()
         {
-            throw new NotSupportedException();
+            return null;
         }
 
-        public T GetActor<T>()
+
+        [return: MaybeNull]
+        public T Actor<T>()
             where T : AbstractActor
         {
-            throw new NotSupportedException();
+            return null;
         }
+#pragma warning restore CS8766
 
         public bool CanReceiveMessage()
         {
-            throw new NotSupportedException();
+            return false;
         }
 
         public void Start()
         {
-            throw new NotSupportedException();
         }
 
         public Task StartAsync()
         {
-            throw new NotSupportedException();
+            return Task.CompletedTask;
         }
 
         public void Stop(bool waitChildren)
         {
-            throw new NotSupportedException();
         }
 
         public Task StopAsync(bool waitChildren)
         {
-            throw new NotSupportedException();
+            return Task.CompletedTask;
         }
 
-        public void Send(object message)
+        public void Tell(object message)
         {
-            throw new NotSupportedException();
         }
 
-        public void Send(object message, IActorRef sender)
+        public void Tell(object message, IActorRef sender)
         {
-            throw new NotSupportedException();
+        }
+
+        public Task<object> Ask(object message)
+        {
+            return Task.FromResult<object>(default!);
+        }
+
+        public Task<T> Ask<T>(object message)
+        {
+            return Task.FromResult<T>(default!);
         }
 
         public override bool Equals(object? other)
@@ -97,54 +109,65 @@ public static class ActorRefs
         {
             get
             {
-                throw new NotSupportedException();
+                return ActorRefState.Closed;
             }
         }
 
-        public AbstractActor GetActor()
+#pragma warning disable CS8766
+        [return: MaybeNull]
+        public AbstractActor Actor()
         {
-            throw new NotSupportedException();
+            return null;
         }
 
-        public T GetActor<T>()
+
+        [return: MaybeNull]
+        public T Actor<T>()
             where T : AbstractActor
         {
-            throw new NotSupportedException();
+            return null;
         }
+#pragma warning restore CS8766
 
         public bool CanReceiveMessage()
         {
-            throw new NotSupportedException();
+            return false;
         }
 
         public void Start()
         {
-            throw new NotSupportedException();
         }
 
         public Task StartAsync()
         {
-            throw new NotSupportedException();
+            return Task.CompletedTask;
         }
 
         public void Stop(bool waitChildren)
         {
-            throw new NotSupportedException();
         }
 
         public Task StopAsync(bool waitChildren)
         {
-            throw new NotSupportedException();
+            return Task.CompletedTask;
         }
 
-        public void Send(object message)
+        public void Tell(object message)
         {
-            throw new NotSupportedException();
         }
 
-        public void Send(object message, IActorRef sender)
+        public void Tell(object message, IActorRef sender)
         {
-            throw new NotSupportedException();
+        }
+
+        public Task<object> Ask(object message)
+        {
+            return Task.FromResult<object>(default!);
+        }
+
+        public Task<T> Ask<T>(object message)
+        {
+            return Task.FromResult<T>(default!);
         }
 
         public override bool Equals(object? other)

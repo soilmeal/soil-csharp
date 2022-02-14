@@ -1,5 +1,3 @@
-using System;
-
 namespace Soil.SimpleActorModel.Actors;
 
 public class ActorFactories
@@ -10,7 +8,7 @@ public class ActorFactories
     {
         public AbstractActor Create()
         {
-            throw new NotSupportedException();
+            return Actors.None;
         }
     }
 }

@@ -33,43 +33,38 @@ public static class Dispatchers
         {
             get
             {
-                throw new NotSupportedException();
+                return 0;
             }
         }
 
         public void Dispatch(ActorCell actorCell, Envelope envelope)
         {
-            throw new NotSupportedException();
         }
 
         public void Dispose()
         {
-            throw new NotSupportedException();
         }
 
         public Task Execute(Action action)
         {
-            throw new NotSupportedException();
+            return Task.CompletedTask;
         }
 
         public void JoinAll()
         {
-            throw new NotSupportedException();
         }
 
         public void JoinAll(TimeSpan timeout)
         {
-            throw new NotSupportedException();
         }
 
         public void JoinAll(int millisecondsTimeout)
         {
-            throw new NotSupportedException();
         }
 
         public bool TryExecuteMailbox(Mailbox mailbox)
         {
-            throw new NotSupportedException();
+            return false;
         }
     }
 }

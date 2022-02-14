@@ -1,6 +1,3 @@
-using System;
-using System.Runtime.CompilerServices;
-
 namespace Soil.SimpleActorModel.Actors;
 
 public static class Actors
@@ -21,7 +18,6 @@ public static class Actors
     {
         public override void HandleReceive(object message)
         {
-            throw new NotSupportedException();
         }
     }
 }

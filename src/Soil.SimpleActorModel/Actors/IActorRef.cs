@@ -5,12 +5,12 @@ namespace Soil.SimpleActorModel.Actors;
 
 public interface IActorRef : IEquatable<IActorRef>
 {
+
     ActorRefState State { get; }
 
+    AbstractActor Actor();
 
-    AbstractActor GetActor();
-
-    T GetActor<T>()
+    T Actor<T>()
         where T : AbstractActor;
 
     bool CanReceiveMessage();
@@ -23,7 +23,11 @@ public interface IActorRef : IEquatable<IActorRef>
 
     Task StopAsync(bool waitChildren);
 
-    void Send(object message);
+    void Tell(object message);
 
-    void Send(object message, IActorRef sender);
+    void Tell(object message, IActorRef sender);
+
+    Task<object> Ask(object message);
+
+    Task<T> Ask<T>(object message);
 }

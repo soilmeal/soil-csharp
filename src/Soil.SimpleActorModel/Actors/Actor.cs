@@ -1,5 +1,3 @@
-using System;
-
 namespace Soil.SimpleActorModel.Actors;
 
 public abstract class Actor : AbstractActor

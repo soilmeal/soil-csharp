@@ -1,5 +1,3 @@
-using System;
-
 namespace Soil.SimpleActorModel.Message;
 
 public enum MailboxState

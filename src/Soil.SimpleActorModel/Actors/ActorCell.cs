@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
 using Soil.Collections.Generics;
 using Soil.SimpleActorModel.Dispatcher;
@@ -98,12 +97,12 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         _mailbox = system.CreateMailbox(this, props.MailboxProps);
     }
 
-    public AbstractActor GetActor()
+    public AbstractActor Actor()
     {
         return _actor;
     }
 
-    public T GetActor<T>() where T : AbstractActor
+    public T Actor<T>() where T : AbstractActor
     {
         return (T)_actor;
     }
@@ -170,7 +169,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         StopChildren(waitChildren).Wait();
 
         Stop stop = Message.System.Stop.Create();
-        Send(stop);
+        Tell(stop);
 
         stop.Task.Wait();
     }
@@ -188,19 +187,35 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         await StopChildren(waitChildren);
 
         Stop stop = Message.System.Stop.Create();
-        Send(stop);
+        Tell(stop);
 
         await stop.Task;
     }
 
-    public void Send(object message)
+    public void Tell(object message)
     {
-        Send(message, ActorRefs.NoSender);
+        Tell(message, ActorRefs.NoSender);
     }
 
-    public void Send(object message, IActorRef sender)
+    public void Tell(object message, IActorRef sender)
     {
         _dispatcher.Dispatch(this, new Envelope(message, sender));
+    }
+
+    public Task<object> Ask(object message)
+    {
+        return Ask<object>(message);
+    }
+
+    public Task<T> Ask<T>(object message)
+    {
+        var taskCompletionSource = new TaskCompletionSource<T>();
+        var taskRef = new TaskActorRef<T>();
+        taskRef.Initialize(taskCompletionSource);
+
+        Tell(message, taskRef);
+
+        return taskCompletionSource.Task;
     }
 
     public void Invoke(Envelope envelope)

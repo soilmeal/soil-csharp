@@ -85,12 +85,12 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         return _mailboxFactory.Create(context, props);
     }
 
-    public AbstractActor GetActor()
+    public AbstractActor Actor()
     {
         throw new NotSupportedException();
     }
 
-    public T GetActor<T>()
+    public T Actor<T>()
         where T : AbstractActor
     {
         throw new NotSupportedException();
@@ -121,12 +121,22 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         return _actorRoot.StopAsync(waitChildren);
     }
 
-    public void Send(object message)
+    public void Tell(object message)
     {
         throw new NotSupportedException();
     }
 
-    public void Send(object message, IActorRef sender)
+    public void Tell(object message, IActorRef sender)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<object> Ask(object message)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<T> Ask<T>(object message)
     {
         throw new NotSupportedException();
     }

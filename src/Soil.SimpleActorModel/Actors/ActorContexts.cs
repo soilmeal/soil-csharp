@@ -61,12 +61,12 @@ public static class ActorContexts
             }
         }
 
-        public AbstractActor GetActor()
+        public AbstractActor Actor()
         {
             throw new NotSupportedException();
         }
 
-        public T GetActor<T>()
+        public T Actor<T>()
             where T : AbstractActor
         {
             throw new NotSupportedException();
@@ -92,14 +92,24 @@ public static class ActorContexts
             throw new NotSupportedException();
         }
 
-        public void Send(object message)
+        public void Tell(object message)
         {
             throw new NotSupportedException();
         }
 
-        public void Send(object message, IActorRef sender)
+        public void Tell(object message, IActorRef sender)
         {
             throw new NotSupportedException();
+        }
+
+        public Task<object> Ask(object message)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<T> Ask<T>(object message)
+        {
+            throw new NotImplementedException();
         }
 
         public void Start()
