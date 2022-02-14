@@ -88,7 +88,7 @@ public class CopyOnWriteList<T> : IList<T>, IReadOnlyList<T>
         {
             T[] oldElements = GetArray();
             int oldLen = oldElements.Length;
-            T[] newElements = new T[oldLen];
+            T[] newElements = new T[oldLen + 1];
             oldElements.CopyTo(newElements, 0);
             newElements[oldLen] = item;
             SetArray(newElements);
