@@ -16,7 +16,7 @@ public static class Actors
 
     private class NoneActor : AbstractActor
     {
-        public override void HandleReceive(object message)
+        public override void HandleReceive(object? message)
         {
         }
     }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Soil.SimpleActorModel.Dispatcher;
 using Soil.SimpleActorModel.Message;
@@ -11,13 +12,13 @@ public static class ActorContexts
 {
     public static readonly IActorContext None = new NoneActorContext();
 
-    private class NoneActorContext : IActorContext
+    private class NoneActorContext : IActorContext, IEquatable<NoneActorContext>
     {
         public ActorRefState State
         {
             get
             {
-                throw new NotSupportedException();
+                return ActorRefState.Closed;
             }
         }
 
@@ -25,7 +26,7 @@ public static class ActorContexts
         {
             get
             {
-                throw new NotSupportedException();
+                return ActorRefs.None;
             }
         }
 
@@ -33,7 +34,7 @@ public static class ActorContexts
         {
             get
             {
-                throw new NotSupportedException();
+                return ActorRefs.None;
             }
         }
 
@@ -41,7 +42,7 @@ public static class ActorContexts
         {
             get
             {
-                throw new NotSupportedException();
+                return ActorRefs.NoSender;
             }
         }
 
@@ -49,7 +50,7 @@ public static class ActorContexts
         {
             get
             {
-                throw new NotSupportedException();
+                return Enumerable.Empty<IActorRef>();
             }
         }
 
@@ -57,84 +58,83 @@ public static class ActorContexts
         {
             get
             {
-                throw new NotSupportedException();
+                return Dispatchers.None;
             }
         }
 
         public AbstractActor Actor()
         {
-            throw new NotSupportedException();
+            return Actors.None;
         }
 
         public T Actor<T>()
             where T : AbstractActor
         {
-            throw new NotSupportedException();
+            return (T)Actors.None;
         }
 
         public bool CanReceiveMessage()
         {
-            throw new NotSupportedException();
+            return false;
         }
 
         public IActorRef Create(ActorProps props)
         {
-            throw new NotSupportedException();
+            return ActorRefs.None;
         }
 
         public void Invoke(Envelope envelope)
         {
-            throw new NotSupportedException();
         }
 
         public void InvokeSystem(SystemMessage message)
         {
-            throw new NotSupportedException();
         }
 
-        public void Tell(object message)
+        public void Tell(object? message)
         {
-            throw new NotSupportedException();
         }
 
-        public void Tell(object message, IActorRef sender)
+        public void Tell(object? message, IActorRef sender)
         {
-            throw new NotSupportedException();
         }
 
-        public Task<object> Ask(object message)
+        public Task<object?> Ask(object? message)
         {
-            throw new NotImplementedException();
+            return Task.FromResult<object?>(null);
         }
 
-        public Task<T> Ask<T>(object message)
+        public Task<T?> Ask<T>(object? message)
         {
-            throw new NotImplementedException();
+            return Task.FromResult<T?>(default);
         }
 
         public void Start()
         {
-            throw new NotSupportedException();
         }
 
         public Task StartAsync()
         {
-            throw new NotSupportedException();
+            return Task.CompletedTask;
         }
 
         public void Stop(bool waitChildren)
         {
-            throw new NotSupportedException();
         }
 
         public Task StopAsync(bool waitChildren)
         {
-            throw new NotSupportedException();
+            return Task.CompletedTask;
         }
 
         public bool Equals(IActorRef? other)
         {
-            throw new NotSupportedException();
+            return other is NoneActorContext context && Equals(context);
+        }
+
+        public bool Equals(NoneActorContext? other)
+        {
+            return ReferenceEquals(this, other);
         }
     }
 }

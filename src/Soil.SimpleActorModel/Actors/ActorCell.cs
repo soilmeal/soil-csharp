@@ -192,25 +192,25 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         await stop.Task;
     }
 
-    public void Tell(object message)
+    public void Tell(object? message)
     {
         Tell(message, ActorRefs.NoSender);
     }
 
-    public void Tell(object message, IActorRef sender)
+    public void Tell(object? message, IActorRef sender)
     {
         _dispatcher.Dispatch(this, new Envelope(message, sender));
     }
 
-    public Task<object> Ask(object message)
+    public Task<object?> Ask(object? message)
     {
-        return Ask<object>(message);
+        return Ask<object?>(message);
     }
 
-    public Task<T> Ask<T>(object message)
+    public Task<T?> Ask<T>(object? message)
     {
-        var taskCompletionSource = new TaskCompletionSource<T>();
-        var taskRef = new TaskActorRef<T>();
+        var taskCompletionSource = new TaskCompletionSource<T?>();
+        var taskRef = new TaskActorRef<T?>();
         taskRef.Initialize(taskCompletionSource);
 
         Tell(message, taskRef);

@@ -28,7 +28,7 @@ public class ActorRoot : ActorCell
 
     private class ActorRootActor : Actor
     {
-        protected override void OnReceive(object message)
+        protected override void OnReceive(object? message)
         {
         }
     }

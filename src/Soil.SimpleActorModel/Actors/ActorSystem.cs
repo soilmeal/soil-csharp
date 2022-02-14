@@ -121,22 +121,22 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         return _actorRoot.StopAsync(waitChildren);
     }
 
-    public void Tell(object message)
+    public void Tell(object? message)
     {
         throw new NotSupportedException();
     }
 
-    public void Tell(object message, IActorRef sender)
+    public void Tell(object? message, IActorRef sender)
     {
         throw new NotSupportedException();
     }
 
-    public Task<object> Ask(object message)
+    public Task<object?> Ask(object? message)
     {
-        throw new NotSupportedException();
+        return Ask<object?>(message);
     }
 
-    public Task<T> Ask<T>(object message)
+    public Task<T?> Ask<T>(object? message)
     {
         throw new NotSupportedException();
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Actors;
@@ -23,11 +24,11 @@ public interface IActorRef : IEquatable<IActorRef>
 
     Task StopAsync(bool waitChildren);
 
-    void Tell(object message);
+    void Tell(object? message);
 
-    void Tell(object message, IActorRef sender);
+    void Tell(object? message, IActorRef sender);
 
-    Task<object> Ask(object message);
+    Task<object?> Ask(object? message);
 
-    Task<T> Ask<T>(object message);
+    Task<T?> Ask<T>(object? message);
 }

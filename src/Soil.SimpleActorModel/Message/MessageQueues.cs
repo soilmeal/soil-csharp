@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace Soil.SimpleActorModel.Message;
 
@@ -50,19 +51,16 @@ public static class MessageQueues
         {
         }
 
-#pragma warning disable CS8766
-        [return: MaybeNull]
         public IEnumerator<Envelope> GetEnumerator()
         {
-            return null;
+            return Enumerable.Empty<Envelope>()
+                .GetEnumerator();
         }
 
-        [return: MaybeNull]
         public Envelope[] ToArray()
         {
-            return null;
+            return Array.Empty<Envelope>();
         }
-#pragma warning restore CS8766
 
         public bool TryAdd(Envelope item)
         {
@@ -75,12 +73,10 @@ public static class MessageQueues
             return false;
         }
 
-#pragma warning disable CS8768
-        [return: MaybeNull]
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return null;
+            return Enumerable.Empty<Envelope>()
+                .GetEnumerator();
         }
-#pragma warning restore CS8768
     }
 }

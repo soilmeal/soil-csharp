@@ -4,11 +4,11 @@ namespace Soil.SimpleActorModel.Message;
 
 public struct Envelope
 {
-    private readonly object _message;
+    private readonly object? _message;
 
     private readonly IActorRef _sender;
 
-    public object Message
+    public object? Message
     {
         get
         {
@@ -24,7 +24,7 @@ public struct Envelope
         }
     }
 
-    public Envelope(object message, IActorRef sender)
+    public Envelope(object? message, IActorRef sender)
     {
         _message = message;
         _sender = sender;

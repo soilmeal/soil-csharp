@@ -36,7 +36,7 @@ public abstract class AbstractActor
         OnStop();
     }
 
-    public abstract void HandleReceive(object message);
+    public abstract void HandleReceive(object? message);
 
     protected virtual void OnCreate()
     {

@@ -20,21 +20,16 @@ public static class ActorRefs
             }
         }
 
-#pragma warning disable CS8766
-        [return: MaybeNull]
         public AbstractActor Actor()
         {
-            return null;
+            return Actors.None;
         }
 
-
-        [return: MaybeNull]
         public T Actor<T>()
             where T : AbstractActor
         {
-            return null;
+            return (T)Actors.None;
         }
-#pragma warning restore CS8766
 
         public bool CanReceiveMessage()
         {
@@ -59,22 +54,22 @@ public static class ActorRefs
             return Task.CompletedTask;
         }
 
-        public void Tell(object message)
+        public void Tell(object? message)
         {
         }
 
-        public void Tell(object message, IActorRef sender)
+        public void Tell(object? message, IActorRef sender)
         {
         }
 
-        public Task<object> Ask(object message)
+        public Task<object?> Ask(object? message)
         {
-            return Task.FromResult<object>(default!);
+            return Ask<object?>(message);
         }
 
-        public Task<T> Ask<T>(object message)
+        public Task<T?> Ask<T>(object? message)
         {
-            return Task.FromResult<T>(default!);
+            return Task.FromResult<T?>(default);
         }
 
         public override bool Equals(object? other)
@@ -113,21 +108,17 @@ public static class ActorRefs
             }
         }
 
-#pragma warning disable CS8766
-        [return: MaybeNull]
         public AbstractActor Actor()
         {
-            return null;
+            return Actors.None;
         }
 
 
-        [return: MaybeNull]
         public T Actor<T>()
             where T : AbstractActor
         {
-            return null;
+            return (T)Actors.None;
         }
-#pragma warning restore CS8766
 
         public bool CanReceiveMessage()
         {
@@ -152,22 +143,22 @@ public static class ActorRefs
             return Task.CompletedTask;
         }
 
-        public void Tell(object message)
+        public void Tell(object? message)
         {
         }
 
-        public void Tell(object message, IActorRef sender)
+        public void Tell(object? message, IActorRef sender)
         {
         }
 
-        public Task<object> Ask(object message)
+        public Task<object?> Ask(object? message)
         {
-            return Task.FromResult<object>(default!);
+            return Ask<object?>(message);
         }
 
-        public Task<T> Ask<T>(object message)
+        public Task<T?> Ask<T>(object? message)
         {
-            return Task.FromResult<T>(default!);
+            return Task.FromResult<T?>(default);
         }
 
         public override bool Equals(object? other)

@@ -40,14 +40,14 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
         return (T1)Actor();
     }
 
-    public Task<object> Ask(object message)
+    public Task<object?> Ask(object? message)
     {
-        throw new NotSupportedException();
+        return Ask<object?>(message);
     }
 
-    public Task<T1> Ask<T1>(object message)
+    public Task<T1?> Ask<T1>(object? message)
     {
-        throw new NotSupportedException();
+        return Task.FromResult<T1?>(default);
     }
 
     public bool CanReceiveMessage()
@@ -83,7 +83,7 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
         return Task.CompletedTask;
     }
 
-    public void Tell(object message)
+    public void Tell(object? message)
     {
         if (!CanReceiveMessage())
         {
@@ -97,6 +97,11 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
                 _taskCompletionSource!.TrySetResult(t);
                 break;
             }
+            case null:
+            {
+                _taskCompletionSource!.TrySetException(new InvalidOperationException($"cannot cast as {nameof(T)} - typename=null"));
+                break;
+            }
             default:
             {
                 _taskCompletionSource!.TrySetException(new InvalidOperationException($"cannot cast as {nameof(T)} - typename={message.GetType().Name}"));
@@ -105,8 +110,8 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
         }
     }
 
-    public void Tell(object message, IActorRef sender)
+    public void Tell(object? message, IActorRef sender)
     {
-        throw new System.NotImplementedException();
+        Tell(message);
     }
 }
