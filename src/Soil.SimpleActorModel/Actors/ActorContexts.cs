@@ -62,6 +62,14 @@ public static class ActorContexts
             }
         }
 
+        public Mailbox Mailbox
+        {
+            get
+            {
+                return Mailboxes.None;
+            }
+        }
+
         public AbstractActor Actor()
         {
             return Actors.None;
@@ -78,9 +86,9 @@ public static class ActorContexts
             return false;
         }
 
-        public IActorRef Create(ActorProps props)
+        public IActorContext Create(ActorProps props)
         {
-            return ActorRefs.None;
+            return this;
         }
 
         public void Invoke(Envelope envelope)
@@ -128,6 +136,11 @@ public static class ActorContexts
         }
 
         public bool Equals(IActorRef? other)
+        {
+            return other is NoneActorContext context && Equals(context);
+        }
+
+        public bool Equals(IActorContext? other)
         {
             return other is NoneActorContext context && Equals(context);
         }

@@ -17,13 +17,13 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     private readonly AbstractActor _actor;
 
-    private readonly IActorRef _parent;
+    private readonly IActorContext _parent;
 
     private readonly IDispatcher _dispatcher;
 
     private readonly Mailbox _mailbox;
 
-    private readonly CopyOnWriteList<IActorRef> _children = new();
+    private readonly CopyOnWriteList<IActorContext> _children = new();
 
     private readonly AtomicInt32 _state = (int)ActorRefState.Created;
 
@@ -85,7 +85,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         }
     }
 
-    public ActorCell(ActorSystem system, IActorRef parent, ActorProps props)
+    public ActorCell(ActorSystem system, IActorContext parent, ActorProps props)
     {
         _system = system;
 
@@ -117,7 +117,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         };
     }
 
-    public IActorRef Create(ActorProps props)
+    public IActorContext Create(ActorProps props)
     {
         var child = new ActorCell(_system, this, props);
         _children.Add(child);
@@ -280,7 +280,28 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
                     ExchangeState(ActorRefState.Closed);
 
                     _mailbox.Close();
+
+                    _parent.Mailbox.TryAddSystemMessage(new ChildStopped(this));
+                    _parent.Dispatcher.TryExecuteMailbox(_parent.Mailbox);
                 }
+                break;
+            }
+            case ChildStopped childStopped:
+            {
+                IActorContext child = childStopped.Child;
+                try
+                {
+                    bool removeChild = _actor.HandleChildStopped(child);
+                    if (!removeChild)
+                    {
+                        return;
+                    }
+                }
+                catch
+                {
+                }
+
+                _children.Remove(child);
                 break;
             }
             default:
@@ -291,6 +312,11 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
     }
 
     public bool Equals(IActorRef? other)
+    {
+        return other is ActorCell actorCell && Equals(actorCell);
+    }
+
+    public bool Equals(IActorContext? other)
     {
         return other is ActorCell actorCell && Equals(actorCell);
     }

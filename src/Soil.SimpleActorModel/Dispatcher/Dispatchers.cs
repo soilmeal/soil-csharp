@@ -50,6 +50,11 @@ public static class Dispatchers
             return Task.CompletedTask;
         }
 
+        public Task<T> Execute<T>(Func<T> func)
+        {
+            return Task.FromResult<T>(default!);
+        }
+
         public void JoinAll()
         {
         }

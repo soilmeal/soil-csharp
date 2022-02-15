@@ -55,6 +55,16 @@ public class CurrentThreadDispatcher : IDispatcher
         return Task.CompletedTask;
     }
 
+    public Task<T> Execute<T>(Func<T> func)
+    {
+        if (func == null)
+        {
+            throw new ArgumentNullException(nameof(func));
+        }
+
+        return Task.FromResult(func());
+    }
+
     public void JoinAll()
     {
     }

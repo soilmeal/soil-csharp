@@ -1,6 +1,6 @@
 namespace Soil.SimpleActorModel.Message.System;
 
-public class Create : SystemMessage
+internal class Create : SystemMessage
 {
     public static readonly Create Instance = new();
 

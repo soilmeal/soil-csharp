@@ -36,6 +36,11 @@ public abstract class AbstractActor
         OnStop();
     }
 
+    public virtual bool HandleChildStopped(IActorRef child)
+    {
+        return OnChildStopped(child);
+    }
+
     public abstract void HandleReceive(object? message);
 
     protected virtual void OnCreate()
@@ -48,5 +53,10 @@ public abstract class AbstractActor
 
     protected virtual void OnStop()
     {
+    }
+
+    protected virtual bool OnChildStopped(IActorRef child)
+    {
+        return true;
     }
 }

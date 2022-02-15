@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Message.System;
 
-public class Stop : SystemMessage
+internal class Stop : SystemMessage
 {
     private readonly TaskCompletionSource<bool> _taskCompletionSource = new();
 

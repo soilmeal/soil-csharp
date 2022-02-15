@@ -65,24 +65,6 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
         return ReferenceEquals(this, other);
     }
 
-    public void Start()
-    {
-    }
-
-    public Task StartAsync()
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Stop(bool waitChildren)
-    {
-    }
-
-    public Task StopAsync(bool waitChildren)
-    {
-        return Task.CompletedTask;
-    }
-
     public void Tell(object? message)
     {
         if (!CanReceiveMessage())

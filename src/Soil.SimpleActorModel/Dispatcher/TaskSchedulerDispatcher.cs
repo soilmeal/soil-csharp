@@ -93,6 +93,11 @@ public class TaskSchedulerDispatcher : IDispatcher
         return _taskFactory.StartNew(action);
     }
 
+    public Task<T> Execute<T>(Func<T> func)
+    {
+        return _taskFactory.StartNew(func);
+    }
+
     public void JoinAll()
     {
         Dispose();

@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Actors;
@@ -34,24 +33,6 @@ public static class ActorRefs
         public bool CanReceiveMessage()
         {
             return false;
-        }
-
-        public void Start()
-        {
-        }
-
-        public Task StartAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Stop(bool waitChildren)
-        {
-        }
-
-        public Task StopAsync(bool waitChildren)
-        {
-            return Task.CompletedTask;
         }
 
         public void Tell(object? message)
@@ -123,24 +104,6 @@ public static class ActorRefs
         public bool CanReceiveMessage()
         {
             return false;
-        }
-
-        public void Start()
-        {
-        }
-
-        public Task StartAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Stop(bool waitChildren)
-        {
-        }
-
-        public Task StopAsync(bool waitChildren)
-        {
-            return Task.CompletedTask;
         }
 
         public void Tell(object? message)

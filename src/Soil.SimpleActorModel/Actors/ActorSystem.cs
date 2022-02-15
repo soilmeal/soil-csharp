@@ -58,6 +58,14 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         }
     }
 
+    public Mailbox Mailbox
+    {
+        get
+        {
+            return _actorRoot.Mailbox;
+        }
+    }
+
     public IDispatcher Dispatcher
     {
         get
@@ -141,7 +149,7 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         throw new NotSupportedException();
     }
 
-    public IActorRef Create(ActorProps props)
+    public IActorContext Create(ActorProps props)
     {
         return _actorRoot.Create(props);
     }
@@ -159,6 +167,11 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
     public bool Equals(ActorSystem? other)
     {
         return ReferenceEquals(this, other);
+    }
+
+    public bool Equals(IActorContext? other)
+    {
+        return other is ActorSystem system && Equals(system);
     }
 
     public bool Equals(IActorRef? other)

@@ -1,12 +1,10 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Actors;
 
 public interface IActorRef : IEquatable<IActorRef>
 {
-
     ActorRefState State { get; }
 
     AbstractActor Actor();
@@ -15,14 +13,6 @@ public interface IActorRef : IEquatable<IActorRef>
         where T : AbstractActor;
 
     bool CanReceiveMessage();
-
-    void Start();
-
-    Task StartAsync();
-
-    void Stop(bool waitChildren);
-
-    Task StopAsync(bool waitChildren);
 
     void Tell(object? message);
 
