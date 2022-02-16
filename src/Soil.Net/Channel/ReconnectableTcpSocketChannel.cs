@@ -15,7 +15,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
 
     private readonly ChannelHandlerContext _ctx;
 
-    private IChannelPipeline _pipeline;
+    private IChannelHandlerSet _handlerSet = DefaultChannelHandlerSet.Instance;
 
     private readonly ChannelConfiguration _configuration;
 
@@ -44,23 +44,24 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         ChannelConfiguration configuration,
         ChannelStatus status)
     {
-        _pipeline = configuration.Pipeline;
-
         _configuration = configuration;
         _socketConfSection = configuration.GetSection<SocketChannelConfigurationSection>();
 
         var innerConfigurationBuilder = new ChannelConfiguration.Builder()
             .SetAllocator(configuration.Allocator)
             .SetEventLoopGroup(configuration.EventLoopGroup)
-            .SetLifecycleHandler(new InnerLifecycleHandler(this))
-            .SetExceptionHandler(new InnerExceptionHandler(this))
-            .SetPipeline(IChannelPipeline.Create(
-                new InnerInboundPipe(this),
-                new InnerOutboundPipe(this)))
             .SetAutoRequest(configuration.AutoRequest);
         innerConfigurationBuilder.AddSection(_socketConfSection);
 
-        _channel = new TcpSocketChannel(socket, innerConfigurationBuilder.Build(), status);
+        _channel = new TcpSocketChannel(socket, innerConfigurationBuilder.Build(), status)
+        {
+            HandlerSet = new IChannelHandlerSet.Builder<object>()
+                .SetLifecycleHandler(new InnerLifecycleHandler(this))
+                .SetExceptionHandler(new InnerExceptionHandler(this))
+                .SetInboundPipe(new InnerInboundPipe(this))
+                .SetOutboundPipe(new InnerOutboundPipe(this))
+                .Build(),
+        };
 
         _ctx = new ChannelHandlerContext(this);
     }
@@ -153,31 +154,15 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         }
     }
 
-    public IChannelLifecycleHandler LifecycleHandler
+    public IChannelHandlerSet HandlerSet
     {
         get
         {
-            return _configuration.LifecycleHandler;
-        }
-    }
-
-    public IChannelExceptionHandler ExceptionHandler
-    {
-        get
-        {
-            return _configuration.ExceptionHandler;
-        }
-    }
-
-    public IChannelPipeline Pipeline
-    {
-        get
-        {
-            return _pipeline;
+            return _handlerSet;
         }
         set
         {
-            _pipeline = value ?? throw new ArgumentNullException(nameof(value));
+            _handlerSet = value ?? throw new ArgumentNullException(nameof(value));
         }
     }
 
@@ -307,11 +292,11 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
     {
         if (EventLoop.IsInEventLoop)
         {
-            ExceptionHandler.HandleException(_ctx, ex);
+            _handlerSet.HandleException(_ctx, ex);
             return;
         }
 
-        EventLoop.StartNew(() => ExceptionHandler.HandleException(_ctx, ex));
+        EventLoop.StartNew(() => _handlerSet.HandleException(_ctx, ex));
     }
 
     private void RunLifecycleHandlerActive()
@@ -360,7 +345,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
     {
         try
         {
-            LifecycleHandler.HandleChannelActive(this);
+            _handlerSet.HandleChannelActive(this);
         }
         catch (Exception ex)
         {
@@ -372,7 +357,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
     {
         try
         {
-            LifecycleHandler.HandleChannelInactive(this, reason, cause);
+            _handlerSet.HandleChannelInactive(this, reason, cause);
         }
         catch (Exception ex)
         {
@@ -570,7 +555,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             IChannelHandlerContext ctx,
             IByteBuffer message)
         {
-            return _parent._pipeline.HandleRead(_parent._ctx, message);
+            return _parent._handlerSet.HandleRead(_parent._ctx, message);
         }
     }
 
@@ -587,7 +572,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             IChannelHandlerContext ctx,
             object message)
         {
-            return _parent._pipeline.HandleWrite(_parent._ctx, message);
+            return _parent._handlerSet.HandleWrite(_parent._ctx, message);
         }
 
         Result<ChannelPipeResultType, IByteBuffer> IChannelOutboundPipe<object, IByteBuffer>.Transform(IChannelHandlerContext ctx, object message)

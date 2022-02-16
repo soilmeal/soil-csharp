@@ -23,7 +23,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     private readonly ChannelHandlerContext _ctx;
 
-    private IChannelPipeline _pipeline;
+    private IChannelHandlerSet _handlerSet = DefaultChannelHandlerSet.Instance;
 
     private readonly ChannelConfiguration _configuration;
 
@@ -133,31 +133,15 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         }
     }
 
-    public IChannelLifecycleHandler LifecycleHandler
+    public IChannelHandlerSet HandlerSet
     {
         get
         {
-            return _configuration.LifecycleHandler;
-        }
-    }
-
-    public IChannelExceptionHandler ExceptionHandler
-    {
-        get
-        {
-            return _configuration.ExceptionHandler;
-        }
-    }
-
-    public IChannelPipeline Pipeline
-    {
-        get
-        {
-            return _pipeline;
+            return _handlerSet;
         }
         set
         {
-            _pipeline = value ?? throw new ArgumentNullException(nameof(value));
+            _handlerSet = value ?? throw new ArgumentNullException(nameof(value));
         }
     }
 
@@ -186,7 +170,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         _id = configuration.IdGenerator.Generate(this);
         _socket = socket;
         _eventLoop = configuration.EventLoopGroup.Next();
-        _pipeline = configuration.Pipeline;
 
         _configuration = configuration;
         _socketConfSection = configuration.GetSection<SocketChannelConfigurationSection>();
@@ -654,12 +637,12 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     {
         if (!_eventLoop.IsInEventLoop)
         {
-            return _eventLoop.StartNew(() => _pipeline.HandleWrite(_ctx, message));
+            return _eventLoop.StartNew(() => _handlerSet.HandleWrite(_ctx, message));
         }
 
         try
         {
-            return Task.FromResult(_pipeline.HandleWrite(_ctx, message));
+            return Task.FromResult(_handlerSet.HandleWrite(_ctx, message));
         }
         catch (Exception ex)
         {
@@ -671,18 +654,18 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     {
         if (_eventLoop.IsInEventLoop)
         {
-            ExceptionHandler.HandleException(_ctx, ex);
+            _handlerSet.HandleException(_ctx, ex);
             return;
         }
 
-        _eventLoop.StartNew(() => ExceptionHandler.HandleException(_ctx, ex));
+        _eventLoop.StartNew(() => _handlerSet.HandleException(_ctx, ex));
     }
 
     private void InvokeLifecycleActive()
     {
         try
         {
-            LifecycleHandler.HandleChannelActive(this);
+            _handlerSet.HandleChannelActive(this);
         }
         catch (Exception ex)
         {
@@ -694,7 +677,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     {
         try
         {
-            LifecycleHandler.HandleChannelInactive(this, reason, cause);
+            _handlerSet.HandleChannelInactive(this, reason, cause);
         }
         catch (Exception ex)
         {
@@ -706,7 +689,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     {
         try
         {
-            var result = _pipeline.HandleRead(_ctx, byteBuffer);
+            var result = _handlerSet.HandleRead(_ctx, byteBuffer);
 
             switch (result.Type)
             {

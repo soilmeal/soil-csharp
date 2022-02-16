@@ -15,6 +15,8 @@ public class ChannelBootstrap
 {
     private readonly ChannelConfiguration.Builder _configurationBuilder = new();
 
+    private IChannelHandlerSet _handlerSet = DefaultChannelHandlerSet.Instance;
+
     public ChannelBootstrap Allocator(IByteBufferAllocator allocator)
     {
         _configurationBuilder.SetAllocator(allocator);
@@ -63,56 +65,9 @@ public class ChannelBootstrap
         return EventLoopGroup(eventLoopGroup);
     }
 
-    public ChannelBootstrap LifecycleHandler(IChannelLifecycleHandler lifecycleHandler)
+    public ChannelBootstrap Pipeline(IChannelHandlerSet handlerSet)
     {
-        _configurationBuilder.SetLifecycleHandler(lifecycleHandler);
-
-        return this;
-    }
-
-    public ChannelBootstrap LifecycleHandler(
-        Action<IChannel> activeAction,
-        Action<IChannel, ChannelInactiveReason, Exception?> inactiveAction)
-    {
-
-        return LifecycleHandler(IChannelLifecycleHandler.Create(activeAction, inactiveAction));
-    }
-
-    public ChannelBootstrap ExceptionHandler(Action<IChannelHandlerContext, Exception> handler)
-    {
-        return ExceptionHandler(IChannelExceptionHandler.Create(handler));
-    }
-
-    public ChannelBootstrap ExceptionHandler(IChannelExceptionHandler exceptionHandler)
-    {
-        _configurationBuilder.SetExceptionHandler(exceptionHandler);
-
-        return this;
-    }
-
-    public ChannelBootstrap Pipeline<TOutMsg>(
-        IChannelInboundPipe<IByteBuffer, Unit> inboundPipe,
-        IChannelOutboundPipe<TOutMsg, IByteBuffer> outboundPipe)
-        where TOutMsg : class
-    {
-        return Pipeline(IChannelPipeline.Create(inboundPipe, outboundPipe));
-    }
-
-    public ChannelBootstrap Pipeline(IChannelInboundPipe<IByteBuffer, Unit> inboundPipe)
-    {
-        return Pipeline(inboundPipe, Constants.DefaultOutboundPipe);
-    }
-
-    public ChannelBootstrap Pipeline(Action<IChannelHandlerContext, IByteBuffer> inboundPipe)
-    {
-        return Pipeline(
-            ChannelInboundHandler.Create(inboundPipe),
-            Constants.DefaultOutboundPipe);
-    }
-
-    public ChannelBootstrap Pipeline(IChannelPipeline pipeline)
-    {
-        _configurationBuilder.SetPipeline(pipeline);
+        _handlerSet = handlerSet ?? throw new ArgumentNullException(nameof(handlerSet));
 
         return this;
     }
@@ -259,15 +214,8 @@ public class ChannelBootstrap
             _configurationBuilder.SetInitHandler(Constants.DefaultInitHandler);
         }
 
-        if (_configurationBuilder.LifecycleHandler == null)
-        {
-            _configurationBuilder.SetLifecycleHandler(Constants.DefaultLifecycleHandler);
-        }
-
-        if (_configurationBuilder.ExceptionHandler == null)
-        {
-            _configurationBuilder.SetExceptionHandler(Constants.DefaultExceptionHandler);
-        }
+        IChannelIdGenerator idGenerator = new DefaultChannelIdGenerator();
+        _configurationBuilder.SetIdGenerator(idGenerator);
 
         SocketChannelConfigurationSection.SetIfAbsent(_configurationBuilder);
 
@@ -275,7 +223,10 @@ public class ChannelBootstrap
 
         if (reconnectStrategy == null)
         {
-            return new TcpSocketChannel(addressFamily, _configurationBuilder.Build());
+            return new TcpSocketChannel(addressFamily, _configurationBuilder.Build())
+            {
+                HandlerSet = _handlerSet
+            };
         }
 
         IChannelReconnectHandler? reconnectHandler = _configurationBuilder.ReconnectHandler;
@@ -284,6 +235,9 @@ public class ChannelBootstrap
             _configurationBuilder.SetReconnectHandler(Constants.DefaultReconnectHandler);
         }
 
-        return new ReconnectableTcpSocketChannel(addressFamily, _configurationBuilder.Build());
+        return new ReconnectableTcpSocketChannel(addressFamily, _configurationBuilder.Build())
+        {
+            HandlerSet = _handlerSet,
+        };
     }
 }

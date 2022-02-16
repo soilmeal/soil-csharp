@@ -31,11 +31,7 @@ public interface IChannel
 
     IEventLoop EventLoop { get; }
 
-    IChannelLifecycleHandler LifecycleHandler { get; }
-
-    IChannelExceptionHandler ExceptionHandler { get; }
-
-    IChannelPipeline Pipeline { get; set; }
+    IChannelHandlerSet HandlerSet { get; set; }
 
     ChannelConfiguration Configuration { get; }
 

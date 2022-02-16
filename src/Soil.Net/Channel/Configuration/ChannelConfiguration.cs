@@ -15,12 +15,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
 
     private readonly IChannelInitHandler? _initHandler;
 
-    private readonly IChannelLifecycleHandler _lifecycleHandler;
-
-    private readonly IChannelExceptionHandler _exceptionHandler;
-
-    private readonly IChannelPipeline _pipeline;
-
     private readonly IChannelReconnectStrategy? _reconnectStrategy;
 
     private readonly IChannelReconnectHandler? _reconnectHandler;
@@ -52,30 +46,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         get
         {
             return _initHandler;
-        }
-    }
-
-    public IChannelLifecycleHandler LifecycleHandler
-    {
-        get
-        {
-            return _lifecycleHandler;
-        }
-    }
-
-    public IChannelExceptionHandler ExceptionHandler
-    {
-        get
-        {
-            return _exceptionHandler;
-        }
-    }
-
-    public IChannelPipeline Pipeline
-    {
-        get
-        {
-            return _pipeline;
         }
     }
 
@@ -122,9 +92,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         IByteBufferAllocator allocator,
         IEventLoopGroup eventLoopGroup,
         IChannelInitHandler? initHandler,
-        IChannelLifecycleHandler lifecycleHandler,
-        IChannelExceptionHandler exceptionHandler,
-        IChannelPipeline pipeline,
         IChannelReconnectStrategy? reconnectStrategy,
         IChannelReconnectHandler? reconnectHandler,
         bool autoRequest,
@@ -134,9 +101,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         _allocator = allocator;
         _eventLoopGroup = eventLoopGroup;
         _initHandler = initHandler;
-        _lifecycleHandler = lifecycleHandler;
-        _exceptionHandler = exceptionHandler;
-        _pipeline = pipeline;
         _reconnectStrategy = reconnectStrategy;
         _reconnectHandler = reconnectHandler;
         _autoRequest = autoRequest;
@@ -158,12 +122,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         private IEventLoopGroup? _eventLoopGroup;
 
         private IChannelInitHandler? _initHandler;
-
-        private IChannelLifecycleHandler? _lifecycleHandler;
-
-        private IChannelExceptionHandler? _exceptionHandler;
-
-        private IChannelPipeline? _pipeline;
 
         private IChannelReconnectStrategy? _reconnectStrategy;
 
@@ -196,22 +154,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             get
             {
                 return _initHandler;
-            }
-        }
-
-        public IChannelLifecycleHandler? LifecycleHandler
-        {
-            get
-            {
-                return _lifecycleHandler;
-            }
-        }
-
-        public IChannelExceptionHandler? ExceptionHandler
-        {
-            get
-            {
-                return _exceptionHandler;
             }
         }
 
@@ -280,27 +222,6 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
             return this;
         }
 
-        public Builder SetLifecycleHandler(IChannelLifecycleHandler lifecycleHandler)
-        {
-            _lifecycleHandler = lifecycleHandler ?? throw new ArgumentNullException(nameof(lifecycleHandler));
-
-            return this;
-        }
-
-        public Builder SetExceptionHandler(IChannelExceptionHandler exceptionHandler)
-        {
-            _exceptionHandler = exceptionHandler ?? throw new ArgumentNullException(nameof(exceptionHandler));
-
-            return this;
-        }
-
-        public Builder SetPipeline(IChannelPipeline pipeline)
-        {
-            _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
-
-            return this;
-        }
-
         public Builder SetReconnectStrategy(IChannelReconnectStrategy reconnectStrategy)
         {
             _reconnectStrategy = reconnectStrategy ?? throw new ArgumentNullException(nameof(reconnectStrategy));
@@ -333,18 +254,12 @@ public class ChannelConfiguration : AbstractReadOnlyConfigurationSection<Channel
         {
             IByteBufferAllocator allocator = _allocator ?? throw new InvalidOperationException("set Allocator first");
             IEventLoopGroup eventLoopGroup = _eventLoopGroup ?? throw new InvalidOperationException("set EventLoopGroup first");
-            IChannelLifecycleHandler lifecycleHandler = _lifecycleHandler ?? throw new InvalidOperationException("set LifecycleHandler first");
-            IChannelExceptionHandler exceptionHandler = _exceptionHandler ?? throw new InvalidOperationException("set ExceptionHandler first");
-            IChannelPipeline pipeline = _pipeline ?? DefaultChannelPipeline.Instance;
             IChannelIdGenerator idGenerator = _idGenerator ?? new DefaultChannelIdGenerator();
 
             return new ChannelConfiguration(
                 allocator,
                 eventLoopGroup,
                 _initHandler,
-                lifecycleHandler,
-                exceptionHandler,
-                pipeline,
                 _reconnectStrategy,
                 _reconnectHandler,
                 _autoRequest,

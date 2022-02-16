@@ -16,6 +16,10 @@ public class ServerChannelBootstrap
 
     private readonly ChannelConfiguration.Builder _childConfigurationBuilder = new();
 
+    private IChannelLifecycleHandler _lifecycleHandler = Constants.DefaultLifecycleHandler;
+
+    private IChannelExceptionHandler _exceptionHandler = Constants.DefaultExceptionHandler;
+
     public ServerChannelBootstrap()
     {
     }
@@ -106,66 +110,16 @@ public class ServerChannelBootstrap
 
     public ServerChannelBootstrap LifecycleHandler(IChannelLifecycleHandler lifecycleHandler)
     {
-        return LifecycleHandler(lifecycleHandler, lifecycleHandler);
-    }
-
-    public ServerChannelBootstrap LifecycleHandler(
-        IChannelLifecycleHandler master,
-        IChannelLifecycleHandler child)
-    {
-        _masterConfigurationBuilder.SetLifecycleHandler(master);
-        _childConfigurationBuilder.SetLifecycleHandler(child);
+        _lifecycleHandler = lifecycleHandler ?? throw new ArgumentNullException(nameof(lifecycleHandler));
 
         return this;
-    }
-
-    public ServerChannelBootstrap LifecycleHandler(
-        Action<IChannel> activeAction,
-        Action<IChannel, ChannelInactiveReason, Exception?> inactiveAction)
-    {
-        return LifecycleHandler(activeAction, inactiveAction, activeAction, inactiveAction);
-    }
-
-    public ServerChannelBootstrap LifecycleHandler(
-        Action<IChannel> masterActiveAction,
-        Action<IChannel, ChannelInactiveReason, Exception?> masterInactiveAction,
-        Action<IChannel> childActiveAction,
-        Action<IChannel, ChannelInactiveReason, Exception?> childInactiveAction)
-    {
-
-        return LifecycleHandler(
-            IChannelLifecycleHandler.Create(masterActiveAction, masterInactiveAction),
-            IChannelLifecycleHandler.Create(childActiveAction, childInactiveAction));
     }
 
     public ServerChannelBootstrap ExceptionHandler(IChannelExceptionHandler exceptionHandler)
     {
-        return ExceptionHandler(exceptionHandler, exceptionHandler);
-    }
-
-    public ServerChannelBootstrap ExceptionHandler(
-        IChannelExceptionHandler master,
-        IChannelExceptionHandler child)
-    {
-        _masterConfigurationBuilder.SetExceptionHandler(master);
-        _childConfigurationBuilder.SetExceptionHandler(child);
+        _exceptionHandler = exceptionHandler ?? throw new ArgumentNullException(nameof(exceptionHandler));
 
         return this;
-    }
-
-    public ServerChannelBootstrap ExceptionHandler(
-        Action<IChannelHandlerContext, Exception> handler)
-    {
-        return ExceptionHandler(handler, handler);
-    }
-
-    public ServerChannelBootstrap ExceptionHandler(
-        Action<IChannelHandlerContext, Exception> master,
-        Action<IChannelHandlerContext, Exception> child)
-    {
-        return ExceptionHandler(
-            IChannelExceptionHandler.Create(master),
-            IChannelExceptionHandler.Create(child));
     }
 
     public ServerChannelBootstrap AutoRequest(bool autoRequest)
@@ -312,24 +266,6 @@ public class ServerChannelBootstrap
             _masterConfigurationBuilder.SetInitHandler(Constants.DefaultInitHandler);
         }
 
-        if (_masterConfigurationBuilder.LifecycleHandler == null)
-        {
-            _masterConfigurationBuilder.SetLifecycleHandler(Constants.DefaultLifecycleHandler);
-        }
-        if (_childConfigurationBuilder.LifecycleHandler == null)
-        {
-            _childConfigurationBuilder.SetLifecycleHandler(Constants.DefaultLifecycleHandler);
-        }
-
-        if (_masterConfigurationBuilder.ExceptionHandler == null)
-        {
-            _masterConfigurationBuilder.SetExceptionHandler(Constants.DefaultExceptionHandler);
-        }
-        if (_childConfigurationBuilder.ExceptionHandler == null)
-        {
-            _childConfigurationBuilder.SetExceptionHandler(Constants.DefaultExceptionHandler);
-        }
-
         IChannelIdGenerator idGenerator = new DefaultChannelIdGenerator();
         _masterConfigurationBuilder.SetIdGenerator(idGenerator);
         _childConfigurationBuilder.SetIdGenerator(idGenerator);
@@ -337,11 +273,16 @@ public class ServerChannelBootstrap
         SocketChannelConfigurationSection.SetIfAbsent(_masterConfigurationBuilder);
         SocketChannelConfigurationSection.SetIfAbsent(_childConfigurationBuilder);
 
-        IServerChannel channel = new TcpSocketServerChannel(
+        return new TcpSocketServerChannel(
             addressFamily,
             _masterConfigurationBuilder.Build(),
-            _childConfigurationBuilder.Build());
-
-        return channel;
+            _childConfigurationBuilder.Build())
+        {
+            HandlerSet = new IChannelHandlerSet.Builder<IByteBuffer>()
+                .SetLifecycleHandler(_lifecycleHandler)
+                .SetExceptionHandler(_exceptionHandler)
+                .SetOutboundPipe(Constants.DefaultOutboundPipe)
+                .Build(),
+        };
     }
 }

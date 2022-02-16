@@ -22,6 +22,8 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     private readonly ChannelHandlerContext _ctx;
 
+    private IChannelHandlerSet _handlerSet = DefaultChannelHandlerSet.Instance;
+
     private readonly ChannelConfiguration _configuration;
 
     private readonly SocketChannelConfigurationSection _socketConfSection;
@@ -140,32 +142,15 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         }
     }
 
-    public IChannelLifecycleHandler LifecycleHandler
+    public IChannelHandlerSet HandlerSet
     {
         get
         {
-            return _configuration.LifecycleHandler;
+            return _handlerSet;
         }
-    }
-
-    public IChannelExceptionHandler ExceptionHandler
-    {
-        get
-        {
-            return _configuration.ExceptionHandler;
-        }
-    }
-
-    public IChannelPipeline Pipeline
-    {
-        get
-        {
-            throw new NotSupportedException();
-        }
-
         set
         {
-            throw new NotSupportedException();
+            _handlerSet = value;
         }
     }
 
@@ -577,11 +562,11 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     {
         if (_eventLoop.IsInEventLoop)
         {
-            ExceptionHandler.HandleException(_ctx, ex);
+            _handlerSet.HandleException(_ctx, ex);
             return;
         }
 
-        _eventLoop.StartNew(() => ExceptionHandler.HandleException(_ctx, ex));
+        _eventLoop.StartNew(() => _handlerSet.HandleException(_ctx, ex));
     }
 
     private void InvokeInitHandler(Socket socket)
@@ -596,7 +581,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
             child.EventLoop.StartNew(() =>
             {
-                child.LifecycleHandler.HandleChannelActive(child);
+                child.HandlerSet.HandleChannelActive(child);
 
                 if (!_childConfiguration.AutoRequest)
                 {
@@ -618,7 +603,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     {
         try
         {
-            LifecycleHandler.HandleChannelActive(this);
+            _handlerSet.HandleChannelActive(this);
         }
         catch (Exception ex)
         {
@@ -630,7 +615,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
     {
         try
         {
-            LifecycleHandler.HandleChannelInactive(this, reason, cause);
+            _handlerSet.HandleChannelInactive(this, reason, cause);
         }
         catch (Exception ex)
         {
