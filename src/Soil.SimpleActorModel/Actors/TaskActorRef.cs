@@ -40,14 +40,14 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
         return (T1)Actor();
     }
 
-    public Task<object?> Ask(object? message)
+    public Task<object> Ask(object? message)
     {
-        return Ask<object?>(message);
+        return Ask<object>(message);
     }
 
-    public Task<T1?> Ask<T1>(object? message)
+    public Task<T1> Ask<T1>(object? message)
     {
-        return Task.FromResult<T1?>(default);
+        return Task.FromResult<T1>(default!);
     }
 
     public bool CanReceiveMessage()

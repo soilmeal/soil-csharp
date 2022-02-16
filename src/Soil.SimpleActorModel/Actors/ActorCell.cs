@@ -202,15 +202,15 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         _dispatcher.Dispatch(this, new Envelope(message, sender));
     }
 
-    public Task<object?> Ask(object? message)
+    public Task<object> Ask(object? message)
     {
-        return Ask<object?>(message);
+        return Ask<object>(message);
     }
 
-    public Task<T?> Ask<T>(object? message)
+    public Task<T> Ask<T>(object? message)
     {
-        var taskCompletionSource = new TaskCompletionSource<T?>();
-        var taskRef = new TaskActorRef<T?>();
+        var taskCompletionSource = new TaskCompletionSource<T>();
+        var taskRef = new TaskActorRef<T>();
         taskRef.Initialize(taskCompletionSource);
 
         Tell(message, taskRef);

@@ -139,12 +139,12 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         throw new NotSupportedException();
     }
 
-    public Task<object?> Ask(object? message)
+    public Task<object> Ask(object? message)
     {
-        return Ask<object?>(message);
+        return Ask<object>(message);
     }
 
-    public Task<T?> Ask<T>(object? message)
+    public Task<T> Ask<T>(object? message)
     {
         throw new NotSupportedException();
     }

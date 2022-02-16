@@ -18,7 +18,7 @@ public interface IActorRef : IEquatable<IActorRef>
 
     void Tell(object? message, IActorRef sender);
 
-    Task<object?> Ask(object? message);
+    Task<object> Ask(object? message);
 
-    Task<T?> Ask<T>(object? message);
+    Task<T> Ask<T>(object? message);
 }

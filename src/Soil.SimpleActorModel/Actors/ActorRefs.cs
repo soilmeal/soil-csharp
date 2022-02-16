@@ -43,14 +43,14 @@ public static class ActorRefs
         {
         }
 
-        public Task<object?> Ask(object? message)
+        public Task<object> Ask(object? message)
         {
-            return Ask<object?>(message);
+            return Ask<object>(message);
         }
 
-        public Task<T?> Ask<T>(object? message)
+        public Task<T> Ask<T>(object? message)
         {
-            return Task.FromResult<T?>(default);
+            return Task.FromResult<T>(default!);
         }
 
         public override bool Equals(object? other)
@@ -114,14 +114,14 @@ public static class ActorRefs
         {
         }
 
-        public Task<object?> Ask(object? message)
+        public Task<object> Ask(object? message)
         {
-            return Ask<object?>(message);
+            return Ask<object>(message);
         }
 
-        public Task<T?> Ask<T>(object? message)
+        public Task<T> Ask<T>(object? message)
         {
-            return Task.FromResult<T?>(default);
+            return Task.FromResult<T>(default!);
         }
 
         public override bool Equals(object? other)
