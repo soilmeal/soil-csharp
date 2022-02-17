@@ -1,7 +1,5 @@
-using System;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Soil.Threading.Atomic;
 
 namespace Soil.Utils.Id;

@@ -1,17 +1,16 @@
 using System;
 using System.Buffers.Binary;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Soil.Utils.Id;
 
-public class HashCodeBasedId : IInt64Id
+public abstract class HashCodeBasedId : IInt64Id
 {
     private readonly long _id;
 
     private readonly string _hexString;
 
-    public HashCodeBasedId(byte[] bytes)
+    protected HashCodeBasedId(byte[] bytes)
     {
         _id = BinaryPrimitives.ReadInt64BigEndian(bytes);
         _hexString = BitConverter.ToString(bytes)
@@ -37,4 +36,8 @@ public class HashCodeBasedId : IInt64Id
     {
         return _hexString;
     }
+
+    public abstract bool Equals(IInt64Id? other);
+
+    public abstract bool Equals(long other);
 }
