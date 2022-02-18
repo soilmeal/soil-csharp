@@ -98,7 +98,7 @@ public class ActorSystem : IActorContext, IActorRef, IEquatable<ActorSystem>
         throw new NotSupportedException();
     }
 
-    public T Actor<T>()
+    public T? Actor<T>()
         where T : AbstractActor
     {
         throw new NotSupportedException();

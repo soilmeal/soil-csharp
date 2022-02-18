@@ -35,19 +35,10 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
         return Actors.None;
     }
 
-    public T1 Actor<T1>() where T1 : AbstractActor
+    public T1? Actor<T1>()
+        where T1 : AbstractActor
     {
-        return (T1)Actor();
-    }
-
-    public Task<object> Ask(object? message)
-    {
-        return Ask<object>(message);
-    }
-
-    public Task<T1> Ask<T1>(object? message)
-    {
-        return Task.FromResult<T1>(default!);
+        return Actor() as T1;
     }
 
     public bool CanReceiveMessage()

@@ -9,7 +9,7 @@ public interface IActorRef : IEquatable<IActorRef>
 
     AbstractActor Actor();
 
-    T Actor<T>()
+    T? Actor<T>()
         where T : AbstractActor;
 
     bool CanReceiveMessage();

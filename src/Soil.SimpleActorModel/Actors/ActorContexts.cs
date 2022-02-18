@@ -75,10 +75,10 @@ public static class ActorContexts
             return Actors.None;
         }
 
-        public T Actor<T>()
+        public T? Actor<T>()
             where T : AbstractActor
         {
-            return (T)Actors.None;
+            return Actors.None as T;
         }
 
         public bool CanReceiveMessage()

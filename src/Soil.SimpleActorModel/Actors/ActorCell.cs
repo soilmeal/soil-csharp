@@ -102,9 +102,10 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         return _actor;
     }
 
-    public T Actor<T>() where T : AbstractActor
+    public T? Actor<T>()
+        where T : AbstractActor
     {
-        return (T)_actor;
+        return _actor as T;
     }
 
     public bool CanReceiveMessage()
