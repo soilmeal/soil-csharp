@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Soil.SimpleActorModel.Actors;
 
-public interface IActorRef : IEquatable<IActorRef>
+public interface IActorRef : ICanTell, IEquatable<IActorRef>
 {
     ActorRefState State { get; }
 
@@ -13,12 +13,4 @@ public interface IActorRef : IEquatable<IActorRef>
         where T : AbstractActor;
 
     bool CanReceiveMessage();
-
-    void Tell(object? message);
-
-    void Tell(object? message, IActorRef sender);
-
-    Task<object> Ask(object? message);
-
-    Task<T> Ask<T>(object? message);
 }

@@ -43,16 +43,6 @@ public static class ActorRefs
         {
         }
 
-        public Task<object> Ask(object? message)
-        {
-            return Ask<object>(message);
-        }
-
-        public Task<T> Ask<T>(object? message)
-        {
-            return Task.FromResult<T>(default!);
-        }
-
         public override bool Equals(object? other)
         {
             return other is NoneActorRef none && Equals(none);
@@ -112,16 +102,6 @@ public static class ActorRefs
 
         public void Tell(object? message, IActorRef sender)
         {
-        }
-
-        public Task<object> Ask(object? message)
-        {
-            return Ask<object>(message);
-        }
-
-        public Task<T> Ask<T>(object? message)
-        {
-            return Task.FromResult<T>(default!);
         }
 
         public override bool Equals(object? other)

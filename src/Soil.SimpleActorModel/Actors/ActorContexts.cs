@@ -107,16 +107,6 @@ public static class ActorContexts
         {
         }
 
-        public Task<object> Ask(object? message)
-        {
-            return Task.FromResult<object>(null!);
-        }
-
-        public Task<T> Ask<T>(object? message)
-        {
-            return Task.FromResult<T>(default!);
-        }
-
         public void Start()
         {
         }
