@@ -70,14 +70,10 @@ internal class TaskActorRef<T> : IActorRef, IEquatable<TaskActorRef<T>>
                 _taskCompletionSource!.TrySetResult(t);
                 break;
             }
-            case null:
-            {
-                _taskCompletionSource!.TrySetException(new InvalidOperationException($"cannot cast as {nameof(T)} - typename=null"));
-                break;
-            }
             default:
             {
-                _taskCompletionSource!.TrySetException(new InvalidOperationException($"cannot cast as {nameof(T)} - typename={message.GetType().Name}"));
+                string typename = message?.GetType().Name ?? "null";
+                _taskCompletionSource!.TrySetException(new InvalidCastException($"cannot cast as {nameof(T)} - typename={typename}"));
                 break;
             }
         }
