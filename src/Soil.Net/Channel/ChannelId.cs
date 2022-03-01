@@ -16,12 +16,12 @@ public class ChannelId : HashCodeBasedId, IEquatable<ChannelId>
         return obj is ChannelId id && Equals(id);
     }
 
-    public override bool Equals(IInt64Id? other)
+    public override bool Equals(IUInt64Id? other)
     {
         return other is ChannelId id && Equals(id);
     }
 
-    public override bool Equals(long other)
+    public override bool Equals(ulong other)
     {
         return Value == other;
     }
@@ -31,12 +31,12 @@ public class ChannelId : HashCodeBasedId, IEquatable<ChannelId>
         return Equals(this, other);
     }
 
-    public static bool operator ==(ChannelId? channelId, long other)
+    public static bool operator ==(ChannelId? channelId, ulong other)
     {
         return channelId != null && channelId.Equals(other);
     }
 
-    public static bool operator !=(ChannelId? channelId, long other)
+    public static bool operator !=(ChannelId? channelId, ulong other)
     {
         return channelId != null && !channelId.Equals(other);
     }
