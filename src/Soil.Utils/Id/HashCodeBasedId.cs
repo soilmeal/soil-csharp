@@ -4,20 +4,20 @@ using System.Runtime.CompilerServices;
 
 namespace Soil.Utils.Id;
 
-public abstract class HashCodeBasedId : IInt64Id
+public abstract class HashCodeBasedId : IUInt64Id
 {
-    private readonly long _id;
+    private readonly ulong _id;
 
     private readonly string _hexString;
 
     protected HashCodeBasedId(byte[] bytes)
     {
-        _id = BinaryPrimitives.ReadInt64BigEndian(bytes);
+        _id = BinaryPrimitives.ReadUInt64BigEndian(bytes);
         _hexString = BitConverter.ToString(bytes)
             .Replace("-", "");
     }
 
-    public long Value
+    public ulong Value
     {
         get
         {
@@ -26,7 +26,7 @@ public abstract class HashCodeBasedId : IInt64Id
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public long AsInt64()
+    public ulong AsUInt64()
     {
         return Value;
     }
@@ -37,7 +37,7 @@ public abstract class HashCodeBasedId : IInt64Id
         return _hexString;
     }
 
-    public abstract bool Equals(IInt64Id? other);
+    public abstract bool Equals(IUInt64Id? other);
 
-    public abstract bool Equals(long other);
+    public abstract bool Equals(ulong other);
 }
