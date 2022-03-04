@@ -65,7 +65,7 @@ public class ChannelBootstrap
         return EventLoopGroup(eventLoopGroup);
     }
 
-    public ChannelBootstrap Pipeline(IChannelHandlerSet handlerSet)
+    public ChannelBootstrap HandlerSet(IChannelHandlerSet handlerSet)
     {
         _handlerSet = handlerSet ?? throw new ArgumentNullException(nameof(handlerSet));
 
