@@ -79,6 +79,11 @@ public class TaskSchedulerDispatcher : IDispatcher
 
     public bool TryExecuteMailbox(Mailbox mailbox)
     {
+        if (!mailbox.HasAnyMessage())
+        {
+            return false;
+        }
+
         if (!mailbox.TrySetScheduled())
         {
             return false;
