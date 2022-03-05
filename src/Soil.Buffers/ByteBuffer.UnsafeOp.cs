@@ -158,12 +158,12 @@ public abstract partial class ByteBuffer : IByteBuffer
 
             private void EnsureCapacityIfNeed(int sizeHint)
             {
-                if (sizeHint <= 0 || sizeHint <= _parent.WritableBytes)
+                if (sizeHint <= _parent.WritableBytes)
                 {
                     return;
                 }
 
-                _parent.EnsureCapacity(_parent.WritableBytes - sizeHint);
+                _parent.EnsureCapacity(sizeHint - _parent.WritableBytes);
             }
         }
     }

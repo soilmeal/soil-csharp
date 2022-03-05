@@ -312,9 +312,14 @@ public partial class CompositeByteBuffer
 
             private void EnsureCapacityIfNeed(int sizeHint)
             {
-                if (sizeHint > 0 && sizeHint > _parent.WritableBytes)
+                if (sizeHint <= 0)
                 {
-                    _parent.EnsureCapacity(_parent.WritableBytes - sizeHint);
+                    return;
+                }
+
+                if (sizeHint > _parent.WritableBytes)
+                {
+                    _parent.EnsureCapacity(sizeHint - _parent.WritableBytes);
                 }
 
                 _byteBuffer ??= _parent.Allocator.Allocate();
