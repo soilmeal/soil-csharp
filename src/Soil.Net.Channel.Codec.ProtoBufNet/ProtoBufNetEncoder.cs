@@ -1,12 +1,12 @@
 ﻿using System;
-using ProtoBuf;
+using Google.Protobuf;
 using Soil.Buffers;
 using Soil.Types;
 
 namespace Soil.Net.Channel.Codec.ProtoBufNet;
 
 public class ProtoBufNetEncoder<T> : IChannelOutboundPipe<T, IByteBuffer>
-    where T : class, IExtensible
+    where T : class, IMessage<T>
 {
     public IChannelOutboundPipe<T, TNewMessage> Connect<TNewMessage>(
         IChannelOutboundPipe<IByteBuffer, TNewMessage> other)
@@ -25,7 +25,7 @@ public class ProtoBufNetEncoder<T> : IChannelOutboundPipe<T, IByteBuffer>
         }
 
         IByteBuffer byteBuffer = ctx.Allocator.Allocate();
-        Serializer.Serialize(byteBuffer.Unsafe.BufferWriter, message);
+        message.WriteTo(byteBuffer.Unsafe.BufferWriter);
         return Result.Create(ChannelPipeResultType.CallNext, byteBuffer);
     }
 }
