@@ -444,7 +444,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             double waitMilliseconds;
             try
             {
-                waitMilliseconds = reconnectStrategy.TryReconnecct(
+                waitMilliseconds = reconnectStrategy.TryReconnect(
                     ++currentReconnectCount,
                     reason,
                     cause);

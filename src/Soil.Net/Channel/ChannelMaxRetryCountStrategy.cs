@@ -35,15 +35,15 @@ public class ChannelMaxReconnectCountStrategy : IChannelReconnectStrategy
         _waitMillisecondsBeforeReconnect = waitMilliseconds;
     }
 
-    public double TryReconnecct(
+    public double TryReconnect(
         int currentReconnectCount,
         ChannelReconnectReason reason,
         Exception? cause)
     {
         switch (reason)
         {
-            case ChannelReconnectReason.InactivedByLocal:
-            case ChannelReconnectReason.InactivedByRemote:
+            case ChannelReconnectReason.InactiveByLocal:
+            case ChannelReconnectReason.InactiveByRemote:
             {
                 return 0.0;
             }

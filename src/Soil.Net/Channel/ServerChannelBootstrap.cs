@@ -192,7 +192,7 @@ public class ServerChannelBootstrap
 
         try
         {
-            IServerChannel channel = Initalize(endPoint.AddressFamily);
+            IServerChannel channel = Initialize(endPoint.AddressFamily);
 
             await channel.BindAsync(endPoint);
 
@@ -213,7 +213,7 @@ public class ServerChannelBootstrap
 
         try
         {
-            IServerChannel channel = Initalize(endPoint.AddressFamily);
+            IServerChannel channel = Initialize(endPoint.AddressFamily);
 
             await channel.StartAsync(endPoint, backlog);
 
@@ -239,7 +239,7 @@ public class ServerChannelBootstrap
         return StartAsync(endPoint, backlog);
     }
 
-    private IServerChannel Initalize(AddressFamily addressFamily)
+    private IServerChannel Initialize(AddressFamily addressFamily)
     {
         if (_masterConfigurationBuilder.Allocator == null)
         {

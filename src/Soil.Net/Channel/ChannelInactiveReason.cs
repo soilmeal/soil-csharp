@@ -31,9 +31,9 @@ public static class ChannelInactiveReasonExtensions
     {
         return reason switch
         {
-            ChannelInactiveReason.ByLocal => ChannelReconnectReason.InactivedByLocal,
-            ChannelInactiveReason.ByRemote => ChannelReconnectReason.InactivedByRemote,
-            ChannelInactiveReason.ByException => ChannelReconnectReason.InactivedByException,
+            ChannelInactiveReason.ByLocal => ChannelReconnectReason.InactiveByLocal,
+            ChannelInactiveReason.ByRemote => ChannelReconnectReason.InactiveByRemote,
+            ChannelInactiveReason.ByException => ChannelReconnectReason.InactiveByException,
             _ => ChannelReconnectReason.None,
         };
     }

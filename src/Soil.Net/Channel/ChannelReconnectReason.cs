@@ -8,11 +8,11 @@ public enum ChannelReconnectReason
 
     ThrownWhenStart = 1,
 
-    InactivedByLocal = 2,
+    InactiveByLocal = 2,
 
-    InactivedByRemote = 3,
+    InactiveByRemote = 3,
 
-    InactivedByException = 4,
+    InactiveByException = 4,
 }
 
 public static class ChannelReconnectReasonExtensions
@@ -23,9 +23,9 @@ public static class ChannelReconnectReasonExtensions
         {
             ChannelReconnectReason.None => nameof(ChannelReconnectReason.None),
             ChannelReconnectReason.ThrownWhenStart => nameof(ChannelReconnectReason.ThrownWhenStart),
-            ChannelReconnectReason.InactivedByLocal => nameof(ChannelReconnectReason.InactivedByLocal),
-            ChannelReconnectReason.InactivedByRemote => nameof(ChannelReconnectReason.InactivedByRemote),
-            ChannelReconnectReason.InactivedByException => nameof(ChannelReconnectReason.InactivedByException),
+            ChannelReconnectReason.InactiveByLocal => nameof(ChannelReconnectReason.InactiveByLocal),
+            ChannelReconnectReason.InactiveByRemote => nameof(ChannelReconnectReason.InactiveByRemote),
+            ChannelReconnectReason.InactiveByException => nameof(ChannelReconnectReason.InactiveByException),
             _ => throw new ArgumentOutOfRangeException(nameof(reason), reason, null),
         };
     }
