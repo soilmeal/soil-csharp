@@ -8,7 +8,5 @@ public enum ActorRefState
 
     Running = 2,
 
-    Closing = 3,
-
-    Closed = 4,
+    Closed = 3,
 }

@@ -115,8 +115,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
     {
         return GetState() switch
         {
-            ActorRefState.Running
-            or ActorRefState.Closing => true,
+            ActorRefState.Running => true,
             _ => false,
         };
     }
@@ -155,14 +154,6 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     public void Stop(bool waitChildren)
     {
-        ActorRefState oldState = CompareExchangeState(
-            ActorRefState.Closing,
-            ActorRefState.Running);
-        if (oldState != ActorRefState.Running)
-        {
-            return;
-        }
-
         StopChildren(waitChildren).Wait();
 
         Stop stop = Message.System.Stop.Create();
@@ -173,14 +164,6 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     public async Task StopAsync(bool waitChildren)
     {
-        ActorRefState oldState = CompareExchangeState(
-            ActorRefState.Closing,
-            ActorRefState.Running);
-        if (oldState != ActorRefState.Running)
-        {
-            return;
-        }
-
         await StopChildren(waitChildren);
 
         Stop stop = Message.System.Stop.Create();
