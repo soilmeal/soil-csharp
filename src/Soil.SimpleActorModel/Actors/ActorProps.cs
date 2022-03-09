@@ -12,6 +12,8 @@ public class ActorProps
 
     private IActorFactory _actorFactory;
 
+    private bool _autoStart = false;
+
     public IActorFactory ActorFactory
     {
         get
@@ -33,6 +35,14 @@ public class ActorProps
         get
         {
             return _mailboxProps;
+        }
+    }
+
+    public bool AutoStart
+    {
+        get
+        {
+            return _autoStart;
         }
     }
 
@@ -82,5 +92,12 @@ public class ActorProps
     public ActorProps WithActorFactory(Func<AbstractActor> actorFactoryFunc)
     {
         return WithActorFactory(IActorFactory.CreateFactory(actorFactoryFunc));
+    }
+
+    public ActorProps WithAutoStart(bool autoStart)
+    {
+        _autoStart = autoStart;
+
+        return this;
     }
 }

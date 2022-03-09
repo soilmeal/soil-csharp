@@ -23,6 +23,8 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     private readonly Mailbox _mailbox;
 
+    private readonly bool _autoStart;
+
     private readonly CopyOnWriteList<IActorContext> _children = new();
 
     private readonly AtomicInt32 _state = (int)ActorRefState.Created;
@@ -95,6 +97,7 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
         _parent = parent;
         _dispatcher = system.GetOrCreateDispatcher(props.DispatcherProps);
         _mailbox = system.CreateMailbox(this, props.MailboxProps);
+        _autoStart = props.AutoStart;
     }
 
     public AbstractActor Actor()
@@ -135,26 +138,19 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
             .Wait();
     }
 
-    public async Task StartAsync()
+    public Task StartAsync()
     {
         if (!CanStart())
         {
-            throw new InvalidOperationException("start parent first!");
+            return Task.FromException(new InvalidOperationException("start parent first!"));
         }
 
-        ActorRefState oldState = CompareExchangeState(
-            ActorRefState.Starting,
-            ActorRefState.Created);
-        if (oldState != ActorRefState.Created)
+        if (_autoStart)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        Start start = Message.System.Start.Create();
-        _mailbox.TryAddSystemMessage(start);
-        _dispatcher.TryExecuteMailbox(_mailbox);
-
-        await start.Task;
+        return EnqueueStartMessage();
     }
 
     public void Stop(bool waitChildren)
@@ -228,6 +224,11 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
             case Message.System.Create:
             {
                 _actor.HandleCreate();
+
+                if (_autoStart)
+                {
+                    EnqueueStartMessage();
+                }
                 break;
             }
             case Start start:
@@ -346,17 +347,28 @@ public class ActorCell : IActorContext, IEquatable<ActorCell>
 
     private bool CanStart()
     {
-        if (_parent is not ActorRoot)
+        if (this is ActorRoot)
         {
             return true;
         }
 
-        return _parent.State switch
+        return _parent.State != ActorRefState.Closed;
+    }
+
+    private Task EnqueueStartMessage()
+    {
+        ActorRefState oldState = CompareExchangeState(
+            ActorRefState.Starting,
+            ActorRefState.Created);
+        if (oldState != ActorRefState.Created)
         {
-            ActorRefState.Created
-            or ActorRefState.Closed => false,
-            _ => true,
-        };
+            return Task.CompletedTask;
+        }
+
+        Start start = Message.System.Start.Create();
+        _mailbox.TryAddSystemMessage(start);
+        _dispatcher.TryExecuteMailbox(_mailbox);
+        return start.Task;
     }
 
     private Task StopChildren(bool waitChildren)
