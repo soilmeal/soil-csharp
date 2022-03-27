@@ -144,20 +144,30 @@ public abstract partial class ByteBuffer : IByteBuffer
 
             public Memory<byte> GetMemory(int sizeHint = 0)
             {
-                EnsureCapacityIfNeed(sizeHint);
+                EnsureCapacity(sizeHint);
 
                 return _parent.Unsafe.AsMemoryToRecv();
             }
 
             public Span<byte> GetSpan(int sizeHint = 0)
             {
-                EnsureCapacityIfNeed(sizeHint);
+                EnsureCapacity(sizeHint);
 
                 return _parent.Unsafe.AsMemoryToRecv().Span;
             }
 
-            private void EnsureCapacityIfNeed(int sizeHint)
+            private void EnsureCapacity(int sizeHint)
             {
+                if (sizeHint < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(sizeHint), sizeHint, null);
+                }
+
+                if (sizeHint == 0)
+                {
+                    sizeHint = Constants.DefaultCapacityIncrements;
+                }
+
                 if (sizeHint <= _parent.WritableBytes)
                 {
                     return;

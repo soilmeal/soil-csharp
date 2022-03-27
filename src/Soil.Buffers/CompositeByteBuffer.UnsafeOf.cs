@@ -282,14 +282,14 @@ public partial class CompositeByteBuffer
 
             public Memory<byte> GetMemory(int sizeHint = 0)
             {
-                EnsureCapacityIfNeed(sizeHint);
+                EnsureCapacity(sizeHint);
 
                 return _byteBuffer!.Unsafe.AsMemory();
             }
 
             public Span<byte> GetSpan(int sizeHint = 0)
             {
-                EnsureCapacityIfNeed(sizeHint);
+                EnsureCapacity(sizeHint);
 
                 return _byteBuffer!.Unsafe.AsSpan();
             }
@@ -310,11 +310,16 @@ public partial class CompositeByteBuffer
                 _byteBuffer = null;
             }
 
-            private void EnsureCapacityIfNeed(int sizeHint)
+            private void EnsureCapacity(int sizeHint)
             {
-                if (sizeHint <= 0)
+                if (sizeHint < 0)
                 {
-                    return;
+                    throw new ArgumentOutOfRangeException(nameof(sizeHint), sizeHint, null);
+                }
+
+                if (sizeHint == 0)
+                {
+                    sizeHint = Constants.DefaultCapacityIncrements;
                 }
 
                 if (sizeHint > _parent.WritableBytes)
