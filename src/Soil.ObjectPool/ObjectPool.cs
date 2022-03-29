@@ -47,7 +47,10 @@ public class ObjectPool<T> : ISizedObjectPool<T>
                 continue;
             }
 
-            return node.Item;
+            T result = node.Item;
+            node.Item = null;
+
+            return result;
         }
 
         return _policy.Create();
