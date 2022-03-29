@@ -1217,6 +1217,7 @@ public partial class CompositeByteBuffer : IByteBuffer
         {
             component.Release();
         }
+        _components.Clear();
 
         byte[] buffer = _buffer;
         _buffer = Constants.EmptyBuffer;
