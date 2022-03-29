@@ -14,9 +14,9 @@ public partial class CompositeByteBuffer
         return destIndex + bytes;
     }
 
-    private static int MinLengthToGet(int length, int bytes, Component component)
+    private static int MinLengthToGet(int length, int bytes, Component component, int offset)
     {
-        return Math.Min(length - bytes, component.Length);
+        return Math.Min(length - bytes, component.Length - offset);
     }
 
     private sealed class Component

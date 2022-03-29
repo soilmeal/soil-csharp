@@ -70,9 +70,9 @@ public abstract partial class ByteBuffer : IByteBuffer
             _parent._endianless = endianless;
         }
 
-        public void Reallocate()
+        public void Reallocate(int addSizeHint = 0)
         {
-            _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer);
+            _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer, addSizeHint);
         }
 
         public byte[] AsArray()
@@ -168,12 +168,7 @@ public abstract partial class ByteBuffer : IByteBuffer
                     sizeHint = Constants.DefaultCapacityIncrements;
                 }
 
-                if (sizeHint <= _parent.WritableBytes)
-                {
-                    return;
-                }
-
-                _parent.EnsureCapacity(sizeHint - _parent.WritableBytes);
+                _parent.EnsureCapacity(sizeHint);
             }
         }
     }

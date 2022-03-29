@@ -23,16 +23,21 @@ public partial class UnpooledByteBufferAllocator
 
         public byte[] Allocate(int capacityHint)
         {
-            int newCapacity = BufferUtilities.ComputeNextCapacity(capacityHint);
+            int newCapacity = BufferUtilities.ComputeActualCapacity(capacityHint);
             return newCapacity > 0
                 ? new byte[newCapacity]
                 : throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
         }
 
-        public byte[] Reallocate(byte[] oldBuffer)
+        public byte[] Reallocate(byte[] oldBuffer, int addSizeHint = 0)
         {
+            if (addSizeHint <= 0)
+            {
+                addSizeHint += 1;
+            }
+
             return oldBuffer != null
-                ? Allocate(oldBuffer.Length + 1)
+                ? Allocate(oldBuffer.Length + addSizeHint)
                 : throw new ArgumentNullException(nameof(oldBuffer));
         }
 

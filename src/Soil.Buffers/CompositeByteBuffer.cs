@@ -7,7 +7,6 @@ namespace Soil.Buffers;
 
 public partial class CompositeByteBuffer : IByteBuffer
 {
-
     private Endianless _endianless;
 
     private readonly List<Component> _components = new();
@@ -278,9 +277,16 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         IByteBuffer newByteBuffer = Allocator.Allocate(Capacity, _endianless);
         GetBytes(0, newByteBuffer);
+        newByteBuffer.Unsafe.SetWriteIndex(ReadableBytes);
 
         Component consolidated = new Component(newByteBuffer);
+
+        foreach (var component in _components)
+        {
+            component.Release();
+        }
         _components.Clear();
+
         _components.Add(consolidated);
     }
 
@@ -1382,7 +1388,7 @@ public partial class CompositeByteBuffer : IByteBuffer
 
             int offset = ComputeOffset(index, bytes, component);
             int destOffset = ComputeDestOffset(destIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component);
+            int lengthToGet = MinLengthToGet(length, bytes, component, offset);
             bytes += component.ByteBuffer.GetBytes(offset, dest, destOffset, lengthToGet);
             componentIndex += 1;
         }
@@ -1417,8 +1423,8 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
 
             int offset = ComputeOffset(index, bytes, component);
-            int lengthToGet = MinLengthToGet(length, bytes, component);
-            bytes += component.ByteBuffer.GetBytes(offset, dest, lengthToGet);
+            int lengthToGet = MinLengthToGet(length, bytes, component, offset);
+            bytes += component.ByteBuffer.GetBytes(offset, dest, bytes, lengthToGet);
             componentIndex += 1;
         }
 
@@ -1448,7 +1454,7 @@ public partial class CompositeByteBuffer : IByteBuffer
 
             int offset = ComputeOffset(index, bytes, component);
             int destOffset = ComputeDestOffset(destIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component);
+            int lengthToGet = MinLengthToGet(length, bytes, component, offset);
             bytes += component.ByteBuffer.GetBytes(offset, dest, destOffset, lengthToGet);
             componentIndex += 1;
         }
@@ -1651,7 +1657,7 @@ public partial class CompositeByteBuffer : IByteBuffer
 
             int offset = ComputeOffset(index, bytes, component);
             int srcOffset = ComputeDestOffset(srcIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component);
+            int lengthToGet = MinLengthToGet(length, bytes, component, offset);
             bytes += component.ByteBuffer.SetBytes(offset, src, srcOffset, lengthToGet);
             componentIndex += 1;
         }
@@ -1686,8 +1692,8 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
 
             int offset = ComputeOffset(index, bytes, component);
-            int lengthToGet = MinLengthToGet(length, bytes, component);
-            bytes += component.ByteBuffer.SetBytes(offset, src, lengthToGet);
+            int lengthToGet = MinLengthToGet(length, bytes, component, offset);
+            bytes += component.ByteBuffer.SetBytes(offset, src, bytes, lengthToGet);
             componentIndex += 1;
         }
 
@@ -1717,7 +1723,7 @@ public partial class CompositeByteBuffer : IByteBuffer
 
             int offset = ComputeOffset(index, bytes, component);
             int srcOffset = ComputeDestOffset(srcIndex, bytes);
-            int lengthToGet = MinLengthToGet(length, bytes, component);
+            int lengthToGet = MinLengthToGet(length, bytes, component, offset);
             bytes += component.ByteBuffer.SetBytes(offset, src, srcOffset, lengthToGet);
             componentIndex += 1;
         }

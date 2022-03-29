@@ -340,31 +340,19 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
     {
         args.AcceptSocket = null;
-        args.SetBuffer((Memory<byte>)null);
+        args.SetBuffer(null, 0, 0);
         _socketConfSection.SocketChannelEventArgsPool.Return(args);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private async Task RunBindAsync(EndPoint endPoint)
+    private Task RunBindAsync(EndPoint endPoint)
     {
-        if (_eventLoop.IsInEventLoop)
-        {
-            DoBind(endPoint);
-            return;
-        }
-
-        await _eventLoop.StartNew(() => DoBind(endPoint));
+        return _eventLoop.StartNew(() => DoBind(endPoint));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private async Task RunConnectAsync(EndPoint endPoint)
     {
-        if (_eventLoop.IsInEventLoop)
-        {
-            await DoConnectAsync(endPoint);
-            return;
-        }
-
         Task task = await _eventLoop.StartNew(() => DoConnectAsync(endPoint));
         await task;
     }
@@ -385,11 +373,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private async Task RunReceiveAsync(IByteBuffer? byteBuffer = null)
     {
-        if (_eventLoop.IsInEventLoop)
-        {
-            await DoReceiveAsync(byteBuffer);
-        }
-
         Task task = await _eventLoop.StartNew(() => DoReceiveAsync(byteBuffer));
         await task;
     }
@@ -397,12 +380,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private async Task<int> RunSendAsync(object message)
     {
-        if (_eventLoop.IsInEventLoop)
-        {
-            return await DoSendAsync(message);
-        }
-
-
         Task<int> task = await _eventLoop.StartNew(() => DoSendAsync(message));
         return await task;
     }
@@ -410,12 +387,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private async Task RunCloseAsync(ChannelInactiveReason reason, Exception? cause)
     {
-        if (_eventLoop.IsInEventLoop)
-        {
-            DoClose(reason, cause);
-            return;
-        }
-
         await _eventLoop.StartNew(() => DoClose(reason, cause));
     }
 
@@ -501,18 +472,19 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
             byteBuffer.Unsafe.SetWriteIndex(byteBuffer.WriteIndex + recvBytes);
 
-            Unit? result = await _handlerSet.HandleReadAsync(_ctx, byteBuffer);
-            if (result == null)
+            // 최대한 변환할 수 있는 만큼 변환을 진행.
+            Unit? result = null;
+            do
             {
-                TryRunReceiveAsync(byteBuffer);
-                return;
-            }
+                result = await _handlerSet.HandleReadAsync(_ctx, byteBuffer);
+            } while (result != null);
 
+            // 버퍼 사이즈가 불필요하게 커질 수 있으니, 버퍼 사이즈 줄여서 Receive 진행
             IByteBuffer prevByteBuffer = byteBuffer;
-            if (prevByteBuffer.ReadableBytes > 0)
+            if (prevByteBuffer.IsInitialized && prevByteBuffer.Readable())
             {
                 byteBuffer = Allocator.Allocate(prevByteBuffer.ReadableBytes);
-                byteBuffer.ReadBytes(prevByteBuffer);
+                byteBuffer.WriteBytes(prevByteBuffer);
             }
             else
             {
@@ -521,7 +493,15 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
             prevByteBuffer.Release();
 
-            TryRunReceiveAsync(byteBuffer);
+            if (byteBuffer == null)
+            {
+                TryRunReceiveAsync();
+                return;
+            }
+
+#pragma warning disable CS4014
+            RunReceiveAsync(byteBuffer);
+#pragma warning restore CS4014
         }
         catch (SocketException ex)
             when (_socketConfSection.ContainsInCloseError(ex.SocketErrorCode))
@@ -567,11 +547,15 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                 throw new InvalidOperationException($"outbound pipe failed");
             }
 
-            args.SetBuffer(byteBuffer.Unsafe.AsMemoryToSend());
+            int sendBytes = 0;
+            while (byteBuffer.Readable())
+            {
+                args.SetBuffer(byteBuffer.Unsafe.AsMemoryToSend());
 
-            int sendBytes = await args.SendAsync(_socket);
+                sendBytes += await args.SendAsync(_socket);
 
-            byteBuffer.Unsafe.SetReadIndex(byteBuffer.ReadIndex + sendBytes);
+                byteBuffer.Unsafe.SetReadIndex(byteBuffer.ReadIndex + sendBytes);
+            }
 
             return sendBytes;
         }

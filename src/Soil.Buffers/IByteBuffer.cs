@@ -163,7 +163,7 @@ public interface IByteBuffer : IReadOnlyByteBuffer
     {
         IByteBufferWriter BufferWriter { get; }
 
-        void Reallocate();
+        void Reallocate(int addSizeHint = 0);
 
         void SetWriteIndex(int writeIndex);
 

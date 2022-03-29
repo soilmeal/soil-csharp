@@ -23,15 +23,27 @@ public partial class PooledByteBufferAllocator
 
         public byte[] Allocate(int capacityHint)
         {
-            int newCapacity = BufferUtilities.ComputeNextCapacity(capacityHint);
-            return newCapacity > 0
-                ? _parent._bufferArrayPool.Rent(capacityHint)
-                : throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
+            int newCapacity = BufferUtilities.ComputeActualCapacity(capacityHint);
+            if (newCapacity <= 0)
+            {
+                throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
+            }
+
+            byte[] arr = _parent._bufferArrayPool.Rent(capacityHint);
+            Array.Fill<byte>(arr, 0);
+
+            return arr;
         }
 
-        public byte[] Reallocate(byte[] oldBuffer)
+        public byte[] Reallocate(byte[] oldBuffer, int addSizeHint = 0)
         {
-            byte[] newBuffer = Allocate(oldBuffer.Length + 1);
+            if (addSizeHint <= 0)
+            {
+                addSizeHint = 1;
+            }
+
+            byte[] newBuffer = Allocate(oldBuffer.Length + addSizeHint);
+
             Array.Copy(oldBuffer, newBuffer, oldBuffer.Length);
             Free(oldBuffer);
             return newBuffer;
@@ -62,7 +74,6 @@ public partial class PooledByteBufferAllocator
 
         private void Free(byte[] buffer)
         {
-            Array.Fill<byte>(buffer, 0);
             _parent._bufferArrayPool.Return(buffer);
         }
     }

@@ -72,7 +72,7 @@ public partial class CompositeByteBuffer
             _parent._endianless = endianless;
         }
 
-        public void Reallocate()
+        public void Reallocate(int addSizeHint = 0)
         {
             throw new NotSupportedException();
         }
@@ -127,7 +127,7 @@ public partial class CompositeByteBuffer
 
         public Memory<byte> AsMemoryToRecv()
         {
-            return AsMemory()[_parent._readIdx.._parent._writeIdx];
+            return AsMemory()[_parent._writeIdx.._parent.Capacity];
         }
 
         public ArraySegment<byte> AsSegmentToSend()
@@ -276,8 +276,7 @@ public partial class CompositeByteBuffer
 
                 _parent.WriteBytes(_byteBuffer, count);
 
-                _byteBuffer.Release();
-
+                ReleaseInnerBuffer();
             }
 
             public Memory<byte> GetMemory(int sizeHint = 0)
@@ -322,13 +321,9 @@ public partial class CompositeByteBuffer
                     sizeHint = Constants.DefaultCapacityIncrements;
                 }
 
-                if (sizeHint > _parent.WritableBytes)
-                {
-                    _parent.EnsureCapacity(sizeHint - _parent.WritableBytes);
-                }
+                _parent.EnsureCapacity(sizeHint);
 
                 _byteBuffer ??= _parent.Allocator.Allocate();
-
                 _byteBuffer.EnsureCapacity(sizeHint);
             }
         }

@@ -27,7 +27,7 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
         _token = 0;
     }
 
-    public void GetResult(short token)
+    void IValueTaskSource.GetResult(short token)
     {
         if (token != _token)
         {

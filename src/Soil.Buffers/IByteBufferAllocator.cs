@@ -15,7 +15,7 @@ public interface IByteBufferAllocator
     {
         byte[] Allocate(int capacityHint);
 
-        byte[] Reallocate(byte[] oldBuffer);
+        byte[] Reallocate(byte[] oldBuffer, int addSizeHint = 0);
 
         void Return(IByteBuffer byteBuffer, byte[] buffer);
     }

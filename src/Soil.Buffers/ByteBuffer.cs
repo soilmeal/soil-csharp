@@ -160,7 +160,7 @@ public abstract partial class ByteBuffer : IByteBuffer
             return;
         }
 
-        _unsafe.Reallocate();
+        _unsafe.Reallocate(length);
     }
 
     public byte GetByte(int index)
@@ -227,7 +227,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int GetBytes(int index, IByteBuffer dest, int length)
     {
-        return GetBytesInternal(index, dest, length);
+        return GetBytesInternal(index, dest, 0, length);
     }
 
     public int GetBytes(int index, IByteBuffer dest, int destIndex, int length)
@@ -689,7 +689,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int SetBytes(int index, IReadOnlyByteBuffer src, int length)
     {
-        return SetBytesInternal(index, src, length);
+        return SetBytesInternal(index, src, 0, length);
     }
 
     public int SetBytes(int index, IReadOnlyByteBuffer src, int srcIndex, int length)
@@ -885,7 +885,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int WriteBytes(IReadOnlyByteBuffer src)
     {
-        return WriteBytes(src, src.ReadableBytes);
+        return WriteBytes(src, Math.Min(WritableBytes, src.ReadableBytes));
     }
 
     public int WriteBytes(IReadOnlyByteBuffer src, int length)

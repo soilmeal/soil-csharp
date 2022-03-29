@@ -75,29 +75,29 @@ public class LengthFieldBasedFrameDecoder : IChannelInboundPipe<IByteBuffer, IBy
 
         // DO NOT CALL IByteBuffer.WriteBytes() because that method does not change readIdx
         IByteBuffer result = ctx.Allocator.Allocate((int)frameLength);
-        message.ReadBytes(result, (int)frameLength);
+        result.WriteBytes(message, (int)frameLength);
 
         return result;
     }
 
     private long ExtractByteSizeFrameLength(IByteBuffer message)
     {
-        return message.GetByte(0);
+        return message.GetByte(message.ReadIndex);
     }
 
     private long ExtractInt16SizeFrameLength(IByteBuffer message)
     {
-        return message.GetInt16(0);
+        return message.GetInt16(message.ReadIndex);
     }
 
     private long ExtractInt32SizeFrameLength(IByteBuffer message)
     {
-        return message.GetInt32(0);
+        return message.GetInt32(message.ReadIndex);
     }
 
     private long ExtractInt64SizeFrameLength(IByteBuffer message)
     {
-        return message.GetInt64(0);
+        return message.GetInt64(message.ReadIndex);
     }
 
     private long ThrowInvalidOperation(IByteBuffer message)
