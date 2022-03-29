@@ -196,20 +196,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task BindAsync(EndPoint endPoint)
     {
-        if (!_eventLoop.IsInEventLoop)
-        {
-            return _eventLoop.StartNew(() => _socket.Bind(endPoint));
-        }
-
-        try
-        {
-            _socket.Bind(endPoint);
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            return Task.FromException(ex);
-        }
+        return RunBindAsync(endPoint);
     }
 
     public Task StartAsync()
@@ -219,22 +206,12 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task StartAsync(int backlog)
     {
-        if (!_eventLoop.IsInEventLoop)
+        if (!TryChangeStatusToStarting())
         {
-            return _eventLoop.StartNew(() => Start(backlog));
-        }
-
-        try
-        {
-            Start(backlog);
             return Task.CompletedTask;
         }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
 
-            return Task.FromException(ex);
-        }
+        return RunStartAsync(backlog);
     }
 
     public Task StartAsync(EndPoint endPoint)
@@ -244,20 +221,17 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task StartAsync(EndPoint endPoint, int backlog)
     {
-        if (!_eventLoop.IsInEventLoop)
+        if (IsBound)
         {
-            return _eventLoop.StartNew(() => Start(endPoint, backlog));
+            throw new InvalidOperationException("already bound");
         }
 
-        try
+        if (!TryChangeStatusToStarting())
         {
-            Start(endPoint, backlog);
             return Task.CompletedTask;
         }
-        catch (Exception ex)
-        {
-            return Task.FromException(ex);
-        }
+
+        return RunStartAsync(endPoint, backlog);
     }
 
     public Task StartAsync(IPAddress address, int port)
@@ -277,7 +251,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task StartAsync(string host, int port, int backlog)
     {
-
         IPAddress? address;
         EndPoint endPoint = IPAddress.TryParse(host, out address)
             ? new IPEndPoint(address, port)
@@ -293,26 +266,10 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
             return;
         }
 
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
-        try
-        {
-            Socket acceptedSocket = await args.AcceptAsync(_socket);
-
-            RunInitHandler(acceptedSocket);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-        }
-        finally
-        {
-            ReturnSocketChannelAsyncEventArgs(args);
-
-            TryRequestAccept();
-        }
+        await RunAcceptAsync();
     }
 
-    public void RequestRead(IByteBuffer? byteBuffer = null)
+    public void RequestRead()
     {
         throw new NotSupportedException();
     }
@@ -324,7 +281,12 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task CloseAsync()
     {
-        return CloseAsync(ChannelInactiveReason.ByLocal, null);
+        if (!TryChangeStatusToClosing())
+        {
+            return Task.CompletedTask;
+        }
+
+        return RunCloseAsync();
     }
 
     public void Dispose()
@@ -385,18 +347,148 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         return oldStatus == ChannelStatus.Running;
     }
 
-    private void Start(EndPoint endPoint, int backlog)
+    private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
     {
-        if (IsBound)
+        args.AcceptSocket = null;
+        args.BufferList = null;
+        args.SetBuffer(null, 0, 0);
+        _socketConfSection.SocketChannelEventArgsPool.Return(args);
+    }
+
+    private void HandleStartSucceed()
+    {
+        ChangeStatusToRunning();
+
+        try
         {
-            throw new InvalidOperationException("already bound");
+            _handlerSet.HandleChannelActive(this);
+        }
+        catch (Exception ex)
+        {
+            _handlerSet.HandleException(_ctx, ex);
         }
 
-        if (!TryChangeStatusToStarting())
+        if (!_configuration.AutoRequest)
         {
             return;
         }
 
+        TryRunAcceptAsync();
+    }
+
+    private void HandleStartFailed(Exception ex)
+    {
+        ChangeStatusToNone();
+
+        _handlerSet.HandleException(_ctx, ex);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunBindAsync(EndPoint endPoint)
+    {
+        if (_eventLoop.IsInEventLoop)
+        {
+            DoBind(endPoint);
+            return;
+        }
+
+        await _eventLoop.StartNew(() => DoBind(endPoint));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunStartAsync(int backlog)
+    {
+        if (_eventLoop.IsInEventLoop)
+        {
+            DoStart(backlog);
+            return;
+        }
+
+        await _eventLoop.StartNew(() => DoStart(backlog));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunStartAsync(EndPoint endPoint, int backlog)
+    {
+        if (_eventLoop.IsInEventLoop)
+        {
+            DoStart(endPoint, backlog);
+            return;
+        }
+
+        await _eventLoop.StartNew(() => DoStart(endPoint, backlog));
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void TryRunAcceptAsync()
+    {
+        if (!_configuration.AutoRequest)
+        {
+            return;
+        }
+
+#pragma warning disable CS4014
+        RunAcceptAsync();
+#pragma warning restore CS4014
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunAcceptAsync()
+    {
+        if (_eventLoop.IsInEventLoop)
+        {
+            await DoAcceptAsync();
+            return;
+        }
+
+        Task task = await _eventLoop.StartNew(() => DoAcceptAsync());
+        await task;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunCloseAsync()
+    {
+        if (_eventLoop.IsInEventLoop)
+        {
+            DoClose();
+            return;
+        }
+
+        await _eventLoop.StartNew(() => DoClose());
+    }
+
+    private void DoBind(EndPoint endPoint)
+    {
+        try
+        {
+            _socket.Bind(endPoint);
+        }
+        catch (Exception ex)
+        {
+            _handlerSet.HandleException(_ctx, ex);
+
+            throw;
+        }
+    }
+
+    private void DoStart(int backlog)
+    {
+        try
+        {
+            _socket.Listen(backlog);
+
+            HandleStartSucceed();
+        }
+        catch (Exception ex)
+        {
+            HandleStartFailed(ex);
+
+            throw;
+        }
+    }
+
+    private void DoStart(EndPoint endPoint, int backlog)
+    {
         try
         {
             _socket.Bind(endPoint);
@@ -412,173 +504,22 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         }
     }
 
-    private void Start(int backlog)
+    private async Task DoAcceptAsync()
     {
-        if (!TryChangeStatusToStarting())
-        {
-            return;
-        }
-
+        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
+        Socket? acceptedSocket = null;
         try
         {
-            _socket.Listen(backlog);
+            acceptedSocket = await args.AcceptAsync(_socket);
 
-            HandleStartSucceed();
-        }
-        catch (Exception ex)
-        {
-            HandleStartFailed(ex);
+            var child = new TcpSocketChannel(
+                acceptedSocket,
+                _childConfiguration,
+                ChannelStatus.Running);
 
-            throw;
-        }
-    }
-
-    private async Task CloseAsync(ChannelInactiveReason reason, Exception? cause)
-    {
-        if (!TryChangeStatusToClosing())
-        {
-            return;
-        }
-
-        try
-        {
-            await RunCloseAsync()
-                   .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-
-            throw;
-        }
-        finally
-        {
-            HandleClose(reason, cause);
-        }
-    }
-
-    private void Close()
-    {
-        _socket.Close();
-    }
-
-    private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
-    {
-        args.AcceptSocket = null;
-        args.SetBuffer(null, 0, 0);
-        _socketConfSection.SocketChannelEventArgsPool.Return(args);
-    }
-
-    private Task RunCloseAsync()
-    {
-        if (!_eventLoop.IsInEventLoop)
-        {
-            return _eventLoop.StartNew(Close);
-        }
-
-        try
-        {
-            Close();
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            return Task.FromException(ex);
-        }
-    }
-
-    private void TryRequestAccept()
-    {
-        if (!_configuration.AutoRequest)
-        {
-            return;
-        }
-
-        RequestAccept();
-    }
-
-    private void HandleStartSucceed()
-    {
-        ChangeStatusToRunning();
-
-        RunLifecycleHandlerActive();
-
-        if (!_configuration.AutoRequest)
-        {
-            return;
-        }
-
-        TryRequestAccept();
-    }
-
-    private void HandleStartFailed(Exception ex)
-    {
-        ChangeStatusToNone();
-
-        RunExceptionHandler(ex);
-    }
-
-    private void HandleClose(ChannelInactiveReason reason, Exception? cause)
-    {
-        ChangeStatusToNone();
-
-        RunLifecycleHandlerInactive(reason, cause);
-    }
-
-    private void RunLifecycleHandlerActive()
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            InvokeLifecycleActive();
-            return;
-        }
-
-        _eventLoop.StartNew(() => InvokeLifecycleActive());
-    }
-
-    private void RunInitHandler(Socket socket)
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            InvokeInitHandler(socket);
-            return;
-        }
-
-        _eventLoop.StartNew(() => InvokeInitHandler(socket));
-    }
-
-    private void RunLifecycleHandlerInactive(ChannelInactiveReason reason, Exception? cause)
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            InvokeLifecycleInactive(reason, cause);
-            return;
-        }
-
-        _eventLoop.StartNew(() => InvokeLifecycleInactive(reason, cause));
-    }
-
-    private void RunExceptionHandler(Exception ex)
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            _handlerSet.HandleException(_ctx, ex);
-            return;
-        }
-
-        _eventLoop.StartNew(() => _handlerSet.HandleException(_ctx, ex));
-    }
-
-    private void InvokeInitHandler(Socket socket)
-    {
-        var child = new TcpSocketChannel(
-            socket,
-            _childConfiguration,
-            ChannelStatus.Running);
-        try
-        {
             InitHandler.InitChannel(child);
 
+#pragma warning disable CS4014
             child.EventLoop.StartNew(() =>
             {
                 child.HandlerSet.HandleChannelActive(child);
@@ -590,36 +531,48 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
                 child.RequestRead();
             });
+#pragma warning restore CS4014
         }
         catch (Exception ex)
         {
-            socket.Close();
+            acceptedSocket?.Close();
 
-            RunExceptionHandler(ex);
+            _handlerSet.HandleException(_ctx, ex);
+        }
+        finally
+        {
+            ReturnSocketChannelAsyncEventArgs(args);
+
+            TryRunAcceptAsync();
         }
     }
 
-    private void InvokeLifecycleActive()
+    private void DoClose()
     {
         try
         {
-            _handlerSet.HandleChannelActive(this);
+            _socket.Close();
         }
         catch (Exception ex)
         {
-            RunExceptionHandler(ex);
-        }
-    }
+            _handlerSet.HandleException(_ctx, ex);
 
-    private void InvokeLifecycleInactive(ChannelInactiveReason reason, Exception? cause)
-    {
-        try
-        {
-            _handlerSet.HandleChannelInactive(this, reason, cause);
+            throw;
         }
-        catch (Exception ex)
+        finally
         {
-            RunExceptionHandler(ex);
+            ChangeStatusToNone();
+
+            try
+            {
+                _handlerSet.HandleChannelInactive(this, ChannelInactiveReason.ByLocal, null);
+            }
+            catch (Exception ex)
+            {
+                _handlerSet.HandleException(_ctx, ex);
+
+                throw;
+            }
         }
     }
 }

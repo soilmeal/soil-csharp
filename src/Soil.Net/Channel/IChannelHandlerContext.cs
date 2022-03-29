@@ -8,7 +8,7 @@ public interface IChannelHandlerContext
 
     IByteBufferAllocator Allocator { get; }
 
-    void RequestRead(IByteBuffer? byteBuffer = null);
+    void RequestRead();
 
     void Write(object message);
 

@@ -8,7 +8,6 @@ using Soil.Buffers;
 using Soil.Net.Channel.Configuration;
 using Soil.Net.Event;
 using Soil.Threading.Atomic;
-using Soil.Types;
 
 namespace Soil.Net.Channel;
 
@@ -202,20 +201,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     Task IChannel.BindAsync(EndPoint endPoint)
     {
-        if (!_eventLoop.IsInEventLoop)
-        {
-            return _eventLoop.StartNew(() => _socket.Bind(endPoint));
-        }
-
-        try
-        {
-            _socket.Bind(endPoint);
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            return Task.FromException(ex);
-        }
+        return RunBindAsync(endPoint);
     }
 
     public Task StartAsync()
@@ -232,34 +218,14 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         return Task.CompletedTask;
     }
 
-    public async Task StartAsync(EndPoint endPoint)
+    public Task StartAsync(EndPoint endPoint)
     {
         if (!TryChangeStatusToStarting())
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
-        try
-        {
-            args.RemoteEndPoint = endPoint;
-            await args.ConnectAsync(_socket)
-                .ConfigureAwait(false);
-
-            HandleStartSucceed();
-        }
-        catch (Exception ex)
-        {
-            // TODO: log
-
-            HandleStartFailed(ex);
-
-            throw;
-        }
-        finally
-        {
-            ReturnSocketChannelAsyncEventArgs(args);
-        }
+        return RunConnectAsync(endPoint);
     }
 
     public Task StartAsync(EndPoint endPoint, int backlog)
@@ -300,139 +266,38 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         return Task.CompletedTask;
     }
 
-    public async void RequestRead(IByteBuffer? byteBuffer = null)
+    public void RequestRead()
     {
-        if (byteBuffer == null)
-        {
-            byteBuffer = Allocator.Allocate(1024);
-        }
-        else
-        {
-            byteBuffer.EnsureCapacity();
-        }
-
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
-        try
-        {
-            args.SetBuffer(byteBuffer.Unsafe.AsMemoryToRecv());
-            int recvBytes = await args.ReceiveAsync(_socket)
-                .ConfigureAwait(false);
-            if (recvBytes <= 0)
-            {
-#pragma warning disable CS4014
-                CloseAsync(ChannelInactiveReason.ByRemote, null);
-#pragma warning restore CS4014
-                return;
-            }
-
-            HandleReadCompleted(recvBytes, byteBuffer);
-
-            RunInboundPipe(byteBuffer);
-        }
-        catch (SocketException ex)
-            when (_socketConfSection.ContainsInCloseError(ex.SocketErrorCode))
-        {
-            // TODO: log
-            if (_socketConfSection.InvokeHandlerWhenCloseErrorCaught)
-            {
-                RunExceptionHandler(ex);
-            }
-
-#pragma warning disable CS4014
-            CloseAsync(ChannelInactiveReason.ByException, ex);
-#pragma warning restore CS4014
-        }
-        catch (Exception ex)
-        {
-            // TODO: log
-
-            RunExceptionHandler(ex);
-        }
-        finally
-        {
-            ReturnSocketChannelAsyncEventArgs(args);
-        }
-    }
-
-
-    public async Task<int> WriteAsync(object message)
-    {
-        if (message == null)
-        {
-            throw new ArgumentNullException(nameof(message));
-        }
-
         ChannelStatus status = Status;
         if (status != ChannelStatus.Running)
         {
-            return 0;
+            return;
         }
-
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
-        IByteBuffer? byteBuffer = null;
-        try
-        {
-            var result = await RunOutboundPipe(message)
-                .ConfigureAwait(false);
-            switch (result.Type)
-            {
-                case ChannelPipeResultType.None:
-                case ChannelPipeResultType.ContinueIO:
-                {
-                    throw new InvalidOperationException($"outbound pipe failed - type={ result.Type.FastToString()}");
-                }
-                default:
-                {
-                    break;
-                }
-            }
-            if (!result.HasValue())
-            {
-                throw new InvalidOperationException($"outbound pipe failed - hasValue={result.HasValue()}");
-            }
-
-            byteBuffer = result.Value!;
-            args.SetBuffer(byteBuffer.Unsafe.AsMemoryToSend());
-            int sendBytes = await args.SendAsync(_socket)
-                .ConfigureAwait(false);
-
-            HandleWriteCompleted(sendBytes, byteBuffer);
-            return sendBytes;
-        }
-        catch (SocketException ex)
-            when (_socketConfSection.ContainsInCloseError(ex.SocketErrorCode))
-        {
-            // TODO: log
-            if (_socketConfSection.InvokeHandlerWhenCloseErrorCaught)
-            {
-                RunExceptionHandler(ex);
-            }
 
 #pragma warning disable CS4014
-            CloseAsync(ChannelInactiveReason.ByException, ex);
+        RunReceiveAsync();
 #pragma warning restore CS4014
+    }
 
-            throw;
-        }
-        catch (Exception ex)
+
+    public Task<int> WriteAsync(object message)
+    {
+        if (Status != ChannelStatus.Running)
         {
-            // TODO: log
-
-            RunExceptionHandler(ex);
-
-            throw;
+            return Task.FromResult(0);
         }
-        finally
-        {
-            ReturnSocketChannelAsyncEventArgs(args);
 
-            byteBuffer?.Release();
-        }
+        return RunSendAsync(message);
     }
 
     public Task CloseAsync()
     {
-        return CloseAsync(ChannelInactiveReason.ByLocal, null);
+        if (!TryChangeStatusToClosing())
+        {
+            return Task.CompletedTask;
+        }
+
+        return RunCloseAsync(ChannelInactiveReason.ByLocal, null);
     }
 
     public void Dispose()
@@ -493,202 +358,158 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         return oldStatus == ChannelStatus.Running;
     }
 
-    private async Task CloseAsync(ChannelInactiveReason reason, Exception? cause)
-    {
-        if (!TryChangeStatusToClosing())
-        {
-            return;
-        }
-
-        try
-        {
-            await RunCloseAsync()
-                   .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-
-            throw;
-        }
-        finally
-        {
-            HandleClose(reason, cause);
-        }
-    }
-
-    private void Close()
-    {
-        try
-        {
-            _socket.Shutdown(_socketConfSection.ShutdownHow);
-        }
-        finally
-        {
-            _socket.Disconnect(true);
-        }
-    }
-
     private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
     {
         args.AcceptSocket = null;
-        args.BufferList = null;
-        args.SetBuffer(null, 0, 0);
+        args.SetBuffer((Memory<byte>)null);
         _socketConfSection.SocketChannelEventArgsPool.Return(args);
     }
 
-    private Task RunCloseAsync()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunBindAsync(EndPoint endPoint)
     {
-        if (!_eventLoop.IsInEventLoop)
+        if (_eventLoop.IsInEventLoop)
         {
-            return _eventLoop.StartNew(Close);
+            DoBind(endPoint);
+            return;
         }
 
-        try
-        {
-            Close();
-            return Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            return Task.FromException(ex);
-        }
+        await _eventLoop.StartNew(() => DoBind(endPoint));
     }
 
-    private void TryRequestRead()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunConnectAsync(EndPoint endPoint)
+    {
+        if (_eventLoop.IsInEventLoop)
+        {
+            await DoConnectAsync(endPoint);
+            return;
+        }
+
+        Task task = await _eventLoop.StartNew(() => DoConnectAsync(endPoint));
+        await task;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void TryRunReceiveAsync()
     {
         if (!_configuration.AutoRequest)
         {
             return;
         }
 
-        RequestRead();
-    }
-
-    private void HandleStartSucceed()
-    {
-        ChangeStatusToRunning();
-
-        RunLifecycleHandlerActive();
-
-        TryRequestRead();
-    }
-
-    private void HandleStartFailed(Exception ex)
-    {
-        ChangeStatusToNone();
-
-        RunExceptionHandler(ex);
+#pragma warning disable CS4014
+        RunReceiveAsync();
+#pragma warning restore CS4014
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void HandleReadCompleted(int recvBytes, IByteBuffer byteBuffer)
+    private async Task RunReceiveAsync(IByteBuffer? byteBuffer = null)
     {
-        byteBuffer.Unsafe.SetWriteIndex(byteBuffer.WriteIndex + recvBytes);
+        if (_eventLoop.IsInEventLoop)
+        {
+            await DoReceiveAsync(byteBuffer);
+        }
+
+        Task task = await _eventLoop.StartNew(() => DoReceiveAsync(byteBuffer));
+        await task;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void HandleWriteCompleted(int sendBytes, IByteBuffer byteBuffer)
-    {
-        byteBuffer.Unsafe.SetReadIndex(byteBuffer.ReadIndex + sendBytes);
-    }
-
-    private void HandleClose(ChannelInactiveReason reason, Exception? cause)
-    {
-        ChangeStatusToNone();
-
-        RunLifecycleHandlerInactive(reason, cause);
-    }
-
-    private void RunLifecycleHandlerActive()
+    private async Task<int> RunSendAsync(object message)
     {
         if (_eventLoop.IsInEventLoop)
         {
-            InvokeLifecycleActive();
-            return;
+            return await DoSendAsync(message);
         }
 
-        _eventLoop.StartNew(() => InvokeLifecycleActive());
+
+        Task<int> task = await _eventLoop.StartNew(() => DoSendAsync(message));
+        return await task;
     }
 
-    private void RunLifecycleHandlerInactive(ChannelInactiveReason reason, Exception? cause)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private async Task RunCloseAsync(ChannelInactiveReason reason, Exception? cause)
     {
         if (_eventLoop.IsInEventLoop)
         {
-            InvokeLifecycleInactive(reason, cause);
+            DoClose(reason, cause);
             return;
         }
 
-        _eventLoop.StartNew(() => InvokeLifecycleInactive(reason, cause));
+        await _eventLoop.StartNew(() => DoClose(reason, cause));
     }
 
-    private void RunInboundPipe(IByteBuffer byteBuffer)
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            InvokeInboundPipe(byteBuffer);
-            return;
-        }
-
-        _eventLoop.StartNew(() => InvokeInboundPipe(byteBuffer));
-    }
-
-    private Task<Result<ChannelPipeResultType, IByteBuffer>> RunOutboundPipe(object message)
-    {
-        if (!_eventLoop.IsInEventLoop)
-        {
-            return _eventLoop.StartNew(() => _handlerSet.HandleWrite(_ctx, message));
-        }
-
-        try
-        {
-            return Task.FromResult(_handlerSet.HandleWrite(_ctx, message));
-        }
-        catch (Exception ex)
-        {
-            return Task.FromException<Result<ChannelPipeResultType, IByteBuffer>>(ex);
-        }
-    }
-
-    private void RunExceptionHandler(Exception ex)
-    {
-        if (_eventLoop.IsInEventLoop)
-        {
-            _handlerSet.HandleException(_ctx, ex);
-            return;
-        }
-
-        _eventLoop.StartNew(() => _handlerSet.HandleException(_ctx, ex));
-    }
-
-    private void InvokeLifecycleActive()
+    private void DoBind(EndPoint endPoint)
     {
         try
         {
+            _socket.Bind(endPoint);
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
+    private async Task DoConnectAsync(EndPoint endPoint)
+    {
+        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
+        // SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+        try
+        {
+            args.RemoteEndPoint = endPoint;
+
+            await args.ConnectAsync(_socket);
+
+            ChangeStatusToRunning();
+
             _handlerSet.HandleChannelActive(this);
         }
         catch (Exception ex)
         {
-            RunExceptionHandler(ex);
+            ChangeStatusToNone();
+
+            _handlerSet.HandleException(_ctx, ex);
+
+            throw;
+        }
+        finally
+        {
+            ReturnSocketChannelAsyncEventArgs(args);
+
+            if (Status == ChannelStatus.Running)
+            {
+                TryRunReceiveAsync();
+            }
         }
     }
 
-    private void InvokeLifecycleInactive(ChannelInactiveReason reason, Exception? cause)
+    private async Task DoReceiveAsync(IByteBuffer? byteBuffer = null)
     {
-        try
+        if (byteBuffer == null)
         {
-            _handlerSet.HandleChannelInactive(this, reason, cause);
+            byteBuffer = Allocator.Allocate(1024);
         }
-        catch (Exception ex)
+        else
         {
-            RunExceptionHandler(ex);
+            byteBuffer.EnsureCapacity();
         }
-    }
 
-    private void InvokeInboundPipe(IByteBuffer byteBuffer)
-    {
+        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
         try
         {
+            args.SetBuffer(byteBuffer.Unsafe.AsMemoryToRecv());
+
+            int recvBytes = await args.ReceiveAsync(_socket);
+            if (recvBytes <= 0)
+            {
+                DoClose(ChannelInactiveReason.ByRemote, null);
+                return;
+            }
+
+            byteBuffer.Unsafe.SetWriteIndex(byteBuffer.WriteIndex + recvBytes);
+
             var result = _handlerSet.HandleRead(_ctx, byteBuffer);
 
             switch (result.Type)
@@ -700,12 +521,14 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                         byteBuffer.Release();
                     }
 
-                    TryRequestRead();
+                    TryRunReceiveAsync();
                     break;
                 }
                 case ChannelPipeResultType.ContinueIO:
                 {
-                    RequestRead(byteBuffer);
+#pragma warning disable CS4014
+                    DoReceiveAsync(byteBuffer);
+#pragma warning restore CS4014
                     break;
                 }
                 default:
@@ -714,9 +537,111 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                 }
             }
         }
+        catch (SocketException ex)
+            when (_socketConfSection.ContainsInCloseError(ex.SocketErrorCode))
+        {
+            if (_socketConfSection.InvokeHandlerWhenCloseErrorCaught)
+            {
+                _handlerSet.HandleException(_ctx, ex);
+            }
+
+            DoClose(ChannelInactiveReason.ByException, ex);
+        }
         catch (Exception ex)
         {
-            RunExceptionHandler(ex);
+            _handlerSet.HandleException(_ctx, ex);
+        }
+        finally
+        {
+            ReturnSocketChannelAsyncEventArgs(args);
+        }
+    }
+
+    private async Task<int> DoSendAsync(object message)
+    {
+        if (message == null)
+        {
+            throw new ArgumentNullException(nameof(message));
+        }
+
+        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
+        IByteBuffer? byteBuffer = null;
+        try
+        {
+            var result = _handlerSet.HandleWrite(_ctx, message);
+            switch (result.Type)
+            {
+                case ChannelPipeResultType.None:
+                case ChannelPipeResultType.ContinueIO:
+                {
+                    throw new InvalidOperationException($"outbound pipe failed - type={ result.Type.FastToString()}");
+                }
+                default:
+                {
+                    break;
+                }
+            }
+
+            if (!result.HasValue())
+            {
+                throw new InvalidOperationException($"outbound pipe failed - hasValue={result.HasValue()}");
+            }
+
+            byteBuffer = result.Value!;
+
+            args.SetBuffer(byteBuffer.Unsafe.AsMemoryToSend());
+
+            int sendBytes = await args.SendAsync(_socket);
+
+            byteBuffer.Unsafe.SetReadIndex(byteBuffer.ReadIndex + sendBytes);
+
+            return sendBytes;
+        }
+        catch (SocketException ex)
+            when (_socketConfSection.ContainsInCloseError(ex.SocketErrorCode))
+        {
+            if (_socketConfSection.InvokeHandlerWhenCloseErrorCaught)
+            {
+                _handlerSet.HandleException(_ctx, ex);
+            }
+
+            DoClose(ChannelInactiveReason.ByException, ex);
+
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _handlerSet.HandleException(_ctx, ex);
+
+            throw;
+        }
+        finally
+        {
+            ReturnSocketChannelAsyncEventArgs(args);
+
+            byteBuffer?.Release();
+        }
+    }
+
+    private void DoClose(ChannelInactiveReason reason, Exception? cause)
+    {
+        try
+        {
+            _socket.Shutdown(_socketConfSection.ShutdownHow);
+        }
+        catch (Exception ex)
+        {
+            _handlerSet.HandleException(_ctx, ex);
+
+            throw;
+        }
+        finally
+        {
+            _socket.Disconnect(true);
+
+            ChangeStatusToNone();
+
+            _handlerSet.HandleChannelInactive(this, reason, cause);
         }
     }
 

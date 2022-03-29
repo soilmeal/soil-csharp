@@ -57,7 +57,8 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
             return ValueTaskSourceStatus.Pending;
         }
 
-        return SocketError == SocketError.Success
+        SocketError error = SocketError;
+        return error == SocketError.Success
             ? ValueTaskSourceStatus.Succeeded
             : ValueTaskSourceStatus.Faulted;
     }
@@ -92,11 +93,21 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
 
     public ValueTask<Socket> AcceptAsync(Socket socket)
     {
-        Debug.Assert(Volatile.Read(ref _continuation) == null, "Expected null continuation to indicate reserved for use");
+        Debug.Assert(
+            Volatile.Read(ref _continuation) == null,
+            "Expected null continuation to indicate reserved for use");
 
-        if (socket.AcceptAsync(this))
+        try
         {
-            return new ValueTask<Socket>(this, _token);
+            if (socket.AcceptAsync(this))
+            {
+                return new ValueTask<Socket>(this, _token);
+            }
+        }
+        catch
+        {
+            Release();
+            throw;
         }
 
         Socket acceptSocket = AcceptSocket!;
@@ -115,11 +126,19 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
     {
         Debug.Assert(
             Volatile.Read(ref _continuation) == null,
-            $"Expected null continuation to indicate reserved for use");
+            "Expected null continuation to indicate reserved for use");
 
-        if (socket.ReceiveAsync(this))
+        try
         {
-            return new ValueTask<int>(this, _token);
+            if (socket.ReceiveAsync(this))
+            {
+                return new ValueTask<int>(this, _token);
+            }
+        }
+        catch
+        {
+            Release();
+            throw;
         }
 
         int bytesTransferred = BytesTransferred;
@@ -134,11 +153,21 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
 
     public ValueTask DisconnectAsync(Socket socket)
     {
-        Debug.Assert(Volatile.Read(ref _continuation) == null, $"Expected null continuation to indicate reserved for use");
+        Debug.Assert(
+            Volatile.Read(ref _continuation) == null,
+            $"Expected null continuation to indicate reserved for use");
 
-        if (socket.DisconnectAsync(this))
+        try
         {
-            return new ValueTask(this, _token);
+            if (socket.DisconnectAsync(this))
+            {
+                return new ValueTask(this, _token);
+            }
+        }
+        catch
+        {
+            Release();
+            throw;
         }
 
         SocketError error = SocketError;
@@ -156,9 +185,17 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
             Volatile.Read(ref _continuation) == null,
             $"Expected null continuation to indicate reserved for use");
 
-        if (socket.SendAsync(this))
+        try
         {
-            return new ValueTask<int>(this, _token);
+            if (socket.SendAsync(this))
+            {
+                return new ValueTask<int>(this, _token);
+            }
+        }
+        catch
+        {
+            Release();
+            throw;
         }
 
         int bytesTransferred = BytesTransferred;
@@ -250,6 +287,7 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
         {
             ThrowException(error);
         }
+
         return bytes;
     }
 
@@ -272,6 +310,7 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
         {
             ThrowException(error);
         }
+
         return acceptSocket;
     }
 
@@ -319,7 +358,7 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
     private void Release()
     {
         // _cancellationToken = default;
-        _token += 1;
+        _token++;
         _continuation = null;
     }
 
@@ -336,7 +375,7 @@ public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSourc
         {
             if (scheduler is SynchronizationContext sc)
             {
-                sc.Post(s =>
+                sc.Post(static s =>
                 {
                     var t = ((Action<object>, object))s!;
                     t.Item1(t.Item2);

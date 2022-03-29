@@ -32,9 +32,9 @@ public class ChannelHandlerContext : IChannelHandlerContext
         _channel.CloseAsync();
     }
 
-    public void RequestRead(IByteBuffer? byteBuffer = null)
+    public void RequestRead()
     {
-        _channel.RequestRead(byteBuffer);
+        _channel.RequestRead();
     }
 
     public void Write(object message)

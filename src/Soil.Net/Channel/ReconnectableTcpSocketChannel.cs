@@ -190,18 +190,9 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         }
     }
 
-    public async Task BindAsync(EndPoint endPoint)
+    public Task BindAsync(EndPoint endPoint)
     {
-        try
-        {
-            await _channel.BindAsync(endPoint);
-
-            _endPoint = endPoint;
-        }
-        catch
-        {
-            throw;
-        }
+        return RunBindAsync(endPoint);
     }
 
     public Task CloseAsync()
@@ -209,9 +200,9 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         return _channel.CloseAsync();
     }
 
-    public void RequestRead(IByteBuffer? byteBuffer = null)
+    public void RequestRead()
     {
-        _channel.RequestRead(byteBuffer);
+        _channel.RequestRead();
     }
 
     public Task StartAsync()
@@ -224,31 +215,9 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         return _channel.StartAsync(backlog);
     }
 
-    public async Task StartAsync(EndPoint endPoint)
+    public Task StartAsync(EndPoint endPoint)
     {
-        try
-        {
-            await _channel.StartAsync(endPoint)
-                .ConfigureAwait(false);
-
-            _endPoint = endPoint;
-        }
-        catch (Exception startEx)
-        {
-            try
-            {
-                await RunReconnectAsync(
-                           endPoint,
-                           ChannelReconnectReason.ThrownWhenStart,
-                           startEx);
-
-                _endPoint = endPoint;
-            }
-            catch
-            {
-                throw;
-            }
-        }
+        return RunStartAsync(endPoint);
     }
 
     public Task StartAsync(EndPoint endPoint, int backlog)
@@ -288,132 +257,83 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         return _channel.WriteAsync(message);
     }
 
-    private void RunExceptionHandler(Exception ex)
+    private async Task RunBindAsync(EndPoint endPoint)
     {
         if (EventLoop.IsInEventLoop)
         {
-            _handlerSet.HandleException(_ctx, ex);
+            await DoBindAsync(endPoint);
             return;
         }
 
-        EventLoop.StartNew(() => _handlerSet.HandleException(_ctx, ex));
+        Task task = EventLoop.StartNew(() => DoBindAsync(endPoint));
+        await task;
     }
 
-    private void RunLifecycleHandlerActive()
+    private async Task RunStartAsync(EndPoint endPoint)
     {
         if (EventLoop.IsInEventLoop)
         {
-            InvokeLifecycleActive();
+            await DoStartAsync(endPoint);
             return;
         }
 
-        EventLoop.StartNew(() => InvokeLifecycleActive());
+        Task task = EventLoop.StartNew(() => DoStartAsync(endPoint));
+        await task;
     }
 
-    private void RunLifecycleHandlerInactive(ChannelInactiveReason reason, Exception? cause)
-    {
-        if (EventLoop.IsInEventLoop)
-        {
-            InvokeLifecycleInactive(reason, cause);
-            return;
-        }
-
-        EventLoop.StartNew(() => InvokeLifecycleInactive(reason, cause));
-    }
-
-    private void RunReconnectHandlerStart()
-    {
-        if (EventLoop.IsInEventLoop)
-        {
-            InvokeReconnectHandlerStart();
-            return;
-        }
-
-        EventLoop.StartNew(() => InvokeReconnectHandlerStart());
-    }
-
-    private void RunReconnectHandlerEnd()
-    {
-        if (EventLoop.IsInEventLoop)
-        {
-            return;
-        }
-    }
-
-
-    private void InvokeLifecycleActive()
-    {
-        try
-        {
-            _handlerSet.HandleChannelActive(this);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-        }
-    }
-
-    private void InvokeLifecycleInactive(ChannelInactiveReason reason, Exception? cause)
-    {
-        try
-        {
-            _handlerSet.HandleChannelInactive(this, reason, cause);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-        }
-    }
-
-    private void InvokeReconnectHandlerStart()
-    {
-        if (!_started)
-        {
-            return;
-        }
-
-        try
-        {
-            ReconnectHandler.HandleReconnectStart(_ctx);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-        }
-    }
-
-    private void InvokeReconnectHandlerEnd(bool isSuccess)
-    {
-        if (!_started)
-        {
-            return;
-        }
-
-        try
-        {
-            ReconnectHandler.HandleReconnectEnd(_ctx, isSuccess);
-        }
-        catch (Exception ex)
-        {
-            RunExceptionHandler(ex);
-        }
-    }
-
-    private Task RunReconnectAsync(
+    private async Task RunReconnectAsync(
         EndPoint endPoint,
         ChannelReconnectReason reason,
         Exception? cause)
     {
         if (EventLoop.IsInEventLoop)
         {
-            return InvokeReconnectAsync(endPoint, reason, cause);
+            await DoReconnectAsync(endPoint, reason, cause);
+            return;
         }
 
-        return EventLoop.StartNew(() => InvokeReconnectAsync(endPoint, reason, cause))
-            .Unwrap();
+        Task task = EventLoop.StartNew(() => DoReconnectAsync(endPoint, reason, cause));
+        await task;
     }
 
-    private async Task InvokeReconnectAsync(
+    private async Task DoBindAsync(EndPoint endPoint)
+    {
+        try
+        {
+            await _channel.BindAsync(endPoint);
+
+            _endPoint = endPoint;
+        }
+        catch
+        {
+            throw;
+        }
+    }
+
+    private async Task DoStartAsync(EndPoint endPoint)
+    {
+        try
+        {
+            await _channel.StartAsync(endPoint);
+
+            _endPoint = endPoint;
+        }
+        catch (Exception startEx)
+        {
+            try
+            {
+                await RunReconnectAsync(endPoint, ChannelReconnectReason.ThrownWhenStart, startEx);
+
+                _endPoint = endPoint;
+            }
+            catch
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task DoReconnectAsync(
         EndPoint endPoint,
         ChannelReconnectReason reason,
         Exception? cause)
@@ -455,7 +375,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             }
             catch (Exception ex)
             {
-                RunExceptionHandler(ex);
+                HandlerSet.HandleException(_ctx, ex);
                 lastException = ex;
                 break;
             }
@@ -464,7 +384,8 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             if (!reconnectStartCalled)
             {
                 reconnectStartCalled = true;
-                InvokeReconnectHandlerStart();
+
+                ReconnectHandler.HandleReconnectStart(_ctx);
             }
 
             try
@@ -473,7 +394,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
 
                 await _channel.StartAsync(endPoint);
 
-                InvokeReconnectHandlerEnd(true);
+                ReconnectHandler.HandleReconnectEnd(_ctx, true);
 
                 return;
             }
@@ -483,7 +404,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             }
         }
 
-        InvokeReconnectHandlerEnd(false);
+        ReconnectHandler.HandleReconnectEnd(_ctx, false);
 
         throw new InvalidOperationException("retry failed", lastException);
     }
@@ -505,7 +426,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             }
 
             _parent._started = true;
-            _parent.RunLifecycleHandlerActive();
+            _parent._handlerSet.HandleChannelActive(_parent);
         }
 
         public void HandleChannelInactive(
@@ -522,7 +443,10 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
                         return;
                     }
 
-                    _parent.RunLifecycleHandlerInactive(reason, task.Exception ?? cause);
+                    _parent._handlerSet.HandleChannelInactive(
+                        _parent,
+                        reason,
+                        task.Exception ?? cause);
                 });
         }
     }
@@ -538,7 +462,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
 
         public void HandleException(IChannelHandlerContext ctx, Exception ex)
         {
-            _parent.RunExceptionHandler(ex);
+            _parent._handlerSet.HandleException(_parent._ctx, ex);
         }
     }
 
