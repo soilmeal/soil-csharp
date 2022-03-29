@@ -1,12 +1,12 @@
 using System;
+using System.Threading.Tasks;
 using Soil.Buffers;
-using Soil.Types;
 
 namespace Soil.Net.Channel.Codec;
 
 public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffer>
 {
-    private readonly Func<IChannelHandlerContext, IByteBuffer, IByteBuffer> _lengtBufferGenerator;
+    private readonly Func<IChannelHandlerContext, IByteBuffer, IByteBuffer> _lengthBufferGenerator;
 
     public LengthFieldPrepender()
         : this(4)
@@ -26,7 +26,7 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
                 null);
         }
 
-        _lengtBufferGenerator = lengthFieldLength switch
+        _lengthBufferGenerator = lengthFieldLength switch
         {
             1 => GenerateByteSizeLengthBuffer,
             2 => GenerateInt16SizeLengthBuffer,
@@ -36,17 +36,9 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         };
     }
 
-    public Result<ChannelPipeResultType, IByteBuffer> Transform(
-        IChannelHandlerContext ctx,
-        IByteBuffer message)
+    public Task<IByteBuffer> TransformAsync(IChannelHandlerContext ctx, IByteBuffer message)
     {
-        IByteBuffer lengthByteBuffer = _lengtBufferGenerator(ctx, message);
-
-        IByteBuffer result = ctx.Allocator.CompositeByteBuffer()
-            .AddComponent(true, lengthByteBuffer)
-            .AddComponent(true, message);
-
-        return Result.Create(ChannelPipeResultType.CallNext, result);
+        return ctx.EventLoop.StartNew(() => DoTransform(ctx, message));
     }
 
     public IChannelOutboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(
@@ -56,6 +48,14 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         return IChannelOutboundPipe.Connect(this, other);
     }
 
+    private IByteBuffer DoTransform(IChannelHandlerContext ctx, IByteBuffer message)
+    {
+        IByteBuffer lengthByteBuffer = _lengthBufferGenerator.Invoke(ctx, message);
+
+        return ctx.Allocator.CompositeByteBuffer()
+            .AddComponent(true, lengthByteBuffer)
+            .AddComponent(true, message);
+    }
 
     private IByteBuffer GenerateByteSizeLengthBuffer(IChannelHandlerContext ctx, IByteBuffer message)
     {

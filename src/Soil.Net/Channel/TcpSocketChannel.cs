@@ -8,6 +8,7 @@ using Soil.Buffers;
 using Soil.Net.Channel.Configuration;
 using Soil.Net.Event;
 using Soil.Threading.Atomic;
+using Soil.Types;
 
 namespace Soil.Net.Channel;
 
@@ -220,11 +221,6 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     public Task StartAsync(EndPoint endPoint)
     {
-        if (!TryChangeStatusToStarting())
-        {
-            return Task.CompletedTask;
-        }
-
         return RunConnectAsync(endPoint);
     }
 
@@ -266,37 +262,20 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         return Task.CompletedTask;
     }
 
-    public void RequestRead()
+    public void RequestRead(IByteBuffer? byteBuffer = null)
     {
-        ChannelStatus status = Status;
-        if (status != ChannelStatus.Running)
-        {
-            return;
-        }
-
 #pragma warning disable CS4014
-        RunReceiveAsync();
+        RunReceiveAsync(byteBuffer);
 #pragma warning restore CS4014
     }
 
-
     public Task<int> WriteAsync(object message)
     {
-        if (Status != ChannelStatus.Running)
-        {
-            return Task.FromResult(0);
-        }
-
         return RunSendAsync(message);
     }
 
     public Task CloseAsync()
     {
-        if (!TryChangeStatusToClosing())
-        {
-            return Task.CompletedTask;
-        }
-
         return RunCloseAsync(ChannelInactiveReason.ByLocal, null);
     }
 
@@ -391,7 +370,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void TryRunReceiveAsync()
+    private void TryRunReceiveAsync(IByteBuffer? byteBuffer = null)
     {
         if (!_configuration.AutoRequest)
         {
@@ -399,7 +378,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         }
 
 #pragma warning disable CS4014
-        RunReceiveAsync();
+        RunReceiveAsync(byteBuffer);
 #pragma warning restore CS4014
     }
 
@@ -454,6 +433,11 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     private async Task DoConnectAsync(EndPoint endPoint)
     {
+        if (!TryChangeStatusToStarting())
+        {
+            return;
+        }
+
         SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
         // SocketAsyncEventArgs args = new SocketAsyncEventArgs();
         try
@@ -487,6 +471,11 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     private async Task DoReceiveAsync(IByteBuffer? byteBuffer = null)
     {
+        if (Status != ChannelStatus.Running)
+        {
+            return;
+        }
+
         if (byteBuffer == null)
         {
             byteBuffer = Allocator.Allocate(1024);
@@ -504,38 +493,35 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
             int recvBytes = await args.ReceiveAsync(_socket);
             if (recvBytes <= 0)
             {
-                DoClose(ChannelInactiveReason.ByRemote, null);
+#pragma warning disable CS4014
+                RunCloseAsync(ChannelInactiveReason.ByRemote, null);
+#pragma warning restore CS4014
                 return;
             }
 
             byteBuffer.Unsafe.SetWriteIndex(byteBuffer.WriteIndex + recvBytes);
 
-            var result = _handlerSet.HandleRead(_ctx, byteBuffer);
-
-            switch (result.Type)
+            Unit? result = await _handlerSet.HandleReadAsync(_ctx, byteBuffer);
+            if (result == null)
             {
-                case ChannelPipeResultType.CallNext:
-                {
-                    if (byteBuffer.IsInitialized)
-                    {
-                        byteBuffer.Release();
-                    }
-
-                    TryRunReceiveAsync();
-                    break;
-                }
-                case ChannelPipeResultType.ContinueIO:
-                {
-#pragma warning disable CS4014
-                    DoReceiveAsync(byteBuffer);
-#pragma warning restore CS4014
-                    break;
-                }
-                default:
-                {
-                    throw new ArgumentOutOfRangeException(nameof(result.Type), result.Type, "should not be reached here");
-                }
+                TryRunReceiveAsync(byteBuffer);
+                return;
             }
+
+            IByteBuffer prevByteBuffer = byteBuffer;
+            if (prevByteBuffer.ReadableBytes > 0)
+            {
+                byteBuffer = Allocator.Allocate(prevByteBuffer.ReadableBytes);
+                byteBuffer.ReadBytes(prevByteBuffer);
+            }
+            else
+            {
+                byteBuffer = null;
+            }
+
+            prevByteBuffer.Release();
+
+            TryRunReceiveAsync(byteBuffer);
         }
         catch (SocketException ex)
             when (_socketConfSection.ContainsInCloseError(ex.SocketErrorCode))
@@ -545,7 +531,9 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                 _handlerSet.HandleException(_ctx, ex);
             }
 
-            DoClose(ChannelInactiveReason.ByException, ex);
+#pragma warning disable CS4014
+            RunCloseAsync(ChannelInactiveReason.ByException, ex);
+#pragma warning restore CS4014
         }
         catch (Exception ex)
         {
@@ -559,6 +547,11 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     private async Task<int> DoSendAsync(object message)
     {
+        if (Status != ChannelStatus.Running)
+        {
+            return 0;
+        }
+
         if (message == null)
         {
             throw new ArgumentNullException(nameof(message));
@@ -568,26 +561,11 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         IByteBuffer? byteBuffer = null;
         try
         {
-            var result = _handlerSet.HandleWrite(_ctx, message);
-            switch (result.Type)
+            byteBuffer = await _handlerSet.HandleWriteAsync(_ctx, message);
+            if (byteBuffer == null)
             {
-                case ChannelPipeResultType.None:
-                case ChannelPipeResultType.ContinueIO:
-                {
-                    throw new InvalidOperationException($"outbound pipe failed - type={ result.Type.FastToString()}");
-                }
-                default:
-                {
-                    break;
-                }
+                throw new InvalidOperationException($"outbound pipe failed");
             }
-
-            if (!result.HasValue())
-            {
-                throw new InvalidOperationException($"outbound pipe failed - hasValue={result.HasValue()}");
-            }
-
-            byteBuffer = result.Value!;
 
             args.SetBuffer(byteBuffer.Unsafe.AsMemoryToSend());
 
@@ -605,7 +583,9 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                 _handlerSet.HandleException(_ctx, ex);
             }
 
-            DoClose(ChannelInactiveReason.ByException, ex);
+#pragma warning disable CS4014
+            RunCloseAsync(ChannelInactiveReason.ByException, ex);
+#pragma warning restore CS4014
 
             throw;
         }
@@ -625,6 +605,11 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
 
     private void DoClose(ChannelInactiveReason reason, Exception? cause)
     {
+        if (!TryChangeStatusToClosing())
+        {
+            return;
+        }
+
         try
         {
             _socket.Shutdown(_socketConfSection.ShutdownHow);

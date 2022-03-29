@@ -200,9 +200,9 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
         return _channel.CloseAsync();
     }
 
-    public void RequestRead()
+    public void RequestRead(IByteBuffer? byteBuffer = null)
     {
-        _channel.RequestRead();
+        _channel.RequestRead(byteBuffer);
     }
 
     public Task StartAsync()
@@ -475,11 +475,9 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             _parent = parent;
         }
 
-        public Result<ChannelPipeResultType, Unit> Transform(
-            IChannelHandlerContext ctx,
-            IByteBuffer message)
+        public Task<Unit?> TransformAsync(IChannelHandlerContext ctx, IByteBuffer message)
         {
-            return _parent._handlerSet.HandleRead(_parent._ctx, message);
+            return _parent._handlerSet.HandleReadAsync(_parent._ctx, message);
         }
     }
 
@@ -492,16 +490,16 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
             _parent = parent;
         }
 
-        public Result<ChannelPipeResultType, IByteBuffer> Transform(
+        public Task<IByteBuffer> TransformAsync(IChannelHandlerContext ctx, object message)
+        {
+            return _parent._handlerSet.HandleWriteAsync(_parent._ctx, message);
+        }
+
+        Task<IByteBuffer> IChannelOutboundPipe<object, IByteBuffer>.TransformAsync(
             IChannelHandlerContext ctx,
             object message)
         {
-            return _parent._handlerSet.HandleWrite(_parent._ctx, message);
-        }
-
-        Result<ChannelPipeResultType, IByteBuffer> IChannelOutboundPipe<object, IByteBuffer>.Transform(IChannelHandlerContext ctx, object message)
-        {
-            return Transform(ctx, message);
+            return TransformAsync(ctx, message);
         }
     }
 }

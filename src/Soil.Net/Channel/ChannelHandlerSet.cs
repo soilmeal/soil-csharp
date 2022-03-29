@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Soil.Buffers;
 using Soil.Types;
 
@@ -45,24 +46,18 @@ internal class ChannelHandlerSet<TOutMsg> : IChannelHandlerSet<TOutMsg>
         _exceptionHandler.HandleException(ctx, ex);
     }
 
-    public Result<ChannelPipeResultType, Unit> HandleRead(
-        IChannelHandlerContext ctx,
-        IByteBuffer byteBuffer)
+    public Task<Unit?> HandleReadAsync(IChannelHandlerContext ctx, IByteBuffer byteBuffer)
     {
-        return _inboundPipe.Transform(ctx, byteBuffer);
+        return _inboundPipe.TransformAsync(ctx, byteBuffer);
     }
 
-    public Result<ChannelPipeResultType, IByteBuffer> HandleWrite(
-        IChannelHandlerContext ctx,
-        TOutMsg message)
+    public Task<IByteBuffer> HandleWriteAsync(IChannelHandlerContext ctx, TOutMsg message)
     {
-        return _outboundPipe.Transform(ctx, message);
+        return _outboundPipe.TransformAsync(ctx, message);
     }
 
-    public Result<ChannelPipeResultType, IByteBuffer> HandleWrite(
-        IChannelHandlerContext ctx,
-        object message)
+    public Task<IByteBuffer> HandleWriteAsync(IChannelHandlerContext ctx, object message)
     {
-        return ((IChannelHandlerSet<TOutMsg>)this).HandleWrite(ctx, (TOutMsg)message);
+        return ((IChannelHandlerSet<TOutMsg>)this).HandleWriteAsync(ctx, (TOutMsg)message);
     }
 }

@@ -1,5 +1,5 @@
 using System;
-using Soil.Buffers;
+using System.Threading.Tasks;
 using Soil.Types;
 
 namespace Soil.Net.Channel;
@@ -23,9 +23,9 @@ public abstract class ChannelInboundHandler
             _action = action;
         }
 
-        protected override void HandleReadComplete(IChannelHandlerContext ctx, TInMsg message)
+        protected override Task HandleReadComplete(IChannelHandlerContext ctx, TInMsg message)
         {
-            _action.Invoke(ctx, message);
+            return ctx.EventLoop.StartNew(() => _action.Invoke(ctx, message));
         }
     }
 }
@@ -34,25 +34,18 @@ public abstract class ChannelInboundHandler
 public abstract class ChannelInboundHandler<TInMsg> : IChannelInboundPipe<TInMsg, Unit>
     where TInMsg : class
 {
-    public Result<ChannelPipeResultType, Unit> Transform(
-        IChannelHandlerContext ctx,
-        TInMsg message)
+    public async Task<Unit?> TransformAsync(IChannelHandlerContext ctx, TInMsg message)
     {
         if (message == null)
         {
             throw new ArgumentNullException(nameof(message));
         }
 
-        HandleReadComplete(ctx, message);
+        await HandleReadComplete(ctx, message);
 
-        if (message is IByteBuffer byteBuffer && byteBuffer.IsInitialized)
-        {
-            byteBuffer.Release();
-        }
-
-        return UnitResult.Create(ChannelPipeResultType.CallNext);
+        return Unit.Instance;
     }
 
-    protected abstract void HandleReadComplete(IChannelHandlerContext ctx, TInMsg message);
+    protected abstract Task HandleReadComplete(IChannelHandlerContext ctx, TInMsg message);
 }
 

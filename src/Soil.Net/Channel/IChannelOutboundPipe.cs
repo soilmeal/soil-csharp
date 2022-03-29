@@ -1,15 +1,14 @@
 using System;
-using System.ComponentModel;
-using Soil.Types;
+using System.Threading.Tasks;
 
 namespace Soil.Net.Channel;
 
 public interface IChannelOutboundPipe
 {
-    Result<ChannelPipeResultType, object> Transform(IChannelHandlerContext ctx, object message);
+    Task<object> TransformAsync(IChannelHandlerContext ctx, object message);
 
     public static IChannelOutboundPipe<TOutMsg1, TOutMsg2> Create<TOutMsg1, TOutMsg2>(
-        Func<IChannelHandlerContext, TOutMsg1, Result<ChannelPipeResultType, TOutMsg2>> func)
+        Func<IChannelHandlerContext, TOutMsg1, TOutMsg2> func)
         where TOutMsg1 : class
         where TOutMsg2 : class
     {
@@ -44,22 +43,20 @@ public interface IChannelOutboundPipe
             _second = second;
         }
 
-        public Result<ChannelPipeResultType, object> Transform(
+        public Task<object> TransformAsync(
             IChannelHandlerContext ctx,
             object message)
         {
-            return ((IChannelOutboundPipe<TOutMsg1, TOutMsg3>)this).Transform(ctx, message);
+            return ((IChannelOutboundPipe<TOutMsg1, TOutMsg3>)this).TransformAsync(ctx, message);
         }
 
 
-        public Result<ChannelPipeResultType, TOutMsg3> Transform(
+        public async Task<TOutMsg3> TransformAsync(
             IChannelHandlerContext ctx,
             TOutMsg1 message)
         {
-            Result<ChannelPipeResultType, TOutMsg2> result = _first.Transform(ctx, message);
-            return result.Is(ChannelPipeResultType.CallNext) && result.HasValue()
-                ? _second.Transform(ctx, result.Value!)
-                : Result.CreateDefault<ChannelPipeResultType, TOutMsg3>(result.Type);
+            TOutMsg2 transformed = await _first.TransformAsync(ctx, message);
+            return await _second.TransformAsync(ctx, transformed);
         }
     }
 
@@ -68,25 +65,23 @@ public interface IChannelOutboundPipe
         where TOutMsg1 : class
         where TOutMsg2 : class
     {
-        private readonly Func<IChannelHandlerContext, TOutMsg1, Result<ChannelPipeResultType, TOutMsg2>> _func;
+        private readonly Func<IChannelHandlerContext, TOutMsg1, TOutMsg2> _func;
 
-        public FuncWrapper(Func<IChannelHandlerContext, TOutMsg1, Result<ChannelPipeResultType, TOutMsg2>> func)
+        public FuncWrapper(Func<IChannelHandlerContext, TOutMsg1, TOutMsg2> func)
         {
             _func = func;
         }
 
-        public Result<ChannelPipeResultType, object> Transform(
-            IChannelHandlerContext ctx,
-            object message)
+        public Task<object> TransformAsync(IChannelHandlerContext ctx, object message)
         {
-            return ((IChannelOutboundPipe<TOutMsg1, TOutMsg2>)this).Transform(ctx, message);
+            return ((IChannelOutboundPipe<TOutMsg1, TOutMsg2>)this).TransformAsync(
+                ctx,
+                (TOutMsg2)message);
         }
 
-        public Result<ChannelPipeResultType, TOutMsg2> Transform(
-            IChannelHandlerContext ctx,
-            TOutMsg1 message)
+        public Task<TOutMsg2> TransformAsync(IChannelHandlerContext ctx, TOutMsg1 message)
         {
-            return _func.Invoke(ctx, message);
+            return ctx.EventLoop.StartNew(() => _func.Invoke(ctx, message));
         }
     }
 }
@@ -95,9 +90,9 @@ public interface IChannelOutboundPipe<TOutMsg1, TOutMsg2> : IChannelOutboundPipe
     where TOutMsg1 : class
     where TOutMsg2 : class
 {
-    Result<ChannelPipeResultType, TOutMsg2> Transform(IChannelHandlerContext ctx, TOutMsg1 message);
+    Task<TOutMsg2> TransformAsync(IChannelHandlerContext ctx, TOutMsg1 message);
 
-    Result<ChannelPipeResultType, object> IChannelOutboundPipe.Transform(
+    async Task<object> IChannelOutboundPipe.TransformAsync(
         IChannelHandlerContext ctx,
         object message)
     {
@@ -106,7 +101,7 @@ public interface IChannelOutboundPipe<TOutMsg1, TOutMsg2> : IChannelOutboundPipe
             throw new ArgumentException($"not supported type - typename={message.GetType().FullName}");
         }
 
-        return Transform(ctx, castedMessage).Map<object>();
+        return await TransformAsync(ctx, castedMessage);
     }
 
     public IChannelOutboundPipe<TOutMsg1, TNewMessage> Connect<TNewMessage>(

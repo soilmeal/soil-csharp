@@ -1,7 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using Google.Protobuf;
 using Soil.Buffers;
-using Soil.Types;
 
 namespace Soil.Net.Channel.Codec.ProtoBufNet;
 
@@ -22,18 +22,21 @@ public class ProtoBufNetDecoder<T> : IChannelInboundPipe<IByteBuffer, T>
         return IChannelInboundPipe.Connect(this, other);
     }
 
-    public Result<ChannelPipeResultType, T> Transform(
-        IChannelHandlerContext ctx,
-        IByteBuffer message)
+    public Task<T?> TransformAsync(IChannelHandlerContext ctx, IByteBuffer message)
+    {
+        return ctx.EventLoop.StartNew(() => DoTransform(ctx, message));
+    }
+
+    private T? DoTransform(IChannelHandlerContext ctx, IByteBuffer message)
     {
         if (message == null)
         {
             throw new ArgumentNullException(nameof(message));
         }
 
-
         T decoded = _parser.ParseFrom(message.Unsafe.AsMemoryToSend().Span);
         message.Release();
-        return Result.Create(ChannelPipeResultType.CallNext, decoded);
+
+        return decoded;
     }
 }

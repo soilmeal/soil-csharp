@@ -206,11 +206,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task StartAsync(int backlog)
     {
-        if (!TryChangeStatusToStarting())
-        {
-            return Task.CompletedTask;
-        }
-
         return RunStartAsync(backlog);
     }
 
@@ -221,16 +216,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task StartAsync(EndPoint endPoint, int backlog)
     {
-        if (IsBound)
-        {
-            throw new InvalidOperationException("already bound");
-        }
-
-        if (!TryChangeStatusToStarting())
-        {
-            return Task.CompletedTask;
-        }
-
         return RunStartAsync(endPoint, backlog);
     }
 
@@ -269,7 +254,7 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         await RunAcceptAsync();
     }
 
-    public void RequestRead()
+    public void RequestRead(IByteBuffer? byteBuffer = null)
     {
         throw new NotSupportedException();
     }
@@ -281,11 +266,6 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     public Task CloseAsync()
     {
-        if (!TryChangeStatusToClosing())
-        {
-            return Task.CompletedTask;
-        }
-
         return RunCloseAsync();
     }
 
@@ -473,6 +453,11 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     private void DoStart(int backlog)
     {
+        if (!TryChangeStatusToStarting())
+        {
+            return;
+        }
+
         try
         {
             _socket.Listen(backlog);
@@ -489,6 +474,16 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     private void DoStart(EndPoint endPoint, int backlog)
     {
+        if (IsBound)
+        {
+            throw new InvalidOperationException("already bound");
+        }
+
+        if (!TryChangeStatusToStarting())
+        {
+            return;
+        }
+
         try
         {
             _socket.Bind(endPoint);
@@ -549,6 +544,11 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     private void DoClose()
     {
+        if (!TryChangeStatusToClosing())
+        {
+            return;
+        }
+
         try
         {
             _socket.Close();

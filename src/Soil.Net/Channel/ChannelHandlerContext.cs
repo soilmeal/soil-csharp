@@ -1,4 +1,5 @@
 using Soil.Buffers;
+using Soil.Net.Event;
 
 namespace Soil.Net.Channel;
 
@@ -22,6 +23,14 @@ public class ChannelHandlerContext : IChannelHandlerContext
         }
     }
 
+    public IEventLoop EventLoop
+    {
+        get
+        {
+            return _channel.EventLoop;
+        }
+    }
+
     public ChannelHandlerContext(IChannel channel)
     {
         _channel = channel;
@@ -32,9 +41,9 @@ public class ChannelHandlerContext : IChannelHandlerContext
         _channel.CloseAsync();
     }
 
-    public void RequestRead()
+    public void RequestRead(IByteBuffer? byteBuffer = null)
     {
-        _channel.RequestRead();
+        _channel.RequestRead(byteBuffer);
     }
 
     public void Write(object message)

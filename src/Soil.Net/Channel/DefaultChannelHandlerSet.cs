@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Soil.Buffers;
 using Soil.Types;
 
@@ -27,17 +28,13 @@ public class DefaultChannelHandlerSet : IChannelHandlerSet<IByteBuffer>
         throw new NotImplementedException();
     }
 
-    public Result<ChannelPipeResultType, Unit> HandleRead(
-        IChannelHandlerContext ctx,
-        IByteBuffer byteBuffer)
+    public Task<Unit?> HandleReadAsync(IChannelHandlerContext ctx, IByteBuffer byteBuffer)
     {
-        return Constants.DefaultInboundPipe.Transform(ctx, byteBuffer);
+        return Constants.DefaultInboundPipe.TransformAsync(ctx, byteBuffer);
     }
 
-    public Result<ChannelPipeResultType, IByteBuffer> HandleWrite(
-        IChannelHandlerContext ctx,
-        IByteBuffer message)
+    public Task<IByteBuffer> HandleWriteAsync(IChannelHandlerContext ctx, IByteBuffer message)
     {
-        return Constants.DefaultOutboundPipe.Transform(ctx, message);
+        return Constants.DefaultOutboundPipe.TransformAsync(ctx, message);
     }
 }

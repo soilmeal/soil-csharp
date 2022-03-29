@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Soil.Buffers;
 using Soil.Types;
 
@@ -6,13 +7,9 @@ namespace Soil.Net.Channel;
 
 public interface IChannelHandlerSet : IChannelLifecycleHandler, IChannelExceptionHandler
 {
-    Result<ChannelPipeResultType, Unit> HandleRead(
-        IChannelHandlerContext ctx,
-        IByteBuffer byteBuffer);
+    Task<Unit?> HandleReadAsync(IChannelHandlerContext ctx, IByteBuffer byteBuffer);
 
-    Result<ChannelPipeResultType, IByteBuffer> HandleWrite(
-        IChannelHandlerContext ctx,
-        object message);
+    Task<IByteBuffer> HandleWriteAsync(IChannelHandlerContext ctx, object message);
 
     public class Builder<TOutMsg>
         where TOutMsg : class
@@ -105,11 +102,9 @@ public interface IChannelHandlerSet : IChannelLifecycleHandler, IChannelExceptio
 public interface IChannelHandlerSet<TOutMsg> : IChannelHandlerSet
     where TOutMsg : class
 {
-    Result<ChannelPipeResultType, IByteBuffer> HandleWrite(
-        IChannelHandlerContext ctx,
-        TOutMsg message);
+    Task<IByteBuffer> HandleWriteAsync(IChannelHandlerContext ctx, TOutMsg message);
 
-    Result<ChannelPipeResultType, IByteBuffer> IChannelHandlerSet.HandleWrite(
+    Task<IByteBuffer> IChannelHandlerSet.HandleWriteAsync(
         IChannelHandlerContext ctx,
         object message)
     {
@@ -118,6 +113,6 @@ public interface IChannelHandlerSet<TOutMsg> : IChannelHandlerSet
             throw new ArgumentException($"not supported type - typename={message.GetType().FullName}");
         }
 
-        return HandleWrite(ctx, castedMessage);
+        return HandleWriteAsync(ctx, castedMessage);
     }
 }

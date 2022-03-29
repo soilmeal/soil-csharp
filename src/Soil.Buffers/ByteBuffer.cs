@@ -285,7 +285,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public uint GetUInt32(int index, Endianless endianless)
     {
-        GetUInt32Interanl(index, endianless, out uint result);
+        GetUInt32Internal(index, endianless, out uint result);
         return result;
     }
 
@@ -550,7 +550,7 @@ public abstract partial class ByteBuffer : IByteBuffer
             throw new IndexOutOfRangeException();
         }
 
-        _readIdx += GetUInt32Interanl(_readIdx, endianless, out uint result);
+        _readIdx += GetUInt32Internal(_readIdx, endianless, out uint result);
 
         return result;
     }
@@ -1193,7 +1193,7 @@ public abstract partial class ByteBuffer : IByteBuffer
         return length;
     }
 
-    private int GetUInt32Interanl(int index, Endianless endianless, out uint result)
+    private int GetUInt32Internal(int index, Endianless endianless, out uint result)
     {
         int length = sizeof(uint);
 

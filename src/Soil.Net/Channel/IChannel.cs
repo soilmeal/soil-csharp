@@ -53,7 +53,7 @@ public interface IChannel
 
     Task StartAsync(string host, int port, int backlog);
 
-    void RequestRead();
+    void RequestRead(IByteBuffer? byteBuffer = null);
 
     Task<int> WriteAsync(object message);
 

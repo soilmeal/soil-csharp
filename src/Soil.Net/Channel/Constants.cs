@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using Soil.Buffers;
 using Soil.Types;
 
@@ -11,13 +12,9 @@ public class Constants
 
     public static readonly IChannelInitHandler DefaultInitHandler = IChannelInitHandler.Create((child) => child);
 
-    public static readonly IChannelInboundPipe<IByteBuffer, Unit> DefaultInboundPipe = IChannelInboundPipe.Create<IByteBuffer, Unit>((_, byteBuffer) =>
-    {
-        byteBuffer.Release();
-        return Result.Create(ChannelPipeResultType.CallNext, Unit.Instance);
-    });
+    public static readonly IChannelInboundPipe<IByteBuffer, Unit> DefaultInboundPipe = IChannelInboundPipe.Create<IByteBuffer, Unit>((_, byteBuffer) => Unit.Instance);
 
-    public static readonly IChannelOutboundPipe<IByteBuffer, IByteBuffer> DefaultOutboundPipe = IChannelOutboundPipe.Create<IByteBuffer, IByteBuffer>((_, message) => Result.Create(ChannelPipeResultType.CallNext, message));
+    public static readonly IChannelOutboundPipe<IByteBuffer, IByteBuffer> DefaultOutboundPipe = IChannelOutboundPipe.Create<IByteBuffer, IByteBuffer>((_, message) => message);
 
     public static readonly IChannelLifecycleHandler DefaultLifecycleHandler = IChannelLifecycleHandler.Create((_) => { }, (_, _, _) => { });
 

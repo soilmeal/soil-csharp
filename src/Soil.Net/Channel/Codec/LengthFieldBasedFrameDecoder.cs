@@ -1,6 +1,6 @@
 using System;
+using System.Threading.Tasks;
 using Soil.Buffers;
-using Soil.Types;
 
 namespace Soil.Net.Channel.Codec;
 
@@ -40,23 +40,27 @@ public class LengthFieldBasedFrameDecoder : IChannelInboundPipe<IByteBuffer, IBy
         };
     }
 
-    public IChannelInboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(IChannelInboundPipe<IByteBuffer, TNewMessage> other)
+    public IChannelInboundPipe<IByteBuffer, TNewMessage> Connect<TNewMessage>(
+        IChannelInboundPipe<IByteBuffer, TNewMessage> other)
         where TNewMessage : class
     {
         return IChannelInboundPipe.Connect(this, other);
     }
 
-    public Result<ChannelPipeResultType, IByteBuffer> Transform(
-        IChannelHandlerContext _,
-        IByteBuffer message)
+    public Task<IByteBuffer?> TransformAsync(IChannelHandlerContext ctx, IByteBuffer message)
+    {
+        return ctx.EventLoop.StartNew(() => DoTransform(ctx, message));
+    }
+
+    private IByteBuffer? DoTransform(IChannelHandlerContext ctx, IByteBuffer message)
     {
         long messageLength = message.ReadableBytes;
         if (messageLength < _lengthFieldLength)
         {
-            return Result.Create(ChannelPipeResultType.ContinueIO, message);
+            return null;
         }
 
-        long frameLength = _frameLengthExtractor(message);
+        long frameLength = _frameLengthExtractor.Invoke(message);
         if (frameLength <= 0)
         {
             throw new ArgumentException("buffer frame length less than or equal to zero.", nameof(message));
@@ -64,11 +68,16 @@ public class LengthFieldBasedFrameDecoder : IChannelInboundPipe<IByteBuffer, IBy
 
         if (message.ReadableBytes - _lengthFieldLength < frameLength)
         {
-            return Result.Create(ChannelPipeResultType.ContinueIO, message);
+            return null;
         }
 
         message.DiscardReadBytes(_lengthFieldLength);
-        return Result.Create(ChannelPipeResultType.CallNext, message);
+
+        // DO NOT CALL IByteBuffer.WriteBytes() because that method does not change readIdx
+        IByteBuffer result = ctx.Allocator.Allocate((int)frameLength);
+        message.ReadBytes(result, (int)frameLength);
+
+        return result;
     }
 
     private long ExtractByteSizeFrameLength(IByteBuffer message)

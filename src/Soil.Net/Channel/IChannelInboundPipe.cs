@@ -1,14 +1,14 @@
 using System;
-using Soil.Types;
+using System.Threading.Tasks;
 
 namespace Soil.Net.Channel;
 
 public interface IChannelInboundPipe
 {
-    Result<ChannelPipeResultType, object> Transform(IChannelHandlerContext ctx, object message);
+    Task<object?> TransformAsync(IChannelHandlerContext ctx, object message);
 
     public static IChannelInboundPipe<TInMsg1, TInMsg2> Create<TInMsg1, TInMsg2>(
-        Func<IChannelHandlerContext, TInMsg1, Result<ChannelPipeResultType, TInMsg2>> func)
+        Func<IChannelHandlerContext, TInMsg1, TInMsg2?> func)
         where TInMsg1 : class
         where TInMsg2 : class
     {
@@ -42,21 +42,22 @@ public interface IChannelInboundPipe
             _second = second;
         }
 
-        public Result<ChannelPipeResultType, object> Transform(
-            IChannelHandlerContext ctx,
-            object message)
+        public Task<object?> TransformAsync(IChannelHandlerContext ctx, object message)
         {
-            return ((IChannelInboundPipe<TInMsg1, TInMsg3>)this).Transform(ctx, message);
+            return ((IChannelInboundPipe<TInMsg1, TInMsg3>)this).TransformAsync(
+                ctx,
+                (TInMsg3)message);
         }
 
-        public Result<ChannelPipeResultType, TInMsg3> Transform(
-            IChannelHandlerContext ctx,
-            TInMsg1 message)
+        public async Task<TInMsg3?> TransformAsync(IChannelHandlerContext ctx, TInMsg1 message)
         {
-            Result<ChannelPipeResultType, TInMsg2> result = _first.Transform(ctx, message);
-            return result.Is(ChannelPipeResultType.CallNext) && result.HasValue()
-                ? _second.Transform(ctx, result.Value!)
-                : Result.CreateDefault<ChannelPipeResultType, TInMsg3>(result.Type);
+            TInMsg2? transformed = await _first.TransformAsync(ctx, message);
+            if (transformed == null)
+            {
+                return null;
+            }
+
+            return await _second.TransformAsync(ctx, transformed);
         }
     }
 
@@ -64,26 +65,21 @@ public interface IChannelInboundPipe
         where TInMsg1 : class
         where TInMsg2 : class
     {
-        private readonly Func<IChannelHandlerContext, TInMsg1, Result<ChannelPipeResultType, TInMsg2>> _func;
+        private readonly Func<IChannelHandlerContext, TInMsg1, TInMsg2?> _func;
 
-        public FuncWrapper(
-            Func<IChannelHandlerContext, TInMsg1, Result<ChannelPipeResultType, TInMsg2>> delegator)
+        public FuncWrapper(Func<IChannelHandlerContext, TInMsg1, TInMsg2?> delegator)
         {
             _func = delegator;
         }
 
-        public Result<ChannelPipeResultType, object> Transform(
-            IChannelHandlerContext ctx,
-            object message)
+        public Task<object?> TransformAsync(IChannelHandlerContext ctx, object message)
         {
-            return ((IChannelInboundPipe<TInMsg1, TInMsg2>)this).Transform(ctx, message);
+            return ((IChannelInboundPipe<TInMsg1, TInMsg2>)this).TransformAsync(ctx, message);
         }
 
-        public Result<ChannelPipeResultType, TInMsg2> Transform(
-            IChannelHandlerContext ctx,
-            TInMsg1 message)
+        public Task<TInMsg2?> TransformAsync(IChannelHandlerContext ctx, TInMsg1 message)
         {
-            return _func.Invoke(ctx, message);
+            return ctx.EventLoop.StartNew(() => _func.Invoke(ctx, message));
         }
     }
 }
@@ -92,9 +88,9 @@ public interface IChannelInboundPipe<TInMsg1, TInMsg2> : IChannelInboundPipe
     where TInMsg1 : class
     where TInMsg2 : class
 {
-    Result<ChannelPipeResultType, TInMsg2> Transform(IChannelHandlerContext ctx, TInMsg1 message);
+    Task<TInMsg2?> TransformAsync(IChannelHandlerContext ctx, TInMsg1 message);
 
-    Result<ChannelPipeResultType, object> IChannelInboundPipe.Transform(
+    async Task<object?> IChannelInboundPipe.TransformAsync(
         IChannelHandlerContext ctx,
         object message)
     {
@@ -103,7 +99,7 @@ public interface IChannelInboundPipe<TInMsg1, TInMsg2> : IChannelInboundPipe
             throw new ArgumentException($"not supported type - typename={message.GetType().FullName}");
         }
 
-        return Transform(ctx, castedMessage).Map<object>();
+        return await TransformAsync(ctx, castedMessage);
     }
 
     public IChannelInboundPipe<TInMsg1, TInMsg3> Connect<TInMsg3>(
