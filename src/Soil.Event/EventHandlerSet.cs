@@ -24,7 +24,8 @@ internal class EventHandlerSet<TEnum> : IEventHandlerSet<TEnum>
             List<EventHandler<Event<TEnum>>>? handlers;
             if (!_handlersOfType.TryGetValue(type, out handlers))
             {
-                continue;
+                handlers = new List<EventHandler<Event<TEnum>>>(16);
+                _handlersOfType.Add(type, handlers);
             }
 
             handlers.Add(handler);
