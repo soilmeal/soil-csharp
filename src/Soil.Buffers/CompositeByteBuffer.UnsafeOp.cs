@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Soil.Buffers;
 
@@ -323,7 +321,7 @@ public partial class CompositeByteBuffer
 
                 _parent.EnsureCapacity(sizeHint);
 
-                _byteBuffer ??= _parent.Allocator.Allocate();
+                _byteBuffer ??= _parent.Allocator.Allocate(sizeHint);
                 _byteBuffer.EnsureCapacity(sizeHint);
             }
         }

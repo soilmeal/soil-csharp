@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Soil.Buffers.Helper;
 
 namespace Soil.Buffers;
@@ -115,16 +116,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public bool Readable()
     {
+        ThrowIfUninitialized();
+
         return ReadableBytes > 0;
     }
 
     public bool Readable(int length)
     {
+        ThrowIfUninitialized();
+
         return ReadableBytes >= length;
     }
 
     public void DiscardReadBytes(int length)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(length))
         {
             throw new IndexOutOfRangeException();
@@ -135,16 +142,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public bool Writable()
     {
+        ThrowIfUninitialized();
+
         return WritableBytes > 0;
     }
 
     public bool Writable(int length)
     {
+        ThrowIfUninitialized();
+
         return WritableBytes >= length;
     }
 
     public void EnsureCapacity()
     {
+        ThrowIfUninitialized();
+
         if (Writable())
         {
             return;
@@ -155,6 +168,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public void EnsureCapacity(int length)
     {
+        ThrowIfUninitialized();
+
         if (Writable(length))
         {
             return;
@@ -165,176 +180,242 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public byte GetByte(int index)
     {
+        ThrowIfUninitialized();
+
         GetByteInternal(index, out byte result);
         return result;
     }
 
     public sbyte GetSByte(int index)
     {
+        ThrowIfUninitialized();
+
         GetSByteInternal(index, out sbyte result);
         return result;
     }
 
     public int GetBytes(int index, byte[] dest)
     {
+        ThrowIfUninitialized();
+
         return GetBytes(index, dest, Math.Min(Capacity - index, dest.Length));
     }
 
     public int GetBytes(int index, byte[] dest, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytes(index, dest, 0, length);
     }
 
     public int GetBytes(int index, byte[] dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytesInternal(index, dest, destIndex, length);
     }
 
     public int GetBytes(int index, Span<byte> dest)
     {
+        ThrowIfUninitialized();
+
         return GetBytes(index, dest, Math.Min(Capacity - index, dest.Length));
     }
 
     public int GetBytes(int index, Span<byte> dest, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytes(index, dest, 0, length);
     }
 
     public int GetBytes(int index, Span<byte> dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytesInternal(index, dest, destIndex, length);
     }
 
     public int GetBytes(int index, Memory<byte> dest)
     {
+        ThrowIfUninitialized();
+
         return GetBytes(index, dest, Math.Min(Capacity - index, dest.Length));
     }
 
     public int GetBytes(int index, Memory<byte> dest, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytes(index, dest, 0, length);
     }
 
     public int GetBytes(int index, Memory<byte> dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytesInternal(index, dest, destIndex, length);
     }
 
     public int GetBytes(int index, IByteBuffer dest)
     {
+        ThrowIfUninitialized();
+
         return GetBytes(index, dest, Math.Min(Capacity - index, dest.WritableBytes));
     }
 
     public int GetBytes(int index, IByteBuffer dest, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytesInternal(index, dest, 0, length);
     }
 
     public int GetBytes(int index, IByteBuffer dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return GetBytesInternal(index, dest, destIndex, length);
     }
 
     public char GetChar(int index)
     {
+        ThrowIfUninitialized();
+
         return GetChar(index, _endianless);
     }
 
     public char GetChar(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         return (char)GetUInt16(index, endianless);
     }
 
     public short GetInt16(int index)
     {
+        ThrowIfUninitialized();
+
         return GetInt16(index, _endianless);
     }
 
     public short GetInt16(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetInt16Internal(index, endianless, out short result);
         return result;
     }
 
     public ushort GetUInt16(int index)
     {
+        ThrowIfUninitialized();
+
         return GetUInt16(index, _endianless);
     }
 
     public ushort GetUInt16(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetUInt16Internal(index, endianless, out ushort result);
         return result;
     }
 
     public int GetInt32(int index)
     {
+        ThrowIfUninitialized();
+
         return GetInt32(index, _endianless);
     }
 
     public int GetInt32(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetInt32Internal(index, endianless, out int result);
         return result;
     }
 
     public uint GetUInt32(int index)
     {
+        ThrowIfUninitialized();
+
         return GetUInt32(index, _endianless);
     }
 
     public uint GetUInt32(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetUInt32Internal(index, endianless, out uint result);
         return result;
     }
 
     public long GetInt64(int index)
     {
+        ThrowIfUninitialized();
+
         return GetInt64(index, _endianless);
     }
 
     public long GetInt64(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetInt64Internal(index, endianless, out long result);
         return result;
     }
 
     public ulong GetUInt64(int index)
     {
+        ThrowIfUninitialized();
+
         return GetUInt64(index, _endianless);
     }
 
     public ulong GetUInt64(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetUInt64Internal(index, endianless, out ulong result);
         return result;
     }
 
     public float GetSingle(int index)
     {
+        ThrowIfUninitialized();
+
         return GetSingle(index, _endianless);
     }
 
     public float GetSingle(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetSingleInternal(index, endianless, out float result);
         return result;
     }
 
     public double GetDouble(int index)
     {
+        ThrowIfUninitialized();
+
         return GetDouble(index, _endianless);
     }
 
     public double GetDouble(int index, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         GetDoubleInternal(index, endianless, out double result);
         return result;
     }
 
     public byte ReadByte()
     {
+        ThrowIfUninitialized();
+
         if (!Readable())
         {
             throw new IndexOutOfRangeException();
@@ -346,6 +427,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public sbyte ReadSByte()
     {
+        ThrowIfUninitialized();
+
         if (!Readable())
         {
             throw new IndexOutOfRangeException();
@@ -357,6 +440,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public Memory<byte> ReadBytes(int length)
     {
+        ThrowIfUninitialized();
+
         if (length <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(length), length, null);
@@ -370,16 +455,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int ReadBytes(byte[] dest)
     {
+        ThrowIfUninitialized();
+
         return ReadBytes(dest, Math.Min(ReadableBytes, dest.Length));
     }
 
     public int ReadBytes(byte[] dest, int length)
     {
+        ThrowIfUninitialized();
+
         return ReadBytes(dest, 0, length);
     }
 
     public int ReadBytes(byte[] dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(length))
         {
             throw new IndexOutOfRangeException();
@@ -393,16 +484,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int ReadBytes(Span<byte> dest)
     {
+        ThrowIfUninitialized();
+
         return ReadBytes(dest, Math.Min(dest.Length, ReadableBytes));
     }
 
     public int ReadBytes(Span<byte> dest, int length)
     {
+        ThrowIfUninitialized();
+
         return ReadBytes(dest, 0, length);
     }
 
     public int ReadBytes(Span<byte> dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(length))
         {
             throw new IndexOutOfRangeException();
@@ -416,16 +513,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int ReadBytes(Memory<byte> dest)
     {
+        ThrowIfUninitialized();
+
         return ReadBytes(dest, Math.Min(dest.Length, ReadableBytes));
     }
 
     public int ReadBytes(Memory<byte> dest, int length)
     {
+        ThrowIfUninitialized();
+
         return ReadBytes(dest, 0, length);
     }
 
     public int ReadBytes(Memory<byte> dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(length))
         {
             throw new IndexOutOfRangeException();
@@ -439,11 +542,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int ReadBytes(IByteBuffer dest)
     {
+        ThrowIfUninitialized();
+
         return ReadBytes(dest, Math.Min(ReadableBytes, dest.WritableBytes));
     }
 
     public int ReadBytes(IByteBuffer dest, int length)
     {
+        ThrowIfUninitialized();
+
         if (dest == null)
         {
             throw new ArgumentNullException(nameof(dest));
@@ -462,6 +569,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int ReadBytes(IByteBuffer dest, int destIndex, int length)
     {
+        ThrowIfUninitialized();
+
         if (dest == null)
         {
             throw new ArgumentNullException(nameof(dest));
@@ -480,21 +589,29 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public char ReadChar()
     {
+        ThrowIfUninitialized();
+
         return ReadChar(_endianless);
     }
 
     public char ReadChar(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         return (char)ReadUInt16(endianless);
     }
 
     public short ReadInt16()
     {
+        ThrowIfUninitialized();
+
         return ReadInt16(_endianless);
     }
 
     public short ReadInt16(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(short)))
         {
             throw new IndexOutOfRangeException();
@@ -506,11 +623,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public ushort ReadUInt16()
     {
+        ThrowIfUninitialized();
+
         return ReadUInt16(_endianless);
     }
 
     public ushort ReadUInt16(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(ushort)))
         {
             throw new IndexOutOfRangeException();
@@ -523,11 +644,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int ReadInt32()
     {
+        ThrowIfUninitialized();
+
         return ReadInt32(_endianless);
     }
 
     public int ReadInt32(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(int)))
         {
             throw new IndexOutOfRangeException();
@@ -540,11 +665,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public uint ReadUInt32()
     {
+        ThrowIfUninitialized();
+
         return ReadUInt32(_endianless);
     }
 
     public uint ReadUInt32(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(uint)))
         {
             throw new IndexOutOfRangeException();
@@ -557,11 +686,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public long ReadInt64()
     {
+        ThrowIfUninitialized();
+
         return ReadInt64(_endianless);
     }
 
     public long ReadInt64(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(long)))
         {
             throw new IndexOutOfRangeException();
@@ -574,11 +707,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public ulong ReadUInt64()
     {
+        ThrowIfUninitialized();
+
         return ReadUInt64(_endianless);
     }
 
     public ulong ReadUInt64(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(ulong)))
         {
             throw new IndexOutOfRangeException();
@@ -591,11 +728,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public float ReadSingle()
     {
+        ThrowIfUninitialized();
+
         return ReadSingle(_endianless);
     }
 
     public float ReadSingle(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(float)))
         {
             throw new IndexOutOfRangeException();
@@ -608,11 +749,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public double ReadDouble()
     {
+        ThrowIfUninitialized();
+
         return ReadDouble(_endianless);
     }
 
     public double ReadDouble(Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         if (!Readable(sizeof(double)))
         {
             throw new IndexOutOfRangeException();
@@ -625,6 +770,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetByte(int index, byte value)
     {
+        ThrowIfUninitialized();
+
         SetByteInternal(index, value);
 
         return this;
@@ -632,6 +779,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetSByte(int index, sbyte value)
     {
+        ThrowIfUninitialized();
+
         SetSByteInternal(index, value);
 
         return this;
@@ -639,81 +788,113 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int SetBytes(int index, byte[] src)
     {
+        ThrowIfUninitialized();
+
         return SetBytes(index, src, Math.Min(Capacity - index, src.Length));
     }
 
     public int SetBytes(int index, byte[] src, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytes(index, src, 0, length);
     }
 
     public int SetBytes(int index, byte[] src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytesInternal(index, src, srcIndex, length);
     }
 
     public int SetBytes(int index, ReadOnlySpan<byte> src)
     {
+        ThrowIfUninitialized();
+
         return SetBytes(index, src, Math.Min(Capacity - index, src.Length));
     }
 
     public int SetBytes(int index, ReadOnlySpan<byte> src, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytes(index, src, 0, length);
     }
 
     public int SetBytes(int index, ReadOnlySpan<byte> src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytesInternal(index, src, srcIndex, length);
     }
 
     public int SetBytes(int index, ReadOnlyMemory<byte> src)
     {
+        ThrowIfUninitialized();
+
         return SetBytes(index, src, Math.Min(Capacity - index, src.Length));
     }
 
     public int SetBytes(int index, ReadOnlyMemory<byte> src, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytes(index, src, 0, length);
     }
 
     public int SetBytes(int index, ReadOnlyMemory<byte> src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytesInternal(index, src, srcIndex, length);
     }
 
     public int SetBytes(int index, IReadOnlyByteBuffer src)
     {
+        ThrowIfUninitialized();
+
         return SetBytes(index, src, Math.Min(Capacity - index, src.ReadableBytes));
     }
 
     public int SetBytes(int index, IReadOnlyByteBuffer src, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytesInternal(index, src, 0, length);
     }
 
     public int SetBytes(int index, IReadOnlyByteBuffer src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         return SetBytesInternal(index, src, srcIndex, length);
     }
 
     public IByteBuffer SetChar(int index, char value)
     {
+        ThrowIfUninitialized();
+
         return SetChar(index, value, _endianless);
     }
 
     public IByteBuffer SetChar(int index, char value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         return SetUInt16(index, value, endianless);
     }
 
     public IByteBuffer SetInt16(int index, short value)
     {
+        ThrowIfUninitialized();
+
         return SetInt16(index, value, _endianless);
     }
 
     public IByteBuffer SetInt16(int index, short value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetInt16Internal(index, value, endianless);
 
         return this;
@@ -721,11 +902,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetUInt16(int index, ushort value)
     {
+        ThrowIfUninitialized();
+
         return SetUInt16(index, value, _endianless);
     }
 
     public IByteBuffer SetUInt16(int index, ushort value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetUInt16Internal(index, value, endianless);
 
         return this;
@@ -733,11 +918,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetInt32(int index, int value)
     {
+        ThrowIfUninitialized();
+
         return SetInt32(index, value, _endianless);
     }
 
     public IByteBuffer SetInt32(int index, int value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetInt32Internal(index, value, endianless);
 
         return this;
@@ -745,11 +934,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetUInt32(int index, uint value)
     {
+        ThrowIfUninitialized();
+
         return SetUInt32(index, value, _endianless);
     }
 
     public IByteBuffer SetUInt32(int index, uint value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetUInt32Internal(index, value, endianless);
 
         return this;
@@ -757,11 +950,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetInt64(int index, long value)
     {
+        ThrowIfUninitialized();
+
         return SetInt64(index, value, _endianless);
     }
 
     public IByteBuffer SetInt64(int index, long value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetInt64Internal(index, value, endianless);
 
         return this;
@@ -769,11 +966,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetUInt64(int index, ulong value)
     {
+        ThrowIfUninitialized();
+
         return SetUInt64(index, value, _endianless);
     }
 
     public IByteBuffer SetUInt64(int index, ulong value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetUInt64Internal(index, value, endianless);
 
         return this;
@@ -781,11 +982,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetSingle(int index, float value)
     {
+        ThrowIfUninitialized();
+
         return SetSingle(index, value, _endianless);
     }
 
     public IByteBuffer SetSingle(int index, float value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetSingleInternal(index, value, endianless);
 
         return this;
@@ -793,11 +998,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer SetDouble(int index, double value)
     {
+        ThrowIfUninitialized();
+
         return SetDouble(index, value, _endianless);
     }
 
     public IByteBuffer SetDouble(int index, double value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         SetDoubleInternal(index, value, endianless);
 
         return this;
@@ -805,6 +1014,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteByte(byte value)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(byte));
 
         _writeIdx += SetByteInternal(_writeIdx, value);
@@ -814,6 +1025,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteSByte(sbyte value)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(sbyte));
 
         _writeIdx += SetSByteInternal(_writeIdx, value);
@@ -823,16 +1036,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int WriteBytes(byte[] src)
     {
+        ThrowIfUninitialized();
+
         return WriteBytes(src, Math.Min(WritableBytes, src.Length));
     }
 
     public int WriteBytes(byte[] src, int length)
     {
+        ThrowIfUninitialized();
+
         return WriteBytes(src, 0, length);
     }
 
     public int WriteBytes(byte[] src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         if (src == null)
         {
             throw new ArgumentNullException(nameof(src));
@@ -847,16 +1066,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int WriteBytes(ReadOnlySpan<byte> src)
     {
+        ThrowIfUninitialized();
+
         return WriteBytes(src, Math.Min(WritableBytes, src.Length));
     }
 
     public int WriteBytes(ReadOnlySpan<byte> src, int length)
     {
+        ThrowIfUninitialized();
+
         return WriteBytes(src, 0, length);
     }
 
     public int WriteBytes(ReadOnlySpan<byte> src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(length);
 
         _writeIdx += SetBytesInternal(_writeIdx, src, srcIndex, length);
@@ -866,16 +1091,22 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int WriteBytes(ReadOnlyMemory<byte> src)
     {
+        ThrowIfUninitialized();
+
         return WriteBytes(src, Math.Min(WritableBytes, src.Length));
     }
 
     public int WriteBytes(ReadOnlyMemory<byte> src, int length)
     {
+        ThrowIfUninitialized();
+
         return WriteBytes(src, 0, length);
     }
 
     public int WriteBytes(ReadOnlyMemory<byte> src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(length);
 
         _writeIdx += SetBytesInternal(_writeIdx, src, srcIndex, length);
@@ -885,11 +1116,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int WriteBytes(IReadOnlyByteBuffer src)
     {
+        ThrowIfUninitialized();
+
         return WriteBytes(src, Math.Min(WritableBytes, src.ReadableBytes));
     }
 
     public int WriteBytes(IReadOnlyByteBuffer src, int length)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(length);
 
         int result = SetBytesInternal(_writeIdx, src, length);
@@ -901,6 +1136,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public int WriteBytes(IReadOnlyByteBuffer src, int srcIndex, int length)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(length);
 
         int result = SetBytesInternal(_writeIdx, src, srcIndex, length);
@@ -912,21 +1149,29 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteChar(char value)
     {
+        ThrowIfUninitialized();
+
         return WriteChar(value, _endianless);
     }
 
     public IByteBuffer WriteChar(char value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         return WriteUInt16(value, endianless);
     }
 
     public IByteBuffer WriteInt16(short value)
     {
+        ThrowIfUninitialized();
+
         return WriteInt16(value, _endianless);
     }
 
     public IByteBuffer WriteInt16(short value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(short));
 
         _writeIdx += SetInt16Internal(_writeIdx, value, endianless);
@@ -936,11 +1181,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteUInt16(ushort value)
     {
+        ThrowIfUninitialized();
+
         return WriteUInt16(value, _endianless);
     }
 
     public IByteBuffer WriteUInt16(ushort value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(ushort));
 
         _writeIdx += SetUInt16Internal(_writeIdx, value, endianless);
@@ -950,11 +1199,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteInt32(int value)
     {
+        ThrowIfUninitialized();
+
         return WriteInt32(value, _endianless);
     }
 
     public IByteBuffer WriteInt32(int value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(int));
 
         _writeIdx += SetInt32Internal(_writeIdx, value, endianless);
@@ -964,11 +1217,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteUInt32(uint value)
     {
+        ThrowIfUninitialized();
+
         return WriteUInt32(value, _endianless);
     }
 
     public IByteBuffer WriteUInt32(uint value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(uint));
 
         _writeIdx += SetUInt32Internal(_writeIdx, value, endianless);
@@ -978,11 +1235,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteInt64(long value)
     {
+        ThrowIfUninitialized();
+
         return WriteInt64(value, _endianless);
     }
 
     public IByteBuffer WriteInt64(long value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(long));
 
         _writeIdx += SetInt64Internal(_writeIdx, value, endianless);
@@ -992,11 +1253,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteUInt64(ulong value)
     {
+        ThrowIfUninitialized();
+
         return WriteUInt64(value, _endianless);
     }
 
     public IByteBuffer WriteUInt64(ulong value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(ulong));
 
         _writeIdx += SetUInt64Internal(_writeIdx, value, endianless);
@@ -1006,11 +1271,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteSingle(float value)
     {
+        ThrowIfUninitialized();
+
         return WriteSingle(value, _endianless);
     }
 
     public IByteBuffer WriteSingle(float value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         int length = sizeof(float);
         EnsureCapacity(length);
 
@@ -1021,11 +1290,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public IByteBuffer WriteDouble(double value)
     {
+        ThrowIfUninitialized();
+
         return WriteDouble(value, _endianless);
     }
 
     public IByteBuffer WriteDouble(double value, Endianless endianless)
     {
+        ThrowIfUninitialized();
+
         EnsureCapacity(sizeof(double));
 
         _writeIdx += SetDoubleInternal(_writeIdx, value, endianless);
@@ -1035,10 +1308,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public void Clear()
     {
-        if (!IsInitialized)
-        {
-            throw new InvalidBufferOperationException(InvalidBufferOperationException.Uninitialized);
-        }
+        ThrowIfUninitialized();
 
         _readIdx = 0;
         _writeIdx = 0;
@@ -1046,10 +1316,7 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public void Release()
     {
-        if (!IsInitialized)
-        {
-            throw new InvalidBufferOperationException(InvalidBufferOperationException.AlreadyReleased);
-        }
+        ThrowIfUninitialized(true);
 
         Clear();
 
@@ -1062,11 +1329,15 @@ public abstract partial class ByteBuffer : IByteBuffer
 
     public void ResetReadIndex()
     {
+        ThrowIfUninitialized();
+
         _readIdx = 0;
     }
 
     public void ResetWriteIndex()
     {
+        ThrowIfUninitialized();
+
         _writeIdx = 0;
     }
 
@@ -1078,14 +1349,6 @@ public abstract partial class ByteBuffer : IByteBuffer
     private Span<byte> AsWritableSlice(int writeIdx, int length)
     {
         return BufferUtilities.SpanSlice(_buffer, writeIdx, length);
-    }
-
-    private void ThrowIfOutOfRange(int index, int length)
-    {
-        if (index < 0 || (index + length) > Capacity)
-        {
-            throw new IndexOutOfRangeException();
-        }
     }
 
     private int GetByteInternal(int index, out byte value)
@@ -1544,5 +1807,25 @@ public abstract partial class ByteBuffer : IByteBuffer
         }
 
         return length;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ThrowIfOutOfRange(int index, int length)
+    {
+        if (index < 0 || (index + length) > Capacity)
+        {
+            throw new IndexOutOfRangeException();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ThrowIfUninitialized(bool calledInRelease = false)
+    {
+        if (!IsInitialized)
+        {
+            throw new InvalidBufferOperationException(calledInRelease
+                ? InvalidBufferOperationException.Uninitialized
+                : InvalidBufferOperationException.AlreadyReleased);
+        }
     }
 }

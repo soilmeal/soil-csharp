@@ -7,7 +7,7 @@ using System.Threading.Tasks.Sources;
 
 namespace Soil.Net.Channel;
 
-public class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSource, IValueTaskSource<int>, IValueTaskSource<Socket>
+public sealed class SocketChannelAsyncEventArgs : SocketAsyncEventArgs, IValueTaskSource, IValueTaskSource<int>, IValueTaskSource<Socket>
 {
     private static readonly Action<object?> _completedSentinel = (_) => throw new InvalidOperationException("should no reach here");
 

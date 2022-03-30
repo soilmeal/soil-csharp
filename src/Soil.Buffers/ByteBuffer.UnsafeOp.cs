@@ -45,6 +45,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         public void SetReadIndex(int readIndex)
         {
+            _parent.ThrowIfUninitialized();
+
             if (readIndex > _parent._writeIdx)
             {
                 throw new InvalidBufferOperationException(
@@ -56,11 +58,14 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         public void SetWriteIndex(int writeIndex)
         {
+            _parent.ThrowIfUninitialized();
+
             if (writeIndex > _parent.Capacity)
             {
                 throw new InvalidBufferOperationException(
                     InvalidBufferOperationException.WriteIndexExceed);
             }
+
             _parent._writeIdx = writeIndex;
         }
 
@@ -72,6 +77,8 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         public void Reallocate(int addSizeHint = 0)
         {
+            _parent.ThrowIfUninitialized();
+
             _parent._buffer = _allocator.Unsafe.Reallocate(_parent._buffer, addSizeHint);
         }
 

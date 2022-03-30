@@ -78,7 +78,7 @@ public class SocketChannelConfigurationSection : AbstractReadOnlyConfigurationSe
         builder.AddSection(new Builder()
             .SetChannelAsyncEventArgs(new TLSObjectPool<SocketChannelAsyncEventArgs>(
                 new DefaultObjectPoolPolicy<SocketChannelAsyncEventArgs>()))
-            .SetShutdownHow(SocketShutdown.Send)
+            .SetShutdownHow(SocketShutdown.Receive)
             .Build());
     }
 
