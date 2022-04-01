@@ -55,7 +55,7 @@ public class EventSubscriber
                     return;
                 }
 
-                handler(tEvt);
+                handler.Invoke(tEvt);
             };
         }
     }

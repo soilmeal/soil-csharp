@@ -68,7 +68,7 @@ internal class EventHandlerSet<TEnum> : IEventHandlerSet<TEnum>
 
         foreach (var handler in handlers)
         {
-            handler(eventData);
+            handler.Invoke(eventData);
         }
     }
 }

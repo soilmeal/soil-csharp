@@ -70,7 +70,7 @@ internal class ConcurrentEventHandlerSet<TEnum> : IEventHandlerSet<TEnum>
 
         foreach (var handler in handlers)
         {
-            handler(eventData);
+            handler.Invoke(eventData);
         }
     }
 }
