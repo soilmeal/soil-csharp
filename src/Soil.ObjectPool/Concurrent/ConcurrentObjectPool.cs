@@ -1,12 +1,10 @@
-using System;
-using System.Threading;
+using Soil.Threading.Atomic;
 
 namespace Soil.ObjectPool.Concurrent;
 
 public class ConcurrentObjectPool<T> : IObjectPool<T>
     where T : class
 {
-
     private readonly IObjectPoolPolicy<T> _policy;
 
     private readonly int _maximumRetainCount;
@@ -15,7 +13,7 @@ public class ConcurrentObjectPool<T> : IObjectPool<T>
 
     private readonly int _itemsLen;
 
-    private T? _firstItem;
+    private readonly AtomicReference<T?> _firstItem = new();
 
 
     public IObjectPoolPolicy<T> Policy
@@ -47,13 +45,12 @@ public class ConcurrentObjectPool<T> : IObjectPool<T>
 
         _nodes = new ObjectNode[maximumRetainedCount - 1];
         _itemsLen = _nodes.Length;
-        _firstItem = null;
     }
 
     public T Get()
     {
-        T? item = _firstItem;
-        if (item != null && Interlocked.CompareExchange(ref _firstItem, null, item) == item)
+        T? item = _firstItem.Read();
+        if (item != null && _firstItem.CompareExchange(null, item) == item)
         {
             return item;
         }
@@ -62,9 +59,8 @@ public class ConcurrentObjectPool<T> : IObjectPool<T>
         for (int i = 0; i < _itemsLen; ++i)
         {
             ObjectNode node = nodes[i];
-            item = node.Item;
-            if (item != null
-                && Interlocked.CompareExchange(ref node.Item, null, item) == item)
+            item = node.Item.Read();
+            if (item != null && node.Item.CompareExchange(null, item) == item)
             {
                 return item;
             }
@@ -82,7 +78,7 @@ public class ConcurrentObjectPool<T> : IObjectPool<T>
             return;
         }
 
-        if (_firstItem == null && Interlocked.CompareExchange(ref _firstItem, item, null) == null)
+        if (_firstItem.Read() == null && _firstItem.CompareExchange(item, null) == null)
         {
             return;
         }
@@ -92,7 +88,7 @@ public class ConcurrentObjectPool<T> : IObjectPool<T>
         for (int i = 0; i < itemsLen; ++i)
         {
             ObjectNode node = items[i];
-            if (Interlocked.CompareExchange(ref node.Item, item, null) == null)
+            if (node.Item.CompareExchange(item, null) == null)
             {
                 return;
             }
@@ -101,6 +97,10 @@ public class ConcurrentObjectPool<T> : IObjectPool<T>
 
     private struct ObjectNode
     {
-        public T? Item;
+        public readonly AtomicReference<T?> Item = new();
+
+        public ObjectNode()
+        {
+        }
     }
 }
