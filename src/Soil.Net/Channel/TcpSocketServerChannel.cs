@@ -327,8 +327,13 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
         return oldStatus == ChannelStatus.Running;
     }
 
-    private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
+    private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs? args)
     {
+        if (args == null)
+        {
+            return;
+        }
+
         args.AcceptSocket = null;
         args.BufferList = null;
         args.SetBuffer(null, 0, 0);
@@ -501,10 +506,11 @@ public class TcpSocketServerChannel : ISocketServerChannel, IDisposable
 
     private async Task DoAcceptAsync()
     {
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
+        SocketChannelAsyncEventArgs? args = null;
         Socket? acceptedSocket = null;
         try
         {
+            args = _socketConfSection.SocketChannelEventArgsPool.Get();
             acceptedSocket = await args.AcceptAsync(_socket);
 
             var child = new TcpSocketChannel(

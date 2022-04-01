@@ -62,7 +62,9 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         long length = message.ReadableBytes;
         if (length > byte.MaxValue)
         {
-            throw new ArgumentException($"buffer length does not fit into a byte. length: {length}", nameof(message));
+            throw new ArgumentException(
+                $"buffer length does not fit into a byte. length: {length}",
+                nameof(message));
         }
 
         return ctx.Allocator.Allocate(1)
@@ -74,7 +76,9 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         long length = message.ReadableBytes;
         if (length > short.MaxValue)
         {
-            throw new ArgumentException($"buffer length does not fit into a short. length: {length}", nameof(message));
+            throw new ArgumentException(
+                $"buffer length does not fit into a short. length: {length}",
+                nameof(message));
         }
 
         return ctx.Allocator.Allocate(2)
@@ -86,7 +90,9 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         long length = message.ReadableBytes;
         if (length > int.MaxValue)
         {
-            throw new ArgumentException($"buffer length does not fit into a int. length: {length}", nameof(message));
+            throw new ArgumentException(
+                $"buffer length does not fit into a int. length: {length}",
+                nameof(message));
         }
 
         return ctx.Allocator.Allocate(4)
@@ -98,7 +104,9 @@ public class LengthFieldPrepender : IChannelOutboundPipe<IByteBuffer, IByteBuffe
         long length = message.ReadableBytes;
         if (length > long.MaxValue)
         {
-            throw new ArgumentException($"buffer length does not fit into a long. length: {length}", nameof(message));
+            throw new ArgumentException(
+                $"buffer length does not fit into a long. length: {length}",
+                nameof(message));
         }
 
         return ctx.Allocator.Allocate(8)

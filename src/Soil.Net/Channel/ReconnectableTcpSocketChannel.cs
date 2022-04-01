@@ -406,7 +406,7 @@ public class ReconnectableTcpSocketChannel : IReconnectableChannel
 
         ReconnectHandler.HandleReconnectEnd(_ctx, false);
 
-        throw new InvalidOperationException("retry failed", lastException);
+        throw new InvalidOperationException("reconnect failed", lastException);
     }
 
     private class InnerLifecycleHandler : IChannelLifecycleHandler

@@ -337,9 +337,15 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
         return oldStatus == ChannelStatus.Running;
     }
 
-    private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs args)
+    private void ReturnSocketChannelAsyncEventArgs(SocketChannelAsyncEventArgs? args)
     {
+        if (args == null)
+        {
+            return;
+        }
+
         args.AcceptSocket = null;
+        args.BufferList = null;
         args.SetBuffer(null, 0, 0);
         _socketConfSection.SocketChannelEventArgsPool.Return(args);
     }
@@ -409,10 +415,10 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
             return;
         }
 
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
-        // SocketAsyncEventArgs args = new SocketAsyncEventArgs();
+        SocketChannelAsyncEventArgs? args = null;
         try
         {
+            args = _socketConfSection.SocketChannelEventArgsPool.Get();
             args.RemoteEndPoint = endPoint;
 
             await args.ConnectAsync(_socket);
@@ -447,18 +453,13 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
             return;
         }
 
-        if (byteBuffer == null)
-        {
-            byteBuffer = Allocator.Allocate(1024);
-        }
-        else
-        {
-            byteBuffer.EnsureCapacity();
-        }
+        byteBuffer ??= Allocator.Allocate(1024);
+        byteBuffer.EnsureCapacity();
 
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
+        SocketChannelAsyncEventArgs? args = null;
         try
         {
+            args = _socketConfSection.SocketChannelEventArgsPool.Get();
             args.SetBuffer(byteBuffer.Unsafe.AsMemoryToRecv());
 
             int recvBytes = await args.ReceiveAsync(_socket);
@@ -537,7 +538,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
             throw new ArgumentNullException(nameof(message));
         }
 
-        SocketChannelAsyncEventArgs args = _socketConfSection.SocketChannelEventArgsPool.Get();
+        SocketChannelAsyncEventArgs? args = null;
         IByteBuffer? byteBuffer = null;
         try
         {
@@ -547,6 +548,7 @@ public class TcpSocketChannel : ISocketChannel, IDisposable
                 throw new InvalidOperationException($"outbound pipe failed");
             }
 
+            args = _socketConfSection.SocketChannelEventArgsPool.Get();
             int sendBytes = 0;
             while (byteBuffer.Readable())
             {
