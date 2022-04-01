@@ -84,7 +84,8 @@ public abstract partial class ByteBuffer : IByteBuffer
     {
         get
         {
-            return !ReferenceEquals(_buffer, Constants.EmptyBuffer) && _endianless != Endianless.None;
+            return !ReferenceEquals(_buffer, Constants.EmptyBuffer)
+                && _endianless != Endianless.None;
         }
     }
 
@@ -1414,10 +1415,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt16BigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt16LittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt16BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt16LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1430,10 +1432,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt16BigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt16LittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt16BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt16LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1446,10 +1449,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt32BigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt32LittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt32BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt32LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1462,10 +1466,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt32BigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt32LittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt32BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt32LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1478,10 +1483,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt64BigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt64LittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt64BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt64LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1494,10 +1500,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt64BigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt64LittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt64BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt64LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1510,10 +1517,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadSingleBigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadSingleLittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadSingleBigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadSingleLittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1526,10 +1534,11 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        ReadOnlySpan<byte> slice = AsReadableSlice(index, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadDoubleBigEndian(AsReadableSlice(index, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadDoubleLittleEndian(AsReadableSlice(index, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadDoubleBigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadDoubleLittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1599,16 +1608,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteInt16BigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteInt16BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteInt16LittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteInt16LittleEndian(slice, value);
                 break;
             }
             default:
@@ -1626,16 +1636,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt16BigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteUInt16BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt16LittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteUInt16LittleEndian(slice, value);
                 break;
             }
             default:
@@ -1653,16 +1664,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteInt32BigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteInt32BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteInt32LittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteInt32LittleEndian(slice, value);
                 break;
             }
             default:
@@ -1680,16 +1692,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt32BigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteUInt32BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt32LittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteUInt32LittleEndian(slice, value);
                 break;
             }
             default:
@@ -1707,16 +1720,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteInt64BigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteInt64BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteInt64LittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteInt64LittleEndian(slice, value);
                 break;
             }
             default:
@@ -1734,16 +1748,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt64BigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteUInt64BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt64LittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteUInt64LittleEndian(slice, value);
                 break;
             }
             default:
@@ -1761,16 +1776,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteSingleBigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteSingleBigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteSingleLittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteSingleLittleEndian(slice, value);
                 break;
             }
             default:
@@ -1788,16 +1804,17 @@ public abstract partial class ByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = AsWritableSlice(index, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteDoubleBigEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteDoubleBigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteDoubleLittleEndian(AsWritableSlice(index, length), value);
+                BinaryPrimitivesHelper.WriteDoubleLittleEndian(slice, value);
                 break;
             }
             default:

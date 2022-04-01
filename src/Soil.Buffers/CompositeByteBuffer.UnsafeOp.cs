@@ -66,7 +66,8 @@ public partial class CompositeByteBuffer
 
         public void Allocate(int capacityHint, Endianless endianless)
         {
-            _parent._buffer = _allocator.Unsafe.Allocate(capacityHint);
+            // ignore 'capacityHint' because '_buffer' is only used to read/write primitive values.
+            _parent._buffer = _allocator.Unsafe.Allocate(sizeof(ulong));
             _parent._endianless = endianless;
         }
 

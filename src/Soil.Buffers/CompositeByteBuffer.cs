@@ -14,6 +14,7 @@ public partial class CompositeByteBuffer : IByteBuffer
 
     private readonly LastAccessedComponent _lastAccessed = new();
 
+    // CAUTION: ONLY USE THIS WHEN READ/WRITE PRIMITIVE VALUES.
     private byte[] _buffer;
 
     private int _readIdx = 0;
@@ -75,7 +76,8 @@ public partial class CompositeByteBuffer : IByteBuffer
     {
         get
         {
-            return !ReferenceEquals(_buffer, Constants.EmptyBuffer) && _endianless != Endianless.None;
+            return !ReferenceEquals(_buffer, Constants.EmptyBuffer)
+                && _endianless != Endianless.None;
         }
     }
 
@@ -199,7 +201,8 @@ public partial class CompositeByteBuffer : IByteBuffer
             int readableBytes = byteBuffer.ReadableBytes;
             if (unchecked(Capacity + readableBytes) >= MaxCapacity)
             {
-                throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
+                throw new InvalidBufferOperationException(
+                    InvalidBufferOperationException.MaxCapacityReached);
             }
 
             Component component = new Component(byteBuffer);
@@ -316,14 +319,13 @@ public partial class CompositeByteBuffer : IByteBuffer
         GetBytes(0, newByteBuffer);
         newByteBuffer.Unsafe.SetWriteIndex(ReadableBytes);
 
-        Component consolidated = new Component(newByteBuffer);
-
         foreach (var component in _components)
         {
             component.Release();
         }
         _components.Clear();
 
+        Component consolidated = new Component(newByteBuffer);
         _components.Add(consolidated);
     }
 
@@ -345,7 +347,8 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         if (Capacity + length >= MaxCapacity)
         {
-            throw new InvalidBufferOperationException(InvalidBufferOperationException.MaxCapacityReached);
+            throw new InvalidBufferOperationException(
+                InvalidBufferOperationException.MaxCapacityReached);
         }
 
         IByteBuffer byteBuffer = Allocator.Allocate(length, _endianless);
@@ -1743,10 +1746,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt16BigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt16LittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt16BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt16LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1761,10 +1765,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt16BigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt16LittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt16BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt16LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1779,10 +1784,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt32BigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt32LittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt32BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt32LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1797,10 +1803,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt32BigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt32LittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt32BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt32LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1815,10 +1822,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt64BigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt64LittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadInt64BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadInt64LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1833,10 +1841,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt64BigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt64LittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadUInt64BigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadUInt64LittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1851,10 +1860,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadSingleBigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadSingleLittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadSingleBigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadSingleLittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -1869,10 +1879,11 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         GetBytesInternal(index, _buffer, 0, length);
 
+        ReadOnlySpan<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         result = endianless switch
         {
-            Endianless.BigEndian => BinaryPrimitivesHelper.ReadDoubleBigEndian(BufferUtilities.SpanSlice(_buffer, length)),
-            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadDoubleLittleEndian(BufferUtilities.SpanSlice(_buffer, length)),
+            Endianless.BigEndian => BinaryPrimitivesHelper.ReadDoubleBigEndian(slice),
+            Endianless.LittleEndian => BinaryPrimitivesHelper.ReadDoubleLittleEndian(slice),
             _ => throw new InvalidBufferOperationException(InvalidBufferOperationException.InvalidEndianless),
         };
 
@@ -2010,16 +2021,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteInt16BigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteInt16BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteInt16LittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteInt16LittleEndian(slice, value);
                 break;
             }
             default:
@@ -2028,7 +2040,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     private int SetUInt16Internal(int index, ushort value, Endianless endianless)
@@ -2037,16 +2049,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt16BigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteUInt16BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt16LittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteUInt16LittleEndian(slice, value);
                 break;
             }
             default:
@@ -2055,7 +2068,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     private int SetInt32Internal(int index, int value, Endianless endianless)
@@ -2064,16 +2077,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteInt32BigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteInt32BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteInt32LittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteInt32LittleEndian(slice, value);
                 break;
             }
             default:
@@ -2082,7 +2096,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     private int SetUInt32Internal(int index, uint value, Endianless endianless)
@@ -2091,16 +2105,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt32BigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteUInt32BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt32LittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteUInt32LittleEndian(slice, value);
                 break;
             }
             default:
@@ -2109,7 +2124,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     private int SetInt64Internal(int index, long value, Endianless endianless)
@@ -2118,16 +2133,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteInt64BigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteInt64BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteInt64LittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteInt64LittleEndian(slice, value);
                 break;
             }
             default:
@@ -2136,7 +2152,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     private int SetUInt64Internal(int index, ulong value, Endianless endianless)
@@ -2145,16 +2161,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt64BigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteUInt64BigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteUInt64LittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteUInt64LittleEndian(slice, value);
                 break;
             }
             default:
@@ -2163,7 +2180,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     private int SetSingleInternal(int index, float value, Endianless endianless)
@@ -2172,16 +2189,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteSingleBigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteSingleBigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteSingleLittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteSingleLittleEndian(slice, value);
                 break;
             }
             default:
@@ -2190,7 +2208,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     private int SetDoubleInternal(int index, double value, Endianless endianless)
@@ -2199,16 +2217,17 @@ public partial class CompositeByteBuffer : IByteBuffer
 
         ThrowIfOutOfRange(index, length);
 
+        Span<byte> slice = BufferUtilities.SpanSlice(_buffer, length);
         switch (endianless)
         {
             case Endianless.BigEndian:
             {
-                BinaryPrimitivesHelper.WriteDoubleBigEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteDoubleBigEndian(slice, value);
                 break;
             }
             case Endianless.LittleEndian:
             {
-                BinaryPrimitivesHelper.WriteDoubleLittleEndian(BufferUtilities.SpanSlice(_buffer, length), value);
+                BinaryPrimitivesHelper.WriteDoubleLittleEndian(slice, value);
                 break;
             }
             default:
@@ -2217,7 +2236,7 @@ public partial class CompositeByteBuffer : IByteBuffer
             }
         }
 
-        return SetBytesInternal(index, _buffer, 0, length);
+        return SetBytesInternal(index, slice, 0, length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
