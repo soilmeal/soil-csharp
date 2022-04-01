@@ -9,7 +9,10 @@
         }
       },
       "soil.objectpool": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       },
       "soil.threading": {
         "type": "Project"
@@ -32,7 +35,10 @@
         }
       },
       "soil.objectpool": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       },
       "soil.threading": {
         "type": "Project"
@@ -55,7 +61,10 @@
         }
       },
       "soil.objectpool": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       },
       "soil.threading": {
         "type": "Project"
@@ -78,7 +87,10 @@
         }
       },
       "soil.objectpool": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "Soil.Threading": "1.0.0"
+        }
       },
       "soil.threading": {
         "type": "Project"
