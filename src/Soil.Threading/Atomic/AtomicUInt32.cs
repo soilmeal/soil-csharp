@@ -50,7 +50,7 @@ public class AtomicUInt32 : IAtomicInteger<uint>
         // return Interlocked.And(ref _value, other);
 
         // Dotnet runtime implement this operation using spin-lock.
-        // Therefore, we also implement this ourselve using spin-lock.
+        // Therefore, we also implement this ourselves using spin-lock.
 
         uint prevValue;
         uint afterValue;
@@ -68,7 +68,7 @@ public class AtomicUInt32 : IAtomicInteger<uint>
         // return Interlocked.Or(ref _value, other);
 
         // Dotnet runtime implement this operation using spin-lock.
-        // Therefore, we also implement this ourselve using spin-lock.
+        // Therefore, we also implement this ourselves using spin-lock.
 
         uint prevValue;
         uint afterValue;

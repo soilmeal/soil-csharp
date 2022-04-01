@@ -40,12 +40,12 @@ internal class NameThreadFactory : IThreadFactory
         return Create(start, false);
     }
 
-    public Thread Create(ThreadStart start, bool backgound)
+    public Thread Create(ThreadStart start, bool background)
     {
         var thread = new Thread(start)
         {
             Name = _name,
-            IsBackground = backgound,
+            IsBackground = background,
         };
         return thread;
     }
@@ -55,12 +55,12 @@ internal class NameThreadFactory : IThreadFactory
         return Create(start, false);
     }
 
-    public Thread Create(ParameterizedThreadStart start, bool backgound)
+    public Thread Create(ParameterizedThreadStart start, bool background)
     {
         var thread = new Thread(start)
         {
             Name = _name,
-            IsBackground = backgound,
+            IsBackground = background,
         };
         return thread;
     }

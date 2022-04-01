@@ -41,11 +41,11 @@ internal class FormattedNameThreadFactory : IThreadFactory
         return Create(start, false);
     }
 
-    public Thread Create(ThreadStart start, bool backgound)
+    public Thread Create(ThreadStart start, bool background)
     {
         var thread = new Thread(start)
         {
-            IsBackground = backgound,
+            IsBackground = background,
         };
         thread.Name = _formatter.Format(thread.ManagedThreadId);
         return thread;
@@ -56,11 +56,11 @@ internal class FormattedNameThreadFactory : IThreadFactory
         return Create(start, false);
     }
 
-    public Thread Create(ParameterizedThreadStart start, bool backgound)
+    public Thread Create(ParameterizedThreadStart start, bool background)
     {
         var thread = new Thread(start)
         {
-            IsBackground = backgound,
+            IsBackground = background,
         };
         thread.Name = _formatter.Format(thread.ManagedThreadId);
         return thread;

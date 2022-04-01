@@ -50,7 +50,7 @@ public class AtomicUInt64 : IAtomicInteger<ulong>
         // return Interlocked.And(ref _value, other);
 
         // Dotnet runtime implement this operation using spin-lock.
-        // Therefore, we also implement this ourselve using spin-lock.
+        // Therefore, we also implement this ourselves using spin-lock.
 
         ulong prevValue;
         ulong afterValue;
@@ -68,7 +68,7 @@ public class AtomicUInt64 : IAtomicInteger<ulong>
         // return Interlocked.Or(ref _value, other);
 
         // Dotnet runtime implement this operation using spin-lock.
-        // Therefore, we also implement this ourselve using spin-lock.
+        // Therefore, we also implement this ourselves using spin-lock.
 
         ulong prevValue;
         ulong afterValue;

@@ -9,11 +9,11 @@ public interface IThreadFactory
 
     Thread Create(ThreadStart start);
 
-    Thread Create(ThreadStart start, bool backgound);
+    Thread Create(ThreadStart start, bool background);
 
     Thread Create(ParameterizedThreadStart start);
 
-    Thread Create(ParameterizedThreadStart start, bool backgound);
+    Thread Create(ParameterizedThreadStart start, bool background);
 
     public class Builder
     {
